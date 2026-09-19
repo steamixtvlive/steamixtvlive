@@ -1,4 +1,31 @@
+import { useEffect, useState } from 'react'
+
+const MAINTENANCE_END = new Date('2027-01-10T00:00:00+03:00').getTime()
+
+function useCountdown() {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const diff = Math.max(0, MAINTENANCE_END - now)
+  return {
+    days: Math.floor(diff / 86400000),
+    hours: Math.floor(diff / 3600000) % 24,
+    minutes: Math.floor(diff / 60000) % 60,
+    seconds: Math.floor(diff / 1000) % 60,
+  }
+}
+
 export default function MaintenanceOverlay() {
+  const { days, hours, minutes, seconds } = useCountdown()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const units = [
+    { v: String(days), label: 'Gün' },
+    { v: pad(hours), label: 'Saat' },
+    { v: pad(minutes), label: 'Dakika' },
+    { v: pad(seconds), label: 'Saniye' },
+  ]
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden bg-[#04060d]">
       <style>{`
@@ -68,9 +95,19 @@ export default function MaintenanceOverlay() {
             </h1>
 
             <p className="text-[13px] md:text-[14.5px] leading-relaxed text-gray-300/90 max-w-[520px] mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
-              Sizlere <span className="text-white font-semibold">daha iyi hizmet verebilmek için</span> kısa bir ara vermiş bulunuyoruz.<br className="hidden md:block" />
-              Sistem güncellemeleri sebebiyle <span className="text-[#7dd3ff] font-medium">yakın bir zamanda</span> tekrar sizlerleyiz.
+              Sizlere <span className="text-white font-semibold">daha iyi hizmet verebilmek için</span> bakıma girdik.<br className="hidden md:block" />
+              Bakım çalışmaları <span className="text-[#7dd3ff] font-semibold">10 Ocak 2027</span> tarihine kadar devam edecek.
             </p>
+
+            {/* geri sayım */}
+            <div className="mt-6 flex justify-center gap-2.5 md:gap-3">
+              {units.map(u => (
+                <div key={u.label} className="w-[68px] md:w-[76px] rounded-2xl bg-white/[0.04] border border-white/10 py-3 backdrop-blur-xl">
+                  <div className="text-[22px] md:text-[26px] font-extrabold text-white tabular-nums" style={{ fontFamily: 'Orbitron, sans-serif' }}>{u.v}</div>
+                  <div className="text-[10px] tracking-[0.2em] text-gray-500 uppercase mt-1">{u.label}</div>
+                </div>
+              ))}
+            </div>
 
             {/* animasyonlu bar + dişli */}
             <div className="mt-7 flex flex-col items-center gap-4">
@@ -87,7 +124,7 @@ export default function MaintenanceOverlay() {
               <div className="w-full max-w-[360px] h-[6px] rounded-full bg-white/5 border border-white/10 overflow-hidden p-[2px]">
                 <div className="h-full rounded-full bg-gradient-to-r from-[#0099ff] via-blue-400 to-purple-500 shadow-[0_0_12px_rgba(0,153,255,0.7)]" style={{ animation: 'barLoad 1.8s ease-in-out infinite' }} />
               </div>
-              <p className="text-[11px] tracking-[0.18em] text-gray-500 uppercase">Lütfen sayfayı yenilemeyin • Çok yakında buradayız</p>
+              <p className="text-[11px] tracking-[0.18em] text-gray-500 uppercase">10 Ocak 2027 • Tekrar görüşmek üzere</p>
             </div>
 
             {/* alt bilgi */}
