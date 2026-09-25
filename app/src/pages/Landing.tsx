@@ -577,7 +577,7 @@ export default function Landing() {
           </p>
           <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/[0.08] to-transparent border border-purple-500/20 border-l-4 border-l-purple-500/60">
             <p className="text-[11px] text-gray-300 leading-relaxed text-center">
-              Aboneliğiniz ayrıca <span className="text-white font-semibold">TiviMate</span>, <span className="text-white font-semibold">Televizio</span> ve <span className="text-white font-semibold">IMPlayer</span> uygulamalarında da geçerlidir. Gönül rahatlığıyla izleyebilirsiniz.
+              Aboneliğiniz ayrıca <span className="text-white font-semibold">TiviMate</span>, <span className="text-white font-semibold">Televizio</span> ve <span className="text-white font-semibold">İMPlayer</span> uygulamalarında da geçerlidir. Gönül rahatlığıyla izleyebilirsiniz.
             </p>
           </div>
         </div>
@@ -631,7 +631,7 @@ export default function Landing() {
                   adresine satın aldığınıza dair ekran görüntüsü atın; yönetici onayının ardından abonelik giriş
                   bilgileriniz en kısa sürede size teslim edilir ve size özel oynatıcı bağlantınız mail üzerinden
                   gönderilir — bağlantıyla birlikte aşağıdaki uygulamamızın apk'sını indirip kullanabilirsiniz.
-                  Ayrıca <span className="text-white font-semibold">TiviMate</span>, <span className="text-white font-semibold">Televizio</span> ve <span className="text-white font-semibold">IMPlayer</span> uygulamalarında da gönül rahatlığıyla izleyebilirsiniz. Shopier resmi
+                  Ayrıca <span className="text-white font-semibold">TiviMate</span>, <span className="text-white font-semibold">Televizio</span> ve <span className="text-white font-semibold">İMPlayer</span> uygulamalarında da gönül rahatlığıyla izleyebilirsiniz. Shopier resmi
                   kuralları gereği abonelikler sınırlıdır; tamamlanan abonelik yalnızca bir defaya mahsus tekrar
                   alınabilir. Steamix TV'yi cihazlarınızda oynatabilmek için en az 100 Mbps internet hızı ve güncel
                   donanımlı bir akıllı televizyon ya da TV Box kullanmanız şarttır, aksi halde donma ve takılmalar donanım yetersizliğinden ve ağ alt yapınızın zayıf olmasından kaynaklanır.
