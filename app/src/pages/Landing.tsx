@@ -634,13 +634,17 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-3">
               <a href={seciliPlan.link} target="_blank" rel="noopener noreferrer"
                 className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(0,153,255,0.5)] transition-all flex items-center justify-center gap-2">
-                <ShoppingCart className="w-4 h-4" />Onaylıyorum, Satın Al
+                <ShoppingCart className="w-4 h-4" />Satın Al
               </a>
               <button onClick={() => setSeciliPlan(null)}
                 className="flex-1 py-3 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-all">
                 Hayır, Vazgeçtim
               </button>
             </div>
+            <a href={seciliPlan.link} target="_blank" rel="noopener noreferrer"
+              className="block text-center mt-3 text-xs text-[#7dd3ff] hover:text-white tracking-wide transition-colors">
+              shopier'e git →
+            </a>
           </div>
         </div>
       )}
