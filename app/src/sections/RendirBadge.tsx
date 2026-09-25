@@ -10,7 +10,7 @@ export default function RendirBadge() {
       <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#0099ff] to-purple-500 flex items-center justify-center ring-1 ring-white/25">
         <Tv className="w-3.5 h-3.5 text-white" style={{ animation: 'rendirTvGlow 2s ease-in-out infinite, rendirTvFloat 2s ease-in-out infinite' }} />
       </span>
-      <span className="text-[11px] md:text-xs font-bold tracking-[0.2em] uppercase bg-gradient-to-r from-[#7dd3ff] to-purple-300 bg-clip-text text-transparent" style={{ fontFamily: 'Orbitron, sans-serif' }}>rendır</span>
+      <span className="text-[11px] md:text-xs font-bold tracking-[0.2em] uppercase bg-gradient-to-r from-[#7dd3ff] to-purple-300 bg-clip-text text-transparent" style={{ fontFamily: 'Orbitron, sans-serif' }}>rendır media</span>
     </span>
   )
 }
