@@ -456,8 +456,6 @@ export default function Landing() {
               <span className="text-[#0099ff] font-bold">📡 Çözünürlüğe göre sınıflı yayın:</span> yayınlarımız
               çözünürlük kalitesine göre sınıflandırılmıştır. Çözünürlük kanallarını kendinize göre sınıflayıp
               favorileyin, böylece donanımınızın desteklediği kanalları favoriledikten sonra takılmaların önüne geçersiniz.
-              Hiçbir IPTV servisi yüzde yüz kesintisiz ve donmasız yayın vaat etmez; vaat eden reklam amaçlıdır,
-              biz dürüst çalışıyoruz. Test yayınlarını vermemizin sebebi budur. Donanımınızın desteklediği kanalları seçip bu sorunları aşmış bulunacaksınız.
             </p>
           </div>
         </div>
