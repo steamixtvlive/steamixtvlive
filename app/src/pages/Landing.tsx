@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion } from 'lucide-react'
 import AnimatedBackground from '@/sections/AnimatedBackground'
+import RendirBadge from '@/sections/RendirBadge'
 
 const APK_URL = 'https://steamixtvlive-vgaq.onrender.com/Steamix TV.apk'
 const MOBIL_APK_URL = 'https://www.dropbox.com/scl/fi/z1ap96oov7m6hz5qwjyu4/SteamixTV_v1.0.45_release.apk?rlkey=637nsb1d8ccbgmt5sqy2ywoi2&st=w0kg6daw&dl=1'
@@ -245,6 +246,7 @@ export default function Landing() {
           <a href="#top" className="flex items-center gap-2">
             <img src="/images/steamix-logo.jpg" alt="" className="w-8 h-8 rounded-lg" />
             <span className="text-base md:text-lg font-bold text-white tracking-wider" style={{ fontFamily: 'Orbitron, sans-serif' }}>Steamix <span className="text-[#0099ff]">TV</span></span>
+            <RendirBadge />
           </a>
           <div className="hidden md:flex items-center gap-1 text-sm">
             <a href="#test" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all">Test</a>

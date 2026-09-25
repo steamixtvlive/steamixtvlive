@@ -3,6 +3,7 @@ import { useLang } from '@/lib/language'
 import { useAuth } from '@/hooks/use-auth'
 import { Home, Tv, Film, Clapperboard, Settings, LogOut, Globe, ChevronDown, Heart, Gamepad2 } from 'lucide-react'
 import { useState } from 'react'
+import RendirBadge from '@/sections/RendirBadge'
 
 const allTabs = [
   { key: 'home', icon: Home, labelKey: 'nav.home' },
@@ -42,6 +43,7 @@ export default function Navbar({ categoryName }: NavbarProps) {
             <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 shrink-0">
               <img src="/images/steamix-logo.jpg" alt="" className="w-8 h-8 md:w-10 md:h-10 rounded-lg" />
               <span className="text-lg md:text-xl font-bold text-white tracking-wider" style={{ fontFamily: 'Orbitron, sans-serif' }}>Steamix <span className="text-[#0099ff]">TV</span></span>
+              <RendirBadge />
             </button>
             <div className="hidden md:flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {tabs.map(tab => {
