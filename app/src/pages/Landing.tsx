@@ -88,7 +88,7 @@ const TESTLER = [
 ]
 
 const STATS = [
-  { icon: Tv, value: 1000, suffix: '+', label: 'Canlı TV Kanalı' },
+  { icon: Tv, value: 5000, suffix: '+', label: 'Canlı TV Kanalı' },
   { icon: Clapperboard, value: 20000, suffix: '+', label: 'Film & Dizi Arşivi' },
   { icon: MonitorPlay, value: 100, suffix: '%', label: '4K Maç Keyfi' },
   { icon: Wifi, value: 24, suffix: '/7', label: 'Kesintisiz Yayın' },
