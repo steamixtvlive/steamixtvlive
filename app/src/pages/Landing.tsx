@@ -224,7 +224,8 @@ export default function Landing() {
         @keyframes scanMove { 0% { top: -10% } 100% { top: 110% } }
         @keyframes ekranDon { 0%,28% { opacity: 1 } 33%,94% { opacity: 0 } 100% { opacity: 1 } }
         @keyframes dokunma { 0%,100% { transform: translate(0,0) scale(1); opacity: 0.8 } 25% { transform: translate(14px,10px) scale(0.9); opacity: 1 } 50% { transform: translate(-10px,16px) scale(0.9); opacity: 1 } 75% { transform: translate(6px,-8px) scale(1); opacity: 0.8 } }
-        @keyframes kumandaBas { 0%,100% { transform: translateY(0) } 10%,30% { transform: translateY(-6px) rotate(-4deg) } 40%,60% { transform: translateY(0) } 70%,90% { transform: translateY(-6px) rotate(4deg) } }`}</style>
+        @keyframes kumandaBas { 0%,100% { transform: translateY(0) } 10%,30% { transform: translateY(-6px) rotate(-4deg) } 40%,60% { transform: translateY(0) } 70%,90% { transform: translateY(-6px) rotate(4deg) } }
+        @keyframes paketVurgu { 0%,100% { box-shadow: 0 0 8px rgba(0,153,255,0.35) } 50% { box-shadow: 0 0 26px rgba(0,153,255,0.8), 0 0 46px rgba(168,85,247,0.35) } }`}</style>
         <div className="absolute" style={{
           top: '-165px', bottom: '-165px', left: '-165px', right: '-165px',
           backgroundImage: 'url(/images/login.jpg)',
@@ -253,7 +254,7 @@ export default function Landing() {
             <a href="#cihazlar" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all">Cihazlar</a>
             <a href="#icerik" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all">İçerik</a>
             <a href="#uygulama" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all">Uygulama</a>
-            <button onClick={() => setPlanModal(true)} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all">Paketleri İncele</button>
+            <button onClick={() => setPlanModal(true)} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>Paketleri İncele</button>
             <a href="#test" className="ml-2 px-4 py-1.5 rounded-lg text-sm text-white bg-gradient-to-r from-[#0099ff] to-blue-600 hover:shadow-[0_0_20px_rgba(0,153,255,0.5)] transition-all">Test Al</a>
           </div>
           <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-gray-300">
@@ -265,7 +266,7 @@ export default function Landing() {
             {[['Test', '#test'], ['Cihazlar', '#cihazlar'], ['İçerik', '#icerik'], ['Uygulama', '#uygulama']].map(([t, h]) => (
               <a key={h} href={h} onClick={() => setMenuOpen(false)} className="block px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5">{t}</a>
             ))}
-            <button onClick={() => { setMenuOpen(false); setPlanModal(true) }} className="block w-full text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5">Paketleri İncele</button>
+            <button onClick={() => { setMenuOpen(false); setPlanModal(true) }} className="block w-full text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>Paketleri İncele</button>
           </div>
         )}
       </nav>
@@ -289,7 +290,7 @@ export default function Landing() {
           binlerce film, dizi ve VOD içeriği. Dilediğin zaman, dilediğin yerde izle.
         </p>
         <div className="flex items-center justify-center md:justify-start gap-4 mt-8">
-          <button onClick={() => setPlanModal(true)} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm hover:shadow-[0_0_30px_rgba(0,153,255,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all">
+          <button onClick={() => setPlanModal(true)} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm hover:shadow-[0_0_30px_rgba(0,153,255,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>
             Paketleri İncele
           </button>
           <a href="#test" className="px-6 py-3 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-all flex items-center gap-2">
@@ -633,18 +634,15 @@ export default function Landing() {
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
               <a href={seciliPlan.link} target="_blank" rel="noopener noreferrer"
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(0,153,255,0.5)] transition-all flex items-center justify-center gap-2">
-                <ShoppingCart className="w-4 h-4" />Satın Al
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(0,153,255,0.5)] transition-all flex flex-col items-center justify-center gap-0.5">
+                <span className="flex items-center gap-2"><ShoppingCart className="w-4 h-4" />Satın Al</span>
+                <span className="text-[10px] font-normal text-white/70 tracking-wide pointer-events-none select-none">shopier'e git</span>
               </a>
               <button onClick={() => setSeciliPlan(null)}
                 className="flex-1 py-3 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-all">
                 Hayır, Vazgeçtim
               </button>
             </div>
-            <a href={seciliPlan.link} target="_blank" rel="noopener noreferrer"
-              className="block text-center mt-3 text-xs text-[#7dd3ff] hover:text-white tracking-wide transition-colors">
-              shopier'e git →
-            </a>
           </div>
         </div>
       )}
