@@ -577,7 +577,7 @@ export default function Landing() {
           </p>
           <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/[0.08] to-transparent border border-purple-500/20 border-l-4 border-l-purple-500/60">
             <p className="text-[11px] text-gray-300 leading-relaxed text-center">
-              Aboneliğiniz ayrıca <span className="text-white font-semibold">TiviMate</span>, <span className="text-white font-semibold">Televizio</span> ve <span className="text-white font-semibold">IMPlayer</span> uygulamalarında da geçerlidir — gönül rahatlığıyla izleyebilirsiniz.
+              Aboneliğiniz ayrıca <span className="text-white font-semibold">TiviMate</span>, <span className="text-white font-semibold">Televizio</span> ve <span className="text-white font-semibold">IMPlayer</span> uygulamalarında da geçerlidir. Gönül rahatlığıyla izleyebilirsiniz.
             </p>
           </div>
         </div>
