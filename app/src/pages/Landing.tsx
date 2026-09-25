@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion } from 'lucide-react'
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
-import SplashScreen from '@/sections/SplashScreen'
 
 const APK_URL = 'https://steamixtvlive-vgaq.onrender.com/Steamix TV.apk'
 const MOBIL_APK_URL = 'https://www.dropbox.com/scl/fi/z1ap96oov7m6hz5qwjyu4/SteamixTV_v1.0.45_release.apk?rlkey=637nsb1d8ccbgmt5sqy2ywoi2&st=w0kg6daw&dl=1'
@@ -208,19 +207,9 @@ export default function Landing() {
   const [seciliPlan, setSeciliPlan] = useState<typeof PLANS[0] | null>(null)
   const [planModal, setPlanModal] = useState(false)
   const [seciliTest, setSeciliTest] = useState<typeof TESTLER[0] | null>(null)
-  const [splash, setSplash] = useState(() => {
-    try {
-      if (sessionStorage.getItem('rendir-splash-shown')) return false
-    } catch {}
-    return true
-  })
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex flex-col relative overflow-hidden">
-      {splash && <SplashScreen onDone={() => {
-        try { sessionStorage.setItem('rendir-splash-shown', '1') } catch {}
-        setSplash(false)
-      }} />}
       <AnimatedBackground />
       {/* Işıklı status barı */}
       <div className="fixed top-0 inset-x-0 z-50 h-[3px] bg-white/5 overflow-hidden">
