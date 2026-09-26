@@ -3,8 +3,8 @@ import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
 
-const APK_URL = 'https://steamixtvlive-vgaq.onrender.com/Steamix TV.apk'
-const MOBIL_APK_URL = 'https://www.dropbox.com/scl/fi/z1ap96oov7m6hz5qwjyu4/SteamixTV_v1.0.45_release.apk?rlkey=637nsb1d8ccbgmt5sqy2ywoi2&st=w0kg6daw&dl=1'
+const APK_URL = 'https://www.dropbox.com/scl/fi/lpffpuzmzq7fia9cc06tj/SteamixTV_v1.0.45_release.apk?rlkey=019f20beqrftcuwzl7r0z8z53&st=r09cdgs9&dl=1'
+const MOBIL_APK_URL = 'https://www.dropbox.com/scl/fi/lpffpuzmzq7fia9cc06tj/SteamixTV_v1.0.45_release.apk?rlkey=019f20beqrftcuwzl7r0z8z53&st=r09cdgs9&dl=1'
 
 function mobilMi() {
   try {
@@ -552,7 +552,7 @@ export default function Landing() {
                 {[0, 1, 2, 3, 4].map(i => (
                   <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                 ))}
-                <span className="text-[10px] text-gray-500 ml-1">18 MB • Türkçe</span>
+                <span className="text-[10px] text-gray-500 ml-1">22 MB • Türkçe</span>
               </div>
               <p className="text-[11px] text-gray-400 leading-relaxed">
                 Abonelik bağlantınızla giriş yapın: yüzlerce canlı kanal, yüzlerce film ve dizi,
