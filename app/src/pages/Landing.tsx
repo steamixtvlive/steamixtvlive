@@ -15,9 +15,9 @@ function mobilMi() {
 }
 
 const PLANS = [
-  { name: '1 AYLIK', price: '300 TL', perMonth: 'ayda 300 TL', link: 'https://www.shopier.com/platool/49623989', features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Hızlı aktivasyon', '7/24 destek'] },
-  { name: '3 AYLIK', price: '600 TL', perMonth: 'ayda sadece 200 TL', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Hızlı kurulum desteği', '7/24 destek', 'En Popüler Seçim'] },
-  { name: '12 AYLIK', price: '1.200 TL', perMonth: 'ayda sadece 100 TL', link: 'https://www.shopier.com/platool/49624023', features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Yıllık fiyat avantajı', 'Öncelikli destek', 'Hızlı aktivasyon', '7/24 destek'] },
+  { name: '1 AYLIK', price: '300 TL', link: 'https://www.shopier.com/platool/49623989', features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Hızlı aktivasyon', '7/24 destek'] },
+  { name: '3 AYLIK', price: '600 TL', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Hızlı kurulum desteği', '7/24 destek', 'En Popüler Seçim'] },
+  { name: '12 AYLIK', price: '1.200 TL', link: 'https://www.shopier.com/platool/49624023', features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Yıllık fiyat avantajı', 'Öncelikli destek', 'Hızlı aktivasyon', '7/24 destek'] },
 ]
 
 const POSTERS = ['poster01.jpg', 'poster02.jpg', 'poster03.jpg', 'poster04.jpg', 'poster05.jpg', 'poster06.jpg', 'poster07.jpg', 'poster08.jpg', 'poster10.jpg', 'poster11.jpg', 'poster12.jpg', 'poster13.jpg']
@@ -34,7 +34,6 @@ function PlanKarti({ p, onSec }: { p: typeof PLANS[0]; onSec: (p: typeof PLANS[0
       <div className="text-center mb-3 mt-1">
         <p className="text-[10px] font-semibold text-gray-400 tracking-[0.25em] uppercase mb-1.5">{p.name}</p>
         <div className="text-3xl font-extrabold bg-gradient-to-r from-[#0099ff] to-purple-400 bg-clip-text text-transparent mb-0.5 drop-shadow-[0_0_15px_rgba(0,153,255,0.35)]">{p.price}</div>
-        <p className="text-[10px] text-gray-500">{p.perMonth}</p>
       </div>
       <div className="h-px bg-white/10 mb-3" />
       <ul className="space-y-1.5 mb-4 flex-1">
