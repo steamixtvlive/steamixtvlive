@@ -300,11 +300,11 @@ export default function Landing() {
           </a>
         </div>
         <div className="flex items-center justify-center md:justify-start gap-4 mt-10">
-          <div className="relative w-16 h-[2px] bg-white/5 overflow-hidden rounded-full">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#0099ff] to-transparent opacity-80 rounded-full"
+          <div className="relative w-20 h-[3px] bg-white/5 overflow-hidden rounded-full">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#0099ff] to-transparent opacity-100 rounded-full shadow-[0_0_12px_rgba(0,153,255,1)]"
               style={{ animation: 'lightSweep 2s ease-in-out infinite' }} />
           </div>
-          <span className="text-xs text-gray-600 tracking-widest uppercase">Steamix TV Company</span>
+          <span className="text-xs text-gray-400 tracking-widest uppercase">RENDIR MEDİA</span>
           <style>{`@keyframes lightSweep { 0%,100% { transform: translateX(-100%) } 50% { transform: translateX(100%) } }`}</style>
         </div>
           </div>
@@ -587,7 +587,7 @@ export default function Landing() {
 
       {/* Alt bilgi */}
       <div className="relative z-10 text-center pb-10 pt-4">
-        <span className="text-xs text-gray-600 tracking-widest uppercase">Steamix TV Company</span>
+        <span className="text-xs text-gray-400 tracking-widest uppercase">RENDIR MEDİA</span>
       </div>
 
       {/* Plan modalı */}
