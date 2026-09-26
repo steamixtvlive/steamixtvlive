@@ -15,16 +15,16 @@ function mobilMi() {
 }
 
 const PLANS = [
-  { name: '1 AYLIK', price: '300 TL', link: 'https://www.shopier.com/platool/49623989', features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', 'Trailer özelliği', '3 cihaz desteği', 'Hızlı aktivasyon', '7/24 destek'] },
-  { name: '3 AYLIK', price: '600 TL', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', 'Trailer özelliği', '3 cihaz desteği', 'Hızlı kurulum desteği', '7/24 destek', 'En Popüler Seçim'] },
-  { name: '12 AYLIK', price: '1.200 TL', link: 'https://www.shopier.com/platool/49624023', features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', 'Trailer özelliği', '3 cihaz desteği', 'Yıllık fiyat avantajı', 'Öncelikli destek', 'Hızlı aktivasyon', '7/24 destek'] },
+  { name: '1 AYLIK', price: '300 TL', perMonth: 'ayda 300 TL', link: 'https://www.shopier.com/platool/49623989', features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Hızlı aktivasyon', '7/24 destek'] },
+  { name: '3 AYLIK', price: '600 TL', perMonth: 'ayda sadece 200 TL', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Hızlı kurulum desteği', '7/24 destek', 'En Popüler Seçim'] },
+  { name: '12 AYLIK', price: '1.200 TL', perMonth: 'ayda sadece 100 TL', link: 'https://www.shopier.com/platool/49624023', features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Yıllık fiyat avantajı', 'Öncelikli destek', 'Hızlı aktivasyon', '7/24 destek'] },
 ]
 
 const POSTERS = ['poster01.jpg', 'poster02.jpg', 'poster03.jpg', 'poster04.jpg', 'poster05.jpg', 'poster06.jpg', 'poster07.jpg', 'poster08.jpg', 'poster10.jpg', 'poster11.jpg', 'poster12.jpg', 'poster13.jpg']
 
 function PlanKarti({ p, onSec }: { p: typeof PLANS[0]; onSec: (p: typeof PLANS[0]) => void }) {
   return (
-    <div className={`relative rounded-3xl p-6 border transition-all duration-300 hover:-translate-y-1.5 flex flex-col ${p.popular ? 'border-[#0099ff]/60 bg-gradient-to-b from-[#0099ff]/[0.14] to-[#0099ff]/[0.02] shadow-[0_0_45px_rgba(0,153,255,0.18)]' : 'border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] hover:border-white/25 hover:shadow-[0_0_30px_rgba(0,153,255,0.1)]'}`}>
+    <div className={`relative rounded-3xl p-6 border transition-all duration-300 hover:-translate-y-1.5 flex flex-col ${p.popular ? 'border-[#0099ff]/60 bg-gradient-to-b from-[#0099ff]/[0.14] to-[#0099ff]/[0.02] shadow-[0_0_45px_rgba(0,153,255,0.18)] md:scale-[1.04]' : 'border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] hover:border-white/25 hover:shadow-[0_0_30px_rgba(0,153,255,0.1)]'}`}>
       <div className={`absolute top-0 inset-x-0 h-1 rounded-t-3xl ${p.popular ? 'bg-gradient-to-r from-[#0099ff] via-blue-400 to-purple-500' : 'bg-gradient-to-r from-white/15 to-white/5'}`} />
       {p.popular && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[#0099ff] to-purple-500 text-white text-[11px] font-bold tracking-wide whitespace-nowrap shadow-lg shadow-[#0099ff]/40 ring-2 ring-[#0099ff]/20">
@@ -34,7 +34,9 @@ function PlanKarti({ p, onSec }: { p: typeof PLANS[0]; onSec: (p: typeof PLANS[0
       <div className="text-center mb-5 mt-3">
         <p className="text-[11px] font-semibold text-gray-400 tracking-[0.25em] uppercase mb-3">{p.name}</p>
         <div className="text-4xl font-extrabold bg-gradient-to-r from-[#0099ff] to-purple-400 bg-clip-text text-transparent mb-1 drop-shadow-[0_0_15px_rgba(0,153,255,0.35)]">{p.price}</div>
+        <p className="text-[11px] text-gray-500">{p.perMonth}</p>
       </div>
+      <div className="h-px bg-white/10 mb-5" />
       <ul className="space-y-2.5 mb-6 flex-1">
         {p.features.map((f, i) => (
           <li key={i} className="flex items-center gap-2.5 text-xs text-gray-300">
@@ -592,8 +594,8 @@ export default function Landing() {
       {planModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setPlanModal(false)} />
-          <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-6 md:p-8 max-w-4xl w-full border border-white/10 shadow-2xl shadow-[#0099ff]/10 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-6 md:p-8 max-w-5xl w-full border border-white/10 shadow-2xl shadow-[#0099ff]/10 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-1">
               <h2 className="text-lg font-bold text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
                 <CreditCard className="w-5 h-5 text-[#0099ff]" /> Paketleri İncele
               </h2>
@@ -601,10 +603,16 @@ export default function Landing() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <p className="text-xs text-gray-500 mb-6">Sana uygun planı seç — ödeme sonrası giriş bilgilerin en kısa sürede teslim edilir.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 items-stretch pt-2">
               {PLANS.map(p => (
                 <PlanKarti key={p.name} p={p} onSec={(pl) => { setPlanModal(false); setSeciliPlan(pl) }} />
               ))}
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-7 pt-5 border-t border-white/10 text-[11px] text-gray-500">
+              <span className="flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5 text-[#0099ff]" />Shopier ile güvenli ödeme</span>
+              <span className="flex items-center gap-1.5"><Gauge className="w-3.5 h-3.5 text-[#0099ff]" />Hızlı aktivasyon</span>
+              <span className="flex items-center gap-1.5"><MessageCircleQuestion className="w-3.5 h-3.5 text-[#0099ff]" />7/24 destek</span>
             </div>
           </div>
         </div>
