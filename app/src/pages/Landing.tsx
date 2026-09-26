@@ -207,8 +207,9 @@ function MiniEkran({ kucuk = false }: { kucuk?: boolean }) {
 export default function Landing() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [seciliPlan, setSeciliPlan] = useState<typeof PLANS[0] | null>(null)
-  const [planModal, setPlanModal] = useState(false)
   const [seciliTest, setSeciliTest] = useState<typeof TESTLER[0] | null>(null)
+  const [planSlide, setPlanSlide] = useState(0)
+  const planTrackRef = useRef<HTMLDivElement>(null)
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex flex-col relative overflow-hidden">
@@ -256,7 +257,7 @@ export default function Landing() {
             <a href="#cihazlar" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all">Cihazlar</a>
             <a href="#icerik" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all">İçerik</a>
             <a href="#uygulama" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all">Uygulama</a>
-            <button onClick={() => setPlanModal(true)} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>Paketleri İncele</button>
+            <button onClick={() => { setPlanSlide(0); setPlanModal(true) }} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>Paketleri İncele</button>
             <a href="#test" className="ml-2 px-4 py-1.5 rounded-lg text-sm text-white bg-gradient-to-r from-[#0099ff] to-blue-600 hover:shadow-[0_0_20px_rgba(0,153,255,0.5)] transition-all">Test Al</a>
           </div>
           <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-gray-300">
@@ -268,7 +269,7 @@ export default function Landing() {
             {[['Test', '#test'], ['Cihazlar', '#cihazlar'], ['İçerik', '#icerik'], ['Uygulama', '#uygulama']].map(([t, h]) => (
               <a key={h} href={h} onClick={() => setMenuOpen(false)} className="block px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5">{t}</a>
             ))}
-            <button onClick={() => { setMenuOpen(false); setPlanModal(true) }} className="block w-full text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>Paketleri İncele</button>
+            <button onClick={() => { setMenuOpen(false); setPlanSlide(0); setPlanModal(true) }} className="block w-full text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>Paketleri İncele</button>
           </div>
         )}
       </nav>
@@ -291,10 +292,10 @@ export default function Landing() {
           Süper Lig dahil dünyadan tüm kanalları izleyeceksiniz. 4K Ultra HD kalitesinde
           binlerce film, dizi ve VOD içeriği. Dilediğin zaman, dilediğin yerde izle.
         </p>
-        <div className="flex items-center justify-center md:justify-start gap-4 mt-8">
-          <button onClick={() => setPlanModal(true)} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm hover:shadow-[0_0_30px_rgba(0,153,255,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>
-            Paketleri İncele
-          </button>
+          <div className="flex items-center justify-center md:justify-start gap-4 mt-8">
+            <button onClick={() => { setPlanSlide(0); setPlanModal(true) }} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm hover:shadow-[0_0_30px_rgba(0,153,255,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all">
+              Paketleri İncele
+            </button>
           <a href="#test" className="px-6 py-3 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-all flex items-center gap-2">
             <PlayCircle className="w-4 h-4" />Test Yayını Al
           </a>
@@ -604,9 +605,33 @@ export default function Landing() {
               </button>
             </div>
             <p className="text-[11px] text-gray-500 mb-3">Sana uygun planı seç — ödeme sonrası giriş bilgilerin en kısa sürede teslim edilir.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch pt-2">
+            <div ref={planTrackRef}
+              onScroll={(e) => {
+                const el = e.currentTarget
+                const first = el.children[0] as HTMLElement | undefined
+                const w = first ? first.offsetWidth + 12 : el.clientWidth
+                const i = Math.round(el.scrollLeft / w)
+                setPlanSlide(Math.min(PLANS.length - 1, Math.max(0, i)))
+              }}
+              style={{ scrollbarWidth: 'none' }}
+              className="flex md:grid md:grid-cols-3 gap-3 items-stretch pt-2 overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none [&::-webkit-scrollbar]:hidden -mx-1 px-1">
               {PLANS.map(p => (
-                <PlanKarti key={p.name} p={p} onSec={(pl) => { setPlanModal(false); setSeciliPlan(pl) }} />
+                <div key={p.name} className="min-w-[86%] sm:min-w-[70%] md:min-w-0 snap-center shrink-0 md:shrink">
+                  <PlanKarti p={p} onSec={(pl) => { setPlanModal(false); setSeciliPlan(pl) }} />
+                </div>
+              ))}
+            </div>
+            <div className="flex md:hidden items-center justify-center gap-2 mt-3">
+              {PLANS.map((pl, i) => (
+                <button key={pl.name} aria-label={pl.name}
+                  onClick={() => {
+                    const el = planTrackRef.current
+                    if (!el) return
+                    const first = el.children[0] as HTMLElement | undefined
+                    const w = first ? first.offsetWidth + 12 : el.clientWidth
+                    el.scrollTo({ left: i * w, behavior: 'smooth' })
+                  }}
+                  className={`h-1.5 rounded-full transition-all ${planSlide === i ? 'w-6 bg-[#0099ff]' : 'w-1.5 bg-white/20'}`} />
               ))}
             </div>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 mt-4 pt-3 border-t border-white/10 text-[10px] text-gray-500">
