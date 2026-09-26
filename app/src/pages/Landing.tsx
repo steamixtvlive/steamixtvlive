@@ -205,6 +205,7 @@ function MiniEkran({ kucuk = false }: { kucuk?: boolean }) {
 
 export default function Landing() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [planModal, setPlanModal] = useState(false)
   const [seciliPlan, setSeciliPlan] = useState<typeof PLANS[0] | null>(null)
   const [seciliTest, setSeciliTest] = useState<typeof TESTLER[0] | null>(null)
   const [planSlide, setPlanSlide] = useState(0)
