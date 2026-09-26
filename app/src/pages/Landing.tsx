@@ -3,8 +3,8 @@ import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
 
-const APK_URL = 'https://www.dropbox.com/scl/fi/lpffpuzmzq7fia9cc06tj/SteamixTV_v1.0.45_release.apk?rlkey=019f20beqrftcuwzl7r0z8z53&st=r09cdgs9&dl=1'
-const MOBIL_APK_URL = 'https://www.dropbox.com/scl/fi/lpffpuzmzq7fia9cc06tj/SteamixTV_v1.0.45_release.apk?rlkey=019f20beqrftcuwzl7r0z8z53&st=r09cdgs9&dl=1'
+const APK_URL = 'https://www.dropbox.com/scl/fi/ea03ji1fcyfbyfwa36qmg/SteamixTV_v1.0.45_release.apk?rlkey=vq913dphoasqera46s9oqlgqf&st=bo3ywj8i&dl=1'
+const MOBIL_APK_URL = 'https://www.dropbox.com/scl/fi/ea03ji1fcyfbyfwa36qmg/SteamixTV_v1.0.45_release.apk?rlkey=vq913dphoasqera46s9oqlgqf&st=bo3ywj8i&dl=1'
 
 function mobilMi() {
   try {
