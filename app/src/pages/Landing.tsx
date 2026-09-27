@@ -3,8 +3,8 @@ import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
 
-const APK_URL = 'https://www.dropbox.com/scl/fi/ea03ji1fcyfbyfwa36qmg/SteamixTV_v1.0.45_release.apk?rlkey=vq913dphoasqera46s9oqlgqf&st=bo3ywj8i&dl=1'
-const MOBIL_APK_URL = 'https://www.dropbox.com/scl/fi/ea03ji1fcyfbyfwa36qmg/SteamixTV_v1.0.45_release.apk?rlkey=vq913dphoasqera46s9oqlgqf&st=bo3ywj8i&dl=1'
+const APK_URL = 'https://www.dropbox.com/scl/fi/p9q2jxt3gr3w49xmftlfo/Steamix-TV.apk?rlkey=qas258lcd9oxcpzqgn93dsyiz&st=il22kjk1&dl=1'
+const MOBIL_APK_URL = 'https://www.dropbox.com/scl/fi/p9q2jxt3gr3w49xmftlfo/Steamix-TV.apk?rlkey=qas258lcd9oxcpzqgn93dsyiz&st=il22kjk1&dl=1'
 
 function mobilMi() {
   try {
@@ -550,12 +550,12 @@ export default function Landing() {
               <span className="absolute -bottom-1.5 -right-1.5 px-1.5 py-0.5 rounded-md bg-green-500 text-white text-[9px] font-bold shadow">APK</span>
             </div>
             <div>
-              <p className="text-sm text-gray-200 font-semibold mb-1 flex items-center gap-2">Steamix TV <span className="text-[10px] text-gray-500 font-normal">Android • v1.0.45</span></p>
+              <p className="text-sm text-gray-200 font-semibold mb-1 flex items-center gap-2">Steamix TV <span className="text-[10px] text-gray-500 font-normal">Android • TiviMate Altyapılı</span></p>
               <div className="flex items-center gap-1 mb-1">
                 {[0, 1, 2, 3, 4].map(i => (
                   <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                 ))}
-                <span className="text-[10px] text-gray-500 ml-1">22 MB • Türkçe</span>
+                <span className="text-[10px] text-gray-500 ml-1">10 MB • Türkçe</span>
               </div>
               <p className="text-[11px] text-gray-400 leading-relaxed">
                 Abonelik bağlantınızla giriş yapın: yüzlerce canlı kanal, yüzlerce film ve dizi,
@@ -578,10 +578,22 @@ export default function Landing() {
           <p className="text-[11px] text-gray-500 text-center leading-relaxed">
             Bilinmeyen kaynaklara izin verip tek dokunuşla kurun, izlemeye başlayın.
           </p>
-          <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/[0.08] to-transparent border border-purple-500/20 border-l-4 border-l-purple-500/60">
-            <p className="text-[11px] text-gray-300 leading-relaxed text-center">
-              Aboneliğiniz ayrıca <span className="text-white font-semibold">TiviMate</span>, <span className="text-white font-semibold">Televizio</span> ve <span className="text-white font-semibold">İMPlayer</span> uygulamalarında da geçerlidir. Gönül rahatlığıyla izleyebilirsiniz.
+          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/[0.12] to-transparent border border-amber-500/40 border-l-4 border-l-amber-500">
+            <p className="text-xs text-amber-300 font-bold text-center mb-2 tracking-wide">⭐ ŞİDDETLE TAVSİYE EDİYORUZ ⭐</p>
+            <p className="text-[11px] text-gray-200 leading-relaxed text-center mb-3">
+              En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-white font-semibold">TiviMate altyapılı resmi uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış bizim uygulamaya özel optimize edilmiştir.
             </p>
+            <p className="text-[11px] text-white font-bold text-center mb-2">NEDEN UYGULAMAMIZ?</p>
+            <div className="grid grid-cols-2 gap-2 text-[10px] leading-relaxed">
+              <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-2">
+                <p className="text-green-400 font-bold mb-1">Steamix TV ✓</p>
+                <p className="text-gray-300">TiviMate motoru • hızlı kanal geçişi • tam EPG • 4K • Türkçe</p>
+              </div>
+              <div className="rounded-lg bg-white/5 border border-white/10 p-2">
+                <p className="text-gray-400 font-bold mb-1">Diğer playerlar</p>
+                <p className="text-gray-500">Çalışır ama optimize değil • EPG eksik kalabilir • yavaş kanal geçişi</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -664,7 +676,7 @@ export default function Landing() {
                   adresine satın aldığınıza dair ekran görüntüsü atın; yönetici onayının ardından abonelik giriş
                   bilgileriniz en kısa sürede size teslim edilir ve size özel oynatıcı bağlantınız mail üzerinden
                   gönderilir — bağlantıyla birlikte aşağıdaki uygulamamızın apk'sını indirip kullanabilirsiniz.
-                  Ayrıca <span className="text-white font-semibold">TiviMate</span>, <span className="text-white font-semibold">Televizio</span> ve <span className="text-white font-semibold">İMPlayer</span> uygulamalarında da gönül rahatlığıyla izleyebilirsiniz. Shopier resmi
+                  En iyi sonuç için <span className="text-white font-semibold">TiviMate altyapılı resmi uygulamamız Steamix TV'yi</span> kullanın; aboneliğiniz TiviMate, Televizio ve İMPlayer uygulamalarında da çalışır. Shopier resmi
                   kuralları gereği abonelikler sınırlıdır; tamamlanan abonelik yalnızca bir defaya mahsus tekrar
                   alınabilir. Steamix TV'yi cihazlarınızda oynatabilmek için en az 100 Mbps internet hızı ve güncel
                   donanımlı bir akıllı televizyon ya da TV Box kullanmanız şarttır, aksi halde donma ve takılmalar donanım yetersizliğinden ve ağ alt yapınızın zayıf olmasından kaynaklanır.
