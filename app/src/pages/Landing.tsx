@@ -572,7 +572,7 @@ export default function Landing() {
             ))}
           </div>
           <a href={mobilMi() ? MOBIL_APK_URL : APK_URL} target="_blank" rel="noopener noreferrer"
-            className="relative overflow-hidden flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-gradient-to-r from-[#0099ff] via-[#33bbff] to-blue-600 text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="relative overflow-hidden flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-gradient-to-r from-[#0099ff] via-[#0077dd] to-[#0050b0] text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
             style={{ animation: 'indirGlow 2.2s ease-in-out infinite' }}>
             <span className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
               style={{ animation: 'btnShine 2.2s ease-in-out infinite' }} />
