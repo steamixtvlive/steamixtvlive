@@ -585,7 +585,7 @@ export default function Landing() {
               </span>
             </div>
             <p className="text-[11px] text-gray-200 leading-relaxed text-center mb-3">
-              En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-amber-300 font-bold text-[13px]">TiviMate altyapılı uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış <span className="text-amber-300 font-bold text-[13px]">bizim uygulamaya özel optimize edilmiştir</span>. Güçlü favori sistemi ve donmaya karşı otomatik kurtarma sayesinde kesintisiz izlersiniz.
+              En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-amber-300 font-bold text-[13px]">TiviMate altyapılı uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış <span className="text-amber-300 font-bold text-[13px]">bizim uygulamaya özel optimize edilmiştir</span>. Güçlü favoriler sistemi ve donmaya karşı otomatik kurtarma sayesinde kesintisiz izlersiniz.
             </p>
             <p className="text-[11px] text-white font-bold text-center mb-2">NEDEN UYGULAMAMIZ?</p>
             <div className="grid grid-cols-2 gap-2 text-[10px] leading-relaxed">
