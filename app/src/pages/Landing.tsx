@@ -595,7 +595,7 @@ export default function Landing() {
               </div>
               <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-2">
                 <p className="text-red-400 font-bold mb-1">Diğer playerlar</p>
-                <p className="text-gray-400">Çalışır ama optimize değil • EPG eksik kalabilir • yavaş kanal geçişi • zayıf kurtarma</p>
+                <p className="text-gray-400">Çalışır ama optimize değil • EPG eksik kalabilir • donmaya karşı zayıf kurtarma</p>
               </div>
             </div>
           </div>
