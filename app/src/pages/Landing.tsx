@@ -459,7 +459,7 @@ export default function Landing() {
             <p className="text-xs md:text-sm text-gray-300 leading-relaxed text-center">
               <span className="text-[#0099ff] font-bold">📡 Çözünürlüğe göre sınıflı yayın:</span> yayınlarımız
               çözünürlük kalitesine göre sınıflandırılmıştır. Çözünürlük kanallarını kendinize göre sınıflayıp
-              favorileyin, böylece donanımınızın desteklediği kanalları favoriledikten sonra liste karmaşıklığının önüne geçmiş olursunuz.
+              favorilere ekleyin, böylece donanımınızın desteklediği kanalları seçtikten sonra liste karmaşıklığının önüne geçmiş olursunuz.
             </p>
           </div>
         </div>
