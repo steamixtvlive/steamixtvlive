@@ -579,7 +579,7 @@ export default function Landing() {
             Bilinmeyen kaynaklara izin verip tek dokunuşla kurun, izlemeye başlayın.
           </p>
           <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/[0.12] to-transparent border border-amber-500/40 border-l-4 border-l-amber-500">
-            <p className="text-xs text-amber-300 font-bold text-center mb-2 tracking-wide">⭐ ŞİDDETLE TAVSİYE EDİYORUZ ⭐</p>
+            <p className="text-xs text-amber-300 font-bold text-center mb-2 tracking-wide">⭐ ÖNERİMİZ ⭐</p>
             <p className="text-[11px] text-gray-200 leading-relaxed text-center mb-3">
               En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-white font-semibold">TiviMate altyapılı resmi uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış bizim uygulamaya özel optimize edilmiştir.
             </p>
