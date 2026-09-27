@@ -541,7 +541,7 @@ export default function Landing() {
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Steamix TV <span className="text-[#0099ff]">Uygulaması</span>
           </h2>
-          <p className="text-sm text-gray-500">Telefon ve TV kutusu için resmi oynatıcımız</p>
+          <p className="text-sm text-gray-500">Telefon ve TV kutusu için önerdiğimiz oynatıcı</p>
         </div>
         <div className="p-5 rounded-xl bg-gradient-to-br from-[#0099ff]/10 to-purple-500/5 border border-[#0099ff]/20 space-y-4">
           <div className="flex items-center gap-4">
@@ -585,7 +585,7 @@ export default function Landing() {
               </span>
             </div>
             <p className="text-[11px] text-gray-200 leading-relaxed text-center mb-3">
-              En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-white font-semibold">TiviMate altyapılı resmi uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış <span className="text-amber-300 font-bold text-[13px]">bizim uygulamaya özel optimize edilmiştir</span>. Güçlü favori sistemi ve donmaya karşı otomatik kurtarma sayesinde kesintisiz izlersiniz.
+              En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-white font-semibold">TiviMate altyapılı uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış <span className="text-amber-300 font-bold text-[13px]">bizim uygulamaya özel optimize edilmiştir</span>. Güçlü favori sistemi ve donmaya karşı otomatik kurtarma sayesinde kesintisiz izlersiniz.
             </p>
             <p className="text-[11px] text-white font-bold text-center mb-2">NEDEN UYGULAMAMIZ?</p>
             <div className="grid grid-cols-2 gap-2 text-[10px] leading-relaxed">
@@ -595,7 +595,7 @@ export default function Landing() {
               </div>
               <div className="rounded-lg bg-white/5 border border-white/10 p-2">
                 <p className="text-gray-400 font-bold mb-1">Diğer playerlar</p>
-                <p className="text-gray-500">Çalışır ama optimize değil • EPG eksik kalabilir • yavaş kanal geçişi • favoriler zayıf • donmada kurtarma yok</p>
+                <p className="text-gray-500">Çalışır ama optimize değil • EPG eksik kalabilir • yavaş kanal geçişi • donmada kurtarma zayıf</p>
               </div>
             </div>
           </div>
@@ -680,7 +680,7 @@ export default function Landing() {
                   adresine satın aldığınıza dair ekran görüntüsü atın; yönetici onayının ardından abonelik giriş
                   bilgileriniz en kısa sürede size teslim edilir ve size özel oynatıcı bağlantınız mail üzerinden
                   gönderilir — bağlantıyla birlikte aşağıdaki uygulamamızın apk'sını indirip kullanabilirsiniz.
-                  En iyi sonuç için <span className="text-white font-semibold">TiviMate altyapılı resmi uygulamamız Steamix TV'yi</span> kullanın; aboneliğiniz TiviMate, Televizio ve İMPlayer uygulamalarında da çalışır. Shopier resmi
+                  En iyi sonuç için <span className="text-white font-semibold">TiviMate altyapılı uygulamamız Steamix TV'yi</span> kullanın; aboneliğiniz TiviMate, Televizio ve İMPlayer uygulamalarında da çalışır. Shopier resmi
                   kuralları gereği abonelikler sınırlıdır; tamamlanan abonelik yalnızca bir defaya mahsus tekrar
                   alınabilir. Steamix TV'yi cihazlarınızda oynatabilmek için en az 100 Mbps internet hızı ve güncel
                   donanımlı bir akıllı televizyon ya da TV Box kullanmanız şarttır, aksi halde donma ve takılmalar donanım yetersizliğinden ve ağ alt yapınızın zayıf olmasından kaynaklanır.
