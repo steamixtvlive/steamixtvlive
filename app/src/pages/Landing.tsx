@@ -680,7 +680,7 @@ export default function Landing() {
                   adresine satın aldığınıza dair ekran görüntüsü atın; yönetici onayının ardından abonelik giriş
                   bilgileriniz en kısa sürede size teslim edilir ve size özel oynatıcı bağlantınız mail üzerinden
                   gönderilir — bağlantıyla birlikte aşağıdaki uygulamamızın apk'sını indirip kullanabilirsiniz.
-                  En iyi sonuç için <span className="text-white font-semibold">TiviMate altyapılı uygulamamız Steamix TV'yi</span> kullanın; aboneliğiniz TiviMate, Televizio ve İMPlayer uygulamalarında da çalışır. Shopier resmi
+                  En iyi sonuç için <span className="text-white font-semibold">TiviMate altyapılı uygulamamız Steamix TV'yi</span> kullanın; aboneliğiniz TiviMate, Televizio ve İMPlayer uygulamalarında da çalışır ancak kendi uygulamamızın verdiği performansı alamazsınız. Shopier resmi
                   kuralları gereği abonelikler sınırlıdır; tamamlanan abonelik yalnızca bir defaya mahsus tekrar
                   alınabilir. Steamix TV'yi cihazlarınızda oynatabilmek için en az 100 Mbps internet hızı ve güncel
                   donanımlı bir akıllı televizyon ya da TV Box kullanmanız şarttır, aksi halde donma ve takılmalar donanım yetersizliğinden ve ağ alt yapınızın zayıf olmasından kaynaklanır.
