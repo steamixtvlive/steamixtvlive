@@ -572,7 +572,7 @@ export default function Landing() {
             ))}
           </div>
           <a href={mobilMi() ? MOBIL_APK_URL : APK_URL} target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-sm hover:shadow-[0_0_25px_rgba(34,197,94,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all">
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-bold text-sm hover:shadow-[0_0_25px_rgba(0,153,255,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all">
             <Download className="w-4 h-4" /> Steamix TV'yi İndir (APK)
           </a>
           <p className="text-[11px] text-gray-500 text-center leading-relaxed">
