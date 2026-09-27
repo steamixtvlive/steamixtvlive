@@ -593,9 +593,9 @@ export default function Landing() {
                 <p className="text-green-400 font-bold mb-1">Steamix TV ✓</p>
                 <p className="text-gray-300">TiviMate motoru • hızlı kanal geçişi • tam EPG • 4K • güçlü favoriler • donmada otomatik kurtarma</p>
               </div>
-              <div className="rounded-lg bg-white/5 border border-white/10 p-2">
-                <p className="text-gray-400 font-bold mb-1">Diğer playerlar</p>
-                <p className="text-gray-500">Çalışır ama optimize değil • EPG eksik kalabilir • yavaş kanal geçişi • donmada kurtarma zayıf</p>
+              <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-2">
+                <p className="text-red-400 font-bold mb-1">Diğer playerlar</p>
+                <p className="text-gray-400">Çalışır ama optimize değil • EPG eksik kalabilir • yavaş kanal geçişi • donmada kurtarma zayıf</p>
               </div>
             </div>
           </div>
