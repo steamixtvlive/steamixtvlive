@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion } from 'lucide-react'
+import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck } from 'lucide-react'
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
 
@@ -579,19 +579,23 @@ export default function Landing() {
             Bilinmeyen kaynaklara izin verip tek dokunuşla kurun, izlemeye başlayın.
           </p>
           <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/[0.12] to-transparent border border-amber-500/40 border-l-4 border-l-amber-500">
-            <p className="text-xs text-amber-300 font-bold text-center mb-2 tracking-wide">⭐ ÖNERİMİZ ⭐</p>
+            <div className="flex justify-center mb-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold tracking-wide">
+                <BadgeCheck className="w-4 h-4" /> ÖNERİMİZ
+              </span>
+            </div>
             <p className="text-[11px] text-gray-200 leading-relaxed text-center mb-3">
-              En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-white font-semibold">TiviMate altyapılı resmi uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış bizim uygulamaya özel optimize edilmiştir.
+              En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-white font-semibold">TiviMate altyapılı resmi uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış bizim uygulamaya özel optimize edilmiştir. Güçlü favori sistemi ve donmaya karşı otomatik kurtarma sayesinde kesintisiz izlersiniz.
             </p>
             <p className="text-[11px] text-white font-bold text-center mb-2">NEDEN UYGULAMAMIZ?</p>
             <div className="grid grid-cols-2 gap-2 text-[10px] leading-relaxed">
               <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-2">
                 <p className="text-green-400 font-bold mb-1">Steamix TV ✓</p>
-                <p className="text-gray-300">TiviMate motoru • hızlı kanal geçişi • tam EPG • 4K • Türkçe</p>
+                <p className="text-gray-300">TiviMate motoru • hızlı kanal geçişi • tam EPG • 4K • güçlü favoriler • donmada otomatik kurtarma</p>
               </div>
               <div className="rounded-lg bg-white/5 border border-white/10 p-2">
                 <p className="text-gray-400 font-bold mb-1">Diğer playerlar</p>
-                <p className="text-gray-500">Çalışır ama optimize değil • EPG eksik kalabilir • yavaş kanal geçişi</p>
+                <p className="text-gray-500">Çalışır ama optimize değil • EPG eksik kalabilir • yavaş kanal geçişi • favoriler zayıf • donmada kurtarma yok</p>
               </div>
             </div>
           </div>
