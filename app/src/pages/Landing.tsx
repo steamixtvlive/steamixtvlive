@@ -585,17 +585,17 @@ export default function Landing() {
               </span>
             </div>
             <p className="text-[11px] text-gray-200 leading-relaxed text-center mb-3">
-              En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-amber-300 font-bold text-[13px]">TiviMate altyapılı uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış <span className="text-amber-300 font-bold text-[13px]">bizim uygulamaya özel optimize edilmiştir</span>. Güçlü favoriler sistemi ve failover destekli otomatik kurtarma sayesinde kesintisiz izlersiniz.
+              En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-amber-300 font-bold text-[13px]">TiviMate altyapılı uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış <span className="text-amber-300 font-bold text-[13px]">bizim uygulamaya özel optimize edilmiştir</span>. Donmaya karşı güçlü kurtarma sayesinde kesintisiz izlersiniz.
             </p>
             <p className="text-[11px] text-white font-bold text-center mb-2">NEDEN UYGULAMAMIZ?</p>
             <div className="grid grid-cols-2 gap-2 text-[10px] leading-relaxed">
               <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-2">
                 <p className="text-green-400 font-bold mb-1">Steamix TV ✓</p>
-                <p className="text-gray-300">TiviMate motoru • hızlı kanal geçişi • tam EPG • 4K • güçlü favoriler • failover ile otomatik kurtarma</p>
+                <p className="text-gray-300">TiviMate motoru • hızlı kanal geçişi • tam EPG • 4K • donmaya karşı güçlü kurtarma</p>
               </div>
               <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-2">
                 <p className="text-red-400 font-bold mb-1">Diğer playerlar</p>
-                <p className="text-gray-400">Çalışır ama optimize değil • EPG eksik kalabilir • yavaş kanal geçişi • failover desteği yok</p>
+                <p className="text-gray-400">Çalışır ama optimize değil • EPG eksik kalabilir • yavaş kanal geçişi • zayıf kurtarma</p>
               </div>
             </div>
           </div>
