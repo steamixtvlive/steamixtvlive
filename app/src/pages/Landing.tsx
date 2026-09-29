@@ -608,7 +608,7 @@ export default function Landing() {
             ))}
           </div>
           <p className="text-[11px] text-gray-500 text-center leading-relaxed">
-            TiviMate, Televizio, İMPlayer ve tüm M3U destekli oynatıcılarla uyumludur.
+            Her player'da izleyebilirsiniz — önerimiz öncelikle <a href="https://play.google.com/store/search?q=ABC%20Player&c=apps" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">ABC Player</a> ve <a href="https://play.google.com/store/apps/details?id=ar.tvplayer.tv" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">TiviMate</a>, ikisini de Google Play'den indirebilirsiniz.
           </p>
         </div>
       </div>
