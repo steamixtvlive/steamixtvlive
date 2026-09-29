@@ -210,6 +210,24 @@ export default function Landing() {
   const [seciliTest, setSeciliTest] = useState<typeof TESTLER[0] | null>(null)
   const [planSlide, setPlanSlide] = useState(0)
   const planTrackRef = useRef<HTMLDivElement>(null)
+  const DEMO_KLIPLER = [
+    { ad: 'SİNEMA', src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4' },
+    { ad: 'AKSİYON', src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' },
+    { ad: 'SPOR', src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4' },
+    { ad: 'BELGESEL', src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4' },
+  ]
+  const [demoAsama, setDemoAsama] = useState(0)
+  useEffect(() => {
+    let i = 0
+    let t: ReturnType<typeof setTimeout>
+    const adim = () => {
+      i = (i + 1) % (DEMO_KLIPLER.length + 1)
+      setDemoAsama(i)
+      t = setTimeout(adim, i === 0 ? 5000 : 8000)
+    }
+    t = setTimeout(adim, 5000)
+    return () => clearTimeout(t)
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex flex-col relative overflow-hidden">
@@ -544,33 +562,39 @@ export default function Landing() {
           <p className="text-sm text-gray-500">M3U bağlantınızı yapıştırın, izlemeye başlayın</p>
         </div>
         <div className="p-5 rounded-xl bg-gradient-to-br from-[#0099ff]/10 to-purple-500/5 border border-[#0099ff]/20 space-y-4">
-  <div className="relative rounded-xl overflow-hidden bg-black border border-white/10">
-    <div className="relative h-40 md:h-48 overflow-hidden">
-      <img src="/images/hero-aile.jpg" alt="Canlı yayın" className="absolute inset-0 w-full h-full object-cover" style={{ animation: 'videoKay 12s ease-in-out infinite alternate' }} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
-      <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/60 border border-white/10">
-        <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: 'canliYanip 1.2s ease-in-out infinite' }} />
-        <span className="text-[10px] text-white font-bold tracking-wider">CANLI</span>
-      </div>
-      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/60 border border-white/10">
-        <span className="text-[10px] text-white font-bold">beIN SPORTS 1 • 4K</span>
-      </div>
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <span className="w-12 h-12 rounded-full bg-[#0099ff]/90 flex items-center justify-center" style={{ animation: 'oynatNefes 2s ease-in-out infinite' }}>
-          <PlayCircle className="w-6 h-6 text-white fill-white/20" />
-        </span>
-      </div>
+  <div className="rounded-2xl bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 p-2 pb-3 border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
+    <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
+      {demoAsama === 0 ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-[#0f172a] to-black p-4">
+          <p className="text-[11px] text-gray-400 font-bold tracking-widest">M3U / M3U8</p>
+          <div className="w-full max-w-xs px-3 py-2 rounded-lg bg-white/5 border border-[#0099ff]/50 font-mono text-[10px] text-cyan-300 overflow-hidden whitespace-nowrap">
+            <span className="inline-block overflow-hidden whitespace-nowrap align-bottom" style={{ animation: 'demoYaz 3.2s steps(48) 0.4s both' }}>https://steamix.tv/get.php?username=demo_abone</span><span className="inline-block w-[7px] h-3 bg-cyan-300 ml-0.5 align-middle" style={{ animation: 'demoImlec 0.7s step-end infinite' }} />
+          </div>
+          <p className="text-[11px] text-[#0099ff] font-bold" style={{ animation: 'demoBaglan 1.4s ease-in-out 3.4s both' }}>Bağlanıyor…</p>
+        </div>
+      ) : (
+        <div className="absolute inset-0">
+          <video key={DEMO_KLIPLER[demoAsama - 1].src} src={DEMO_KLIPLER[demoAsama - 1].src} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/60 border border-white/10">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: 'canliYanip 1.2s ease-in-out infinite' }} />
+            <span className="text-[10px] text-white font-bold tracking-wider">{DEMO_KLIPLER[demoAsama - 1].ad}</span>
+          </div>
+          <div className="absolute bottom-2 inset-x-2">
+            <div className="relative h-1 rounded-full bg-white/15 overflow-hidden">
+              <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#0099ff] to-cyan-300" style={{ animation: 'demoZaman 8s linear infinite' }} />
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.07] via-transparent to-transparent pointer-events-none" />
     </div>
-    <div className="px-3 py-2.5 bg-black/70">
-      <div className="relative h-1.5 rounded-full bg-white/10 overflow-hidden mb-1.5">
-        <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#0099ff] to-cyan-300" style={{ animation: 'zamanIlerle 20s linear infinite' }} />
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] text-gray-400 font-mono">20:45</span>
-        <span className="text-[10px] text-gray-400 font-mono">CANLI YAYIN</span>
-      </div>
+    <div className="flex items-center justify-center gap-2 mt-2">
+      <span className="w-8 h-1 rounded-full bg-black/70 border border-white/10" />
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: 'canliYanip 2s ease-in-out infinite' }} />
+      <span className="w-8 h-1 rounded-full bg-black/70 border border-white/10" />
     </div>
-    <style>{`@keyframes videoKay { 0% { transform: scale(1) translateX(0) } 100% { transform: scale(1.15) translateX(-2%) } } @keyframes zamanIlerle { 0% { width: 5% } 100% { width: 98% } } @keyframes oynatNefes { 0%,100% { transform: scale(1); box-shadow: 0 0 15px rgba(0,153,255,0.5) } 50% { transform: scale(1.08); box-shadow: 0 0 30px rgba(0,153,255,0.9) } } @keyframes canliYanip { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }`}</style>
+    <style>{`@keyframes demoYaz { 0% { width: 0 } 100% { width: 100% } } @keyframes demoImlec { 0%,100% { opacity: 1 } 50% { opacity: 0 } } @keyframes demoBaglan { 0% { opacity: 0 } 100% { opacity: 1 } } @keyframes demoZaman { 0% { width: 3% } 100% { width: 98% } } @keyframes canliYanip { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }`}</style>
   </div>
           <p className="text-[12px] text-gray-200 leading-relaxed text-center">
             İstediğiniz IPTV player'da <span className="text-white font-semibold">gönül rahatlığıyla</span> oynatabilirsiniz. Player'da <span className="text-[#0099ff] font-semibold">M3U / M3U8</span> yazan yere size verdiğimiz oynatıcı bağlantısını yapıştırmanız yeterli.
