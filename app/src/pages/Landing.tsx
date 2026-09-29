@@ -216,7 +216,7 @@ export default function Landing() {
     { ad: 'Spor', img: '/images/demo/spor-arena.jpg' },
     { ad: 'Aksiyon', img: '/images/demo/aksiyon.jpg' },
     { ad: 'Sinema', img: '/images/demo/sinema.jpg' },
-    { ad: 'Belgesel', img: '/images/demo/belgesel.webp' },
+    { ad: 'Belgesel', img: '/images/demo/belgesel.jpg' },
     { ad: 'Dizi', img: '/images/demo/dizi-appletv.jpg' },
     { ad: 'Dizi', img: '/images/demo/dizi-stan.webp' },
   ]
@@ -362,6 +362,16 @@ export default function Landing() {
               Tuttuğun takımın tüm maçları hem evinde hem cebinde — canlı, donmadan, düşük gecikmeyle, 4K kaliteyle. Derbi akşamı nerede olursan ol, maç yanında.
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Slogan şeridi */}
+      <div className="relative z-10 max-w-5xl mx-auto px-4 pb-2 w-full">
+        <div className="text-center rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-5">
+          <p className="text-lg md:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+            Kumandayla Koltuktan, <span className="text-[#0099ff]">Dokunarak Cebinden</span>
+          </p>
+          <p className="text-xs md:text-sm text-gray-400">TV'de maç, telefonda dizi — Steamix TV arayüzü her ekranda aynı akıcılıkta.</p>
         </div>
       </div>
 
@@ -624,7 +634,7 @@ export default function Landing() {
     <style>{`@keyframes demoYaz { 0% { width: 0 } 100% { width: 100% } } @keyframes demoImlec { 0%,100% { opacity: 1 } 50% { opacity: 0 } } @keyframes demoBaglan { 0% { opacity: 0 } 100% { opacity: 1 } } @keyframes demoZaman { 0% { width: 3% } 100% { width: 98% } } @keyframes canliYanip { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } } @keyframes demoSerit { 0% { transform: translateX(-50%) } 100% { transform: translateX(0) } } @keyframes demoKaydir { 0% { transform: translateX(30px) } 100% { transform: translateX(-30px) } } @keyframes demoSalla { 0%,100% { transform: rotate(-6deg) scale(1) } 50% { transform: rotate(6deg) scale(1.1) } } @keyframes demoHalka { 0% { transform: scale(0.7); opacity: 1 } 100% { transform: scale(1.3); opacity: 0 } } @keyframes demoTop { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-26px) } } @keyframes demoYakin { 0% { transform: scale(0.9) } 100% { transform: scale(1.15) } } @keyframes demoFoto { 0% { transform: scale(1) } 100% { transform: scale(1.12) } }`}</style>
   </div>
           <p className="text-[12px] text-gray-200 leading-relaxed text-center">
-            İstediğiniz IPTV player'da <span className="text-white font-semibold">gönül rahatlığıyla</span> oynatabilirsiniz. <span className="text-amber-300 font-semibold">Kumandayla koltuktan, dokunarak cebinden.</span> Player'da <span className="text-[#0099ff] font-semibold">M3U / M3U8</span> yazan yere size verdiğimiz oynatıcı bağlantısını yapıştırmanız yeterli.
+            İstediğiniz IPTV player'da <span className="text-white font-semibold">gönül rahatlığıyla</span> oynatabilirsiniz. Player'da <span className="text-[#0099ff] font-semibold">M3U / M3U8</span> yazan yere size verdiğimiz oynatıcı bağlantısını yapıştırmanız yeterli.
           </p>
           <div className="grid grid-cols-3 gap-2 text-center">
             {[['1', 'Player’ı açın'], ['2', 'M3U linkini yapıştırın'], ['3', 'İzlemeye başlayın']].map(([t, a]) => (
