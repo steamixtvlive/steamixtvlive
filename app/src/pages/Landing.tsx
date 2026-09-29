@@ -211,10 +211,10 @@ export default function Landing() {
   const [planSlide, setPlanSlide] = useState(0)
   const planTrackRef = useRef<HTMLDivElement>(null)
   const DEMO_KLIPLER = [
-    { ad: 'SİNEMA', grad: 'from-purple-900 via-[#1e1b4b] to-black', ikon: 'sinema' },
-    { ad: 'AKSİYON', grad: 'from-red-900 via-[#450a0a] to-black', ikon: 'aksiyon' },
-    { ad: 'SPOR', grad: 'from-green-900 via-[#052e16] to-black', ikon: 'spor' },
-    { ad: 'BELGESEL', grad: 'from-sky-900 via-[#082f49] to-black', ikon: 'belgesel' },
+    { ad: 'SİNEMA', img: 'https://commons.wikimedia.org/wiki/Special:FilePath/Projetor_antigo_cinema.jpg?width=800' },
+    { ad: 'AKSİYON', img: 'https://commons.wikimedia.org/wiki/Special:FilePath/Spider-Man.jpg?width=800' },
+    { ad: 'SPOR', img: 'https://commons.wikimedia.org/wiki/Special:FilePath/Devin_Booker_%2830362063153%29_%28cropped%29.jpg?width=800' },
+    { ad: 'BELGESEL', img: 'https://commons.wikimedia.org/wiki/Special:FilePath/Lion_male.jpg?width=800' },
   ]
   const [demoAsama, setDemoAsama] = useState(0)
   useEffect(() => {
@@ -574,40 +574,9 @@ export default function Landing() {
         </div>
       ) : (
         <div className="absolute inset-0">
-          <div className={`absolute inset-0 bg-gradient-to-br ${DEMO_KLIPLER[demoAsama - 1].grad}`} />
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute inset-y-0 w-full" style={{ animation: 'demoSerit 3s linear infinite' }}>
-              <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-              <div className="absolute inset-y-0 left-1/2 w-1/2 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-            </div>
-          </div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            {DEMO_KLIPLER[demoAsama - 1].ikon === 'sinema' && (
-              <div className="flex gap-1.5" style={{ animation: 'demoKaydir 4s linear infinite' }}>
-                {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
-                  <span key={i} className="w-8 h-11 rounded-sm bg-black/70 border border-white/25 flex items-center justify-center">
-                    <Clapperboard className="w-4 h-4 text-purple-300" />
-                  </span>
-                ))}
-              </div>
-            )}
-            {DEMO_KLIPLER[demoAsama - 1].ikon === 'aksiyon' && (
-              <div className="relative">
-                <Gamepad2 className="w-12 h-12 text-red-300" style={{ animation: 'demoSalla 0.5s ease-in-out infinite' }} />
-                <span className="absolute -inset-3 rounded-full border-2 border-red-400/50" style={{ animation: 'demoHalka 1s ease-out infinite' }} />
-              </div>
-            )}
-            {DEMO_KLIPLER[demoAsama - 1].ikon === 'spor' && (
-              <div className="h-16 flex items-end">
-                <span className="w-9 h-9 rounded-full bg-gradient-to-br from-white to-gray-400 shadow-[0_0_15px_rgba(255,255,255,0.5)] flex items-center justify-center" style={{ animation: 'demoTop 0.9s ease-in-out infinite' }}>
-                  <Trophy className="w-4 h-4 text-green-800" />
-                </span>
-              </div>
-            )}
-            {DEMO_KLIPLER[demoAsama - 1].ikon === 'belgesel' && (
-              <Tv className="w-12 h-12 text-sky-300" style={{ animation: 'demoYakin 4s ease-in-out infinite alternate' }} />
-            )}
-            <p className="text-sm text-white font-bold tracking-[0.3em]" style={{ fontFamily: 'Orbitron, sans-serif' }}>{DEMO_KLIPLER[demoAsama - 1].ad}</p>
+          <img key={DEMO_KLIPLER[demoAsama - 1].img} src={DEMO_KLIPLER[demoAsama - 1].img} alt={DEMO_KLIPLER[demoAsama - 1].ad} className="absolute inset-0 w-full h-full object-cover" style={{ animation: 'demoFoto 8s ease-in-out infinite alternate' }} />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <p className="text-lg text-white font-bold tracking-[0.3em] drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]" style={{ fontFamily: 'Orbitron, sans-serif' }}>{DEMO_KLIPLER[demoAsama - 1].ad}</p>
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
           <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/60 border border-white/10">
@@ -628,7 +597,7 @@ export default function Landing() {
       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: 'canliYanip 2s ease-in-out infinite' }} />
       <span className="w-8 h-1 rounded-full bg-black/70 border border-white/10" />
     </div>
-    <style>{`@keyframes demoYaz { 0% { width: 0 } 100% { width: 100% } } @keyframes demoImlec { 0%,100% { opacity: 1 } 50% { opacity: 0 } } @keyframes demoBaglan { 0% { opacity: 0 } 100% { opacity: 1 } } @keyframes demoZaman { 0% { width: 3% } 100% { width: 98% } } @keyframes canliYanip { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } } @keyframes demoSerit { 0% { transform: translateX(-50%) } 100% { transform: translateX(0) } } @keyframes demoKaydir { 0% { transform: translateX(30px) } 100% { transform: translateX(-30px) } } @keyframes demoSalla { 0%,100% { transform: rotate(-6deg) scale(1) } 50% { transform: rotate(6deg) scale(1.1) } } @keyframes demoHalka { 0% { transform: scale(0.7); opacity: 1 } 100% { transform: scale(1.3); opacity: 0 } } @keyframes demoTop { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-26px) } } @keyframes demoYakin { 0% { transform: scale(0.9) } 100% { transform: scale(1.15) } }`}</style>
+    <style>{`@keyframes demoYaz { 0% { width: 0 } 100% { width: 100% } } @keyframes demoImlec { 0%,100% { opacity: 1 } 50% { opacity: 0 } } @keyframes demoBaglan { 0% { opacity: 0 } 100% { opacity: 1 } } @keyframes demoZaman { 0% { width: 3% } 100% { width: 98% } } @keyframes canliYanip { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } } @keyframes demoSerit { 0% { transform: translateX(-50%) } 100% { transform: translateX(0) } } @keyframes demoKaydir { 0% { transform: translateX(30px) } 100% { transform: translateX(-30px) } } @keyframes demoSalla { 0%,100% { transform: rotate(-6deg) scale(1) } 50% { transform: rotate(6deg) scale(1.1) } } @keyframes demoHalka { 0% { transform: scale(0.7); opacity: 1 } 100% { transform: scale(1.3); opacity: 0 } } @keyframes demoTop { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-26px) } } @keyframes demoYakin { 0% { transform: scale(0.9) } 100% { transform: scale(1.15) } } @keyframes demoFoto { 0% { transform: scale(1) } 100% { transform: scale(1.12) } }`}</style>
   </div>
           <p className="text-[12px] text-gray-200 leading-relaxed text-center">
             İstediğiniz IPTV player'da <span className="text-white font-semibold">gönül rahatlığıyla</span> oynatabilirsiniz. Player'da <span className="text-[#0099ff] font-semibold">M3U / M3U8</span> yazan yere size verdiğimiz oynatıcı bağlantısını yapıştırmanız yeterli.
