@@ -332,15 +332,20 @@ export default function Landing() {
         </div>
           </div>
           <div className="flex-1 w-full max-w-xl">
-            <div className="relative rounded-3xl overflow-hidden border border-white/15 shadow-[0_0_60px_rgba(0,153,255,0.3),0_0_120px_rgba(168,85,247,0.15)] hover:scale-[1.02] transition-transform duration-500">
-              <img src="/images/bein-lig.jpg" alt="Süper Lig beIN SPORTS" className="w-full object-cover" style={{ animation: 'heroYakin 10s ease-in-out infinite alternate' }} />
+            <div className="relative rounded-3xl overflow-hidden border border-white/15 aspect-video shadow-[0_0_60px_rgba(0,153,255,0.3),0_0_120px_rgba(168,85,247,0.15)] hover:scale-[1.02] transition-transform duration-500">
+              <div className="absolute inset-0" style={{ animation: 'heroCapraz1 16s ease-in-out infinite' }}>
+                <img src="/images/hero-aile.jpg" alt="Steamix TV" className="w-full h-full object-cover" style={{ animation: 'heroYakin 10s ease-in-out infinite alternate' }} />
+              </div>
+              <div className="absolute inset-0" style={{ animation: 'heroCapraz2 16s ease-in-out infinite' }}>
+                <img src="/images/bein-lig.jpg" alt="Süper Lig beIN SPORTS" className="w-full h-full object-cover" style={{ animation: 'heroYakin 10s ease-in-out infinite alternate' }} />
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/50 via-transparent to-transparent pointer-events-none" />
               <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/20 pointer-events-none" />
               <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-[#0099ff]/40">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: 'canliYanip 1.2s ease-in-out infinite' }} />
                 <span className="text-[10px] text-white font-bold tracking-wider">SÜPER LİG • CANLI</span>
               </div>
-              <style>{`@keyframes heroYakin { 0% { transform: scale(1) } 100% { transform: scale(1.08) } }`}</style>
+              <style>{`@keyframes heroYakin { 0% { transform: scale(1) } 100% { transform: scale(1.08) } } @keyframes heroCapraz1 { 0%,44% { opacity: 1 } 56%,94% { opacity: 0 } 100% { opacity: 1 } } @keyframes heroCapraz2 { 0%,44% { opacity: 0 } 56%,94% { opacity: 1 } 100% { opacity: 0 } }`}</style>
             </div>
           </div>
         </div>
