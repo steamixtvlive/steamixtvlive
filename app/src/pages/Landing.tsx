@@ -347,24 +347,23 @@ export default function Landing() {
       </div>
 
       {/* beIN şeridi */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 py-6 md:py-8 w-full">
-        <div className="flex flex-col md:flex-row items-center gap-5 p-4 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-4 md:py-6 w-full">
+        <div className="flex flex-col md:flex-row items-center gap-5 p-3 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
           <div className="w-full md:w-1/2 shrink-0">
-            <div className="relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]">
+            <div className="group relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]">
               <img src="/images/bein-lig.jpg" alt="Süper Lig beIN SPORTS" className="w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/60 border border-[#0099ff]/40">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: 'canliYanip 1.2s ease-in-out infinite' }} />
-                <span className="text-[10px] text-white font-bold tracking-wider">CANLI</span>
-              </div>
+              <span className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ animation: 'beinParla 2.8s ease-in-out infinite' }} />
+              <style>{`@keyframes beinParla { 0% { transform: translateX(-150%) skewX(-20deg) } 100% { transform: translateX(350%) skewX(-20deg) } }`}</style>
             </div>
           </div>
-          <div className="flex-1 text-center md:text-left">
+          <div className="flex-1 text-left">
             <h3 className="text-xl md:text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
               Süper Lig <span className="text-[#0099ff]">Heyecanı</span>
             </h3>
             <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
-              Tuttuğun takımın tüm maçları canlı, donmadan, 4K kaliteyle cebinde. Derbi akşamı kahvede değil, koltuğunda ol.
+              Tuttuğun takımın tüm maçları hem evinde hem cebinde — canlı, donmadan, 4K kaliteyle. Derbi akşamı nerede olursan ol, maç yanında.
             </p>
           </div>
         </div>
