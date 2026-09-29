@@ -539,70 +539,52 @@ export default function Landing() {
       <div id="uygulama" className="relative z-10 max-w-xl mx-auto px-4 py-8 md:py-10 w-full">
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-            Steamix TV <span className="text-[#0099ff]">Uygulaması</span>
+            Her Player'da <span className="text-[#0099ff]">İzleyin</span>
           </h2>
-          <p className="text-sm text-gray-500">Telefon ve TV kutusu için önerdiğimiz oynatıcı</p>
+          <p className="text-sm text-gray-500">M3U bağlantınızı yapıştırın, izlemeye başlayın</p>
         </div>
         <div className="p-5 rounded-xl bg-gradient-to-br from-[#0099ff]/10 to-purple-500/5 border border-[#0099ff]/20 space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="relative shrink-0">
-              <img src="/images/steamix-logo.jpg" alt="Steamix TV" className="w-16 h-16 rounded-2xl shadow-[0_0_25px_rgba(0,153,255,0.5)]" style={{ animation: 'floatGlow 3s ease-in-out infinite' }} />
-              <span className="absolute -bottom-1.5 -right-1.5 px-1.5 py-0.5 rounded-md bg-green-500 text-white text-[9px] font-bold shadow">APK</span>
-            </div>
-            <div>
-              <p className="text-sm text-gray-200 font-semibold mb-1 flex items-center gap-2">Steamix TV <span className="text-[10px] text-gray-500 font-normal">Android • TiviMate Altyapılı</span></p>
-              <div className="flex items-center gap-1 mb-1">
-                {[0, 1, 2, 3, 4].map(i => (
-                  <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                ))}
-                <span className="text-[10px] text-gray-500 ml-1">10 MB • Türkçe</span>
+          <div className="relative rounded-xl overflow-hidden bg-black/60 border border-white/10 p-4">
+            <div className="flex items-center gap-4">
+              <div className="relative shrink-0 w-14 h-14 flex items-center justify-center">
+                <span className="absolute inset-0 rounded-full border-2 border-[#0099ff]/60" style={{ animation: 'oynatHalka 2s ease-out infinite' }} />
+                <span className="absolute inset-0 rounded-full border-2 border-[#0099ff]/40" style={{ animation: 'oynatHalka 2s ease-out 1s infinite' }} />
+                <span className="w-12 h-12 rounded-full bg-gradient-to-br from-[#0099ff] to-blue-600 flex items-center justify-center shadow-[0_0_20px_rgba(0,153,255,0.7)]">
+                  <PlayCircle className="w-6 h-6 text-white fill-white/20" />
+                </span>
               </div>
-              <p className="text-[11px] text-gray-400 leading-relaxed">
-                Abonelik bağlantınızla giriş yapın: yüzlerce canlı kanal, yüzlerce film ve dizi,
-                4K kalite, kumanda ve dokunmatik uyumu.
-              </p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-2 h-2 rounded-full bg-red-500" style={{ animation: 'canliYanip 1.2s ease-in-out infinite' }} />
+                  <p className="text-xs text-white font-bold truncate">CANLI • beIN SPORTS 1</p>
+                </div>
+                <div className="flex items-end gap-1 h-6 mb-2">
+                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(i => (
+                    <span key={i} className="w-1 rounded-sm bg-gradient-to-t from-[#0099ff] to-cyan-300" style={{ animation: `eqZip 0.9s ease-in-out ${i * 0.08}s infinite` }} />
+                  ))}
+                </div>
+                <div className="relative h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 w-2/3 rounded-full bg-gradient-to-r from-[#0099ff] to-cyan-300" />
+                  <span className="absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-white/60 to-transparent" style={{ animation: 'akisKay 2.4s ease-in-out infinite' }} />
+                </div>
+              </div>
             </div>
+            <style>{`@keyframes oynatHalka { 0% { transform: scale(0.7); opacity: 1 } 100% { transform: scale(1.4); opacity: 0 } } @keyframes eqZip { 0%,100% { height: 25% } 50% { height: 100% } } @keyframes akisKay { 0% { transform: translateX(-100%) } 100% { transform: translateX(400%) } } @keyframes canliYanip { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }`}</style>
           </div>
+          <p className="text-[12px] text-gray-200 leading-relaxed text-center">
+            İstediğiniz IPTV player'da <span className="text-white font-semibold">gönül rahatlığıyla</span> oynatabilirsiniz. Player'da <span className="text-[#0099ff] font-semibold">M3U / M3U8</span> yazan yere size verdiğimiz oynatıcı bağlantısını yapıştırmanız yeterli.
+          </p>
           <div className="grid grid-cols-3 gap-2 text-center">
-            {[['Android', 'Telefon & Tablet'], ['TV', 'Smart TV & Box'], ['4K', 'Ultra HD']].map(([t, a]) => (
-              <div key={t} className="rounded-lg bg-white/5 border border-white/10 py-2">
-                <p className="text-xs text-white font-bold">{t}</p>
-                <p className="text-[10px] text-gray-500">{a}</p>
+            {[['1', 'Player’ı açın'], ['2', 'M3U linkini yapıştırın'], ['3', 'İzlemeye başlayın']].map(([t, a]) => (
+              <div key={t} className="rounded-lg bg-white/5 border border-white/10 py-2 px-1">
+                <p className="text-sm text-[#0099ff] font-bold">{t}</p>
+                <p className="text-[10px] text-gray-400">{a}</p>
               </div>
             ))}
           </div>
-          <a href={mobilMi() ? MOBIL_APK_URL : APK_URL} target="_blank" rel="noopener noreferrer"
-            className="relative overflow-hidden flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-gradient-to-r from-[#0099ff] via-[#0077dd] to-[#0050b0] text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
-            style={{ animation: 'indirGlow 2.2s ease-in-out infinite' }}>
-            <span className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
-              style={{ animation: 'btnShine 2.2s ease-in-out infinite' }} />
-            <Download className="w-4 h-4" /> Steamix TV'yi İndir (APK)
-            <style>{`@keyframes indirGlow { 0%,100% { box-shadow: 0 0 18px rgba(0,153,255,0.45) } 50% { box-shadow: 0 0 38px rgba(0,153,255,0.85) } } @keyframes btnShine { 0% { transform: translateX(-150%) skewX(-20deg) } 100% { transform: translateX(350%) skewX(-20deg) } }`}</style>
-          </a>
           <p className="text-[11px] text-gray-500 text-center leading-relaxed">
-            Bilinmeyen kaynaklara izin verip tek dokunuşla kurun, izlemeye başlayın.
+            TiviMate, Televizio, İMPlayer ve tüm M3U destekli oynatıcılarla uyumludur.
           </p>
-          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/[0.12] to-transparent border border-amber-500/40 border-l-4 border-l-amber-500">
-            <div className="flex justify-center mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold tracking-wide">
-                <BadgeCheck className="w-4 h-4" /> ÖNERİMİZ
-              </span>
-            </div>
-            <p className="text-[11px] text-gray-200 leading-relaxed text-center mb-3">
-              En iyi sonucu almak istiyorsanız yayınları mutlaka <span className="text-amber-300 font-bold text-[13px]">TiviMate altyapılı uygulamamız Steamix TV</span>'de izleyin. Aboneliğiniz başka oynatıcılarda da çalışır ama kanal listesi, EPG ve 4K akış <span className="text-amber-300 font-bold text-[13px]">bizim uygulamaya özel optimize edilmiştir</span>. Donmaya karşı güçlü kurtarma sayesinde kesintisiz izlersiniz.
-            </p>
-            <p className="text-[11px] text-white font-bold text-center mb-2">NEDEN UYGULAMAMIZ?</p>
-            <div className="grid grid-cols-2 gap-2 text-[10px] leading-relaxed">
-              <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-2">
-                <p className="text-green-400 font-bold mb-1">Steamix TV ✓</p>
-                <p className="text-gray-300">TiviMate motoru • hızlı kanal geçişi • tam EPG • 4K • donmaya karşı güçlü kurtarma</p>
-              </div>
-              <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-2">
-                <p className="text-red-400 font-bold mb-1">Diğer playerlar</p>
-                <p className="text-gray-400">Çalışır ama optimize değil • EPG eksik kalabilir • donmaya karşı zayıf kurtarma</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
