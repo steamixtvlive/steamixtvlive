@@ -608,7 +608,7 @@ export default function Landing() {
       ) : (
         <div className="absolute inset-0">
           {DEMO_KLIPLER.map((k, i) => (
-            <img key={k.img} src={k.img} alt={k.ad} className={`absolute inset-0 w-full h-full ${k.fit || 'object-cover'} transition-opacity duration-700`}
+            <img key={k.img} src={k.img} alt={k.ad} className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
               style={{ opacity: (demoAsama - 1) === i ? 1 : 0, animation: (demoAsama - 1) === i ? 'demoFoto 3s ease-in-out infinite alternate' : undefined }} />
           ))}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10 pointer-events-none" />
