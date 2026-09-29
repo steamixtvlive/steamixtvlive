@@ -332,21 +332,40 @@ export default function Landing() {
         </div>
           </div>
           <div className="flex-1 w-full max-w-xl">
-            <div className="relative rounded-3xl overflow-hidden border border-white/15 aspect-video shadow-[0_0_60px_rgba(0,153,255,0.3),0_0_120px_rgba(168,85,247,0.15)] hover:scale-[1.02] transition-transform duration-500">
-              <div className="absolute inset-0" style={{ animation: 'heroCapraz1 16s ease-in-out infinite' }}>
-                <img src="/images/hero-aile.jpg" alt="Steamix TV" className="w-full h-full object-cover" style={{ animation: 'heroYakin 10s ease-in-out infinite alternate' }} />
-              </div>
-              <div className="absolute inset-0" style={{ animation: 'heroCapraz2 16s ease-in-out infinite' }}>
-                <img src="/images/bein-lig.jpg" alt="Süper Lig beIN SPORTS" className="w-full h-full object-cover" style={{ animation: 'heroYakin 10s ease-in-out infinite alternate' }} />
-              </div>
+            <div className="relative rounded-3xl overflow-hidden border border-white/15 shadow-[0_0_60px_rgba(0,153,255,0.3),0_0_120px_rgba(168,85,247,0.15)] hover:scale-[1.02] transition-transform duration-500">
+              <img src="/images/hero-aile.jpg" alt="Steamix TV" className="w-full object-cover" style={{ animation: 'heroYakin 10s ease-in-out infinite alternate' }} />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/50 via-transparent to-transparent pointer-events-none" />
               <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/20 pointer-events-none" />
               <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-[#0099ff]/40">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: 'canliYanip 1.2s ease-in-out infinite' }} />
                 <span className="text-[10px] text-white font-bold tracking-wider">SÜPER LİG • CANLI</span>
               </div>
-              <style>{`@keyframes heroYakin { 0% { transform: scale(1) } 100% { transform: scale(1.08) } } @keyframes heroCapraz1 { 0%,44% { opacity: 1 } 56%,94% { opacity: 0 } 100% { opacity: 1 } } @keyframes heroCapraz2 { 0%,44% { opacity: 0 } 56%,94% { opacity: 1 } 100% { opacity: 0 } }`}</style>
+              <style>{`@keyframes heroYakin { 0% { transform: scale(1) } 100% { transform: scale(1.08) } }`}</style>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* beIN şeridi */}
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-6 md:py-8 w-full">
+        <div className="flex flex-col md:flex-row items-center gap-5 p-4 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
+          <div className="w-full md:w-1/2 shrink-0">
+            <div className="relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]">
+              <img src="/images/bein-lig.jpg" alt="Süper Lig beIN SPORTS" className="w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/60 border border-[#0099ff]/40">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: 'canliYanip 1.2s ease-in-out infinite' }} />
+                <span className="text-[10px] text-white font-bold tracking-wider">CANLI</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 text-center md:text-left">
+            <h3 className="text-xl md:text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+              Süper Lig <span className="text-[#0099ff]">Heyecanı</span>
+            </h3>
+            <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
+              Tuttuğun takımın tüm maçları canlı, donmadan, 4K kaliteyle cebinde. Derbi akşamı kahvede değil, koltuğunda ol.
+            </p>
           </div>
         </div>
       </div>
