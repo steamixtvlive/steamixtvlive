@@ -544,33 +544,34 @@ export default function Landing() {
           <p className="text-sm text-gray-500">M3U bağlantınızı yapıştırın, izlemeye başlayın</p>
         </div>
         <div className="p-5 rounded-xl bg-gradient-to-br from-[#0099ff]/10 to-purple-500/5 border border-[#0099ff]/20 space-y-4">
-          <div className="relative rounded-xl overflow-hidden bg-black/60 border border-white/10 p-4">
-            <div className="flex items-center gap-4">
-              <div className="relative shrink-0 w-14 h-14 flex items-center justify-center">
-                <span className="absolute inset-0 rounded-full border-2 border-[#0099ff]/60" style={{ animation: 'oynatHalka 2s ease-out infinite' }} />
-                <span className="absolute inset-0 rounded-full border-2 border-[#0099ff]/40" style={{ animation: 'oynatHalka 2s ease-out 1s infinite' }} />
-                <span className="w-12 h-12 rounded-full bg-gradient-to-br from-[#0099ff] to-blue-600 flex items-center justify-center shadow-[0_0_20px_rgba(0,153,255,0.7)]">
-                  <PlayCircle className="w-6 h-6 text-white fill-white/20" />
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-red-500" style={{ animation: 'canliYanip 1.2s ease-in-out infinite' }} />
-                  <p className="text-xs text-white font-bold truncate">CANLI • beIN SPORTS 1</p>
-                </div>
-                <div className="flex items-end gap-1 h-6 mb-2">
-                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(i => (
-                    <span key={i} className="w-1 rounded-sm bg-gradient-to-t from-[#0099ff] to-cyan-300" style={{ animation: `eqZip 0.9s ease-in-out ${i * 0.08}s infinite` }} />
-                  ))}
-                </div>
-                <div className="relative h-1.5 rounded-full bg-white/10 overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 w-2/3 rounded-full bg-gradient-to-r from-[#0099ff] to-cyan-300" />
-                  <span className="absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-white/60 to-transparent" style={{ animation: 'akisKay 2.4s ease-in-out infinite' }} />
-                </div>
-              </div>
-            </div>
-            <style>{`@keyframes oynatHalka { 0% { transform: scale(0.7); opacity: 1 } 100% { transform: scale(1.4); opacity: 0 } } @keyframes eqZip { 0%,100% { height: 25% } 50% { height: 100% } } @keyframes akisKay { 0% { transform: translateX(-100%) } 100% { transform: translateX(400%) } } @keyframes canliYanip { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }`}</style>
-          </div>
+  <div className="relative rounded-xl overflow-hidden bg-black border border-white/10">
+    <div className="relative h-40 md:h-48 overflow-hidden">
+      <img src="/images/hero-aile.jpg" alt="Canlı yayın" className="absolute inset-0 w-full h-full object-cover" style={{ animation: 'videoKay 12s ease-in-out infinite alternate' }} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+      <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/60 border border-white/10">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: 'canliYanip 1.2s ease-in-out infinite' }} />
+        <span className="text-[10px] text-white font-bold tracking-wider">CANLI</span>
+      </div>
+      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/60 border border-white/10">
+        <span className="text-[10px] text-white font-bold">beIN SPORTS 1 • 4K</span>
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span className="w-12 h-12 rounded-full bg-[#0099ff]/90 flex items-center justify-center" style={{ animation: 'oynatNefes 2s ease-in-out infinite' }}>
+          <PlayCircle className="w-6 h-6 text-white fill-white/20" />
+        </span>
+      </div>
+    </div>
+    <div className="px-3 py-2.5 bg-black/70">
+      <div className="relative h-1.5 rounded-full bg-white/10 overflow-hidden mb-1.5">
+        <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#0099ff] to-cyan-300" style={{ animation: 'zamanIlerle 20s linear infinite' }} />
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-gray-400 font-mono">20:45</span>
+        <span className="text-[10px] text-gray-400 font-mono">CANLI YAYIN</span>
+      </div>
+    </div>
+    <style>{`@keyframes videoKay { 0% { transform: scale(1) translateX(0) } 100% { transform: scale(1.15) translateX(-2%) } } @keyframes zamanIlerle { 0% { width: 5% } 100% { width: 98% } } @keyframes oynatNefes { 0%,100% { transform: scale(1); box-shadow: 0 0 15px rgba(0,153,255,0.5) } 50% { transform: scale(1.08); box-shadow: 0 0 30px rgba(0,153,255,0.9) } } @keyframes canliYanip { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }`}</style>
+  </div>
           <p className="text-[12px] text-gray-200 leading-relaxed text-center">
             İstediğiniz IPTV player'da <span className="text-white font-semibold">gönül rahatlığıyla</span> oynatabilirsiniz. Player'da <span className="text-[#0099ff] font-semibold">M3U / M3U8</span> yazan yere size verdiğimiz oynatıcı bağlantısını yapıştırmanız yeterli.
           </p>
