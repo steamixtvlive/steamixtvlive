@@ -212,6 +212,8 @@ export default function Landing() {
   const planTrackRef = useRef<HTMLDivElement>(null)
   const DEMO_KLIPLER = [
     { ad: 'Spor', img: '/images/demo/spor.jpg' },
+    { ad: 'Spor', img: '/images/demo/spor-basket.avif' },
+    { ad: 'Spor', img: '/images/demo/spor-arena.jpg' },
     { ad: 'Aksiyon', img: '/images/demo/aksiyon.jpg' },
     { ad: 'Sinema', img: '/images/demo/sinema.jpg' },
     { ad: 'Belgesel', img: '/images/demo/belgesel.webp' },
@@ -220,8 +222,15 @@ export default function Landing() {
   ]
   const [demoAsama, setDemoAsama] = useState(0)
   useEffect(() => {
-    const t = setInterval(() => setDemoAsama(i => (i + 1) % DEMO_KLIPLER.length), 2500)
-    return () => clearInterval(t)
+    let i = 0
+    let t: ReturnType<typeof setTimeout>
+    const adim = () => {
+      i = (i + 1) % (DEMO_KLIPLER.length + 1)
+      setDemoAsama(i)
+      t = setTimeout(adim, i === 0 ? 5000 : 3000)
+    }
+    t = setTimeout(adim, 5000)
+    return () => clearTimeout(t)
   }, [])
 
   return (
@@ -559,15 +568,25 @@ export default function Landing() {
         <div className="p-5 rounded-xl bg-gradient-to-br from-[#0099ff]/10 to-purple-500/5 border border-[#0099ff]/20 space-y-4">
   <div className="rounded-2xl bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 p-2 pb-3 border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
     <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
+      {demoAsama === 0 ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-[#0f172a] to-black p-4">
+          <p className="text-[11px] text-gray-400 font-bold tracking-widest">M3U / M3U8</p>
+          <div className="w-full max-w-xs px-3 py-2 rounded-lg bg-white/5 border border-[#0099ff]/50 font-mono text-[10px] text-cyan-300 overflow-hidden whitespace-nowrap">
+            <span key="link" className="inline-block overflow-hidden whitespace-nowrap align-bottom" style={{ animation: 'demoYaz 3.2s steps(48) 0.4s both' }}>https://steamix.tv/get.php?username=demo_abone</span><span className="inline-block w-[7px] h-3 bg-cyan-300 ml-0.5 align-middle" style={{ animation: 'demoImlec 0.7s step-end infinite' }} />
+          </div>
+          <p className="text-[11px] text-[#0099ff] font-bold" style={{ animation: 'demoBaglan 1.4s ease-in-out 3.4s both' }}>Bağlanıyor…</p>
+        </div>
+      ) : (
         <div className="absolute inset-0">
-          <img key={DEMO_KLIPLER[demoAsama].img} src={DEMO_KLIPLER[demoAsama].img} alt={DEMO_KLIPLER[demoAsama].ad} className="absolute inset-0 w-full h-full object-cover" style={{ animation: 'demoFoto 2.6s ease-in-out infinite alternate' }} />
+          <img key={DEMO_KLIPLER[demoAsama - 1].img} src={DEMO_KLIPLER[demoAsama - 1].img} alt={DEMO_KLIPLER[demoAsama - 1].ad} className="absolute inset-0 w-full h-full object-cover" style={{ animation: 'demoFoto 3s ease-in-out infinite alternate' }} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10 pointer-events-none" />
           <div className="absolute bottom-2 inset-x-2">
             <div className="relative h-1 rounded-full bg-white/15 overflow-hidden">
-              <div key={demoAsama} className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#0099ff] to-cyan-300" style={{ animation: 'demoZaman 2.5s linear infinite' }} />
+              <div key={demoAsama} className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#0099ff] to-cyan-300" style={{ animation: 'demoZaman 3s linear infinite' }} />
             </div>
           </div>
         </div>
+      )}
       <div className="absolute inset-0 bg-gradient-to-br from-white/[0.07] via-transparent to-transparent pointer-events-none" />
     </div>
     <div className="flex items-center justify-center gap-2 mt-2">
