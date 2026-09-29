@@ -212,7 +212,7 @@ export default function Landing() {
   const planTrackRef = useRef<HTMLDivElement>(null)
   const DEMO_KLIPLER = [
     { ad: 'Spor', img: '/images/demo/spor.jpg' },
-    { ad: 'Spor', img: '/images/demo/spor-basket.avif', fit: 'object-contain' },
+    { ad: 'Spor', img: '/images/bein-lig.jpg' },
     { ad: 'Spor', img: '/images/demo/spor-arena.jpg' },
     { ad: 'Aksiyon', img: '/images/demo/aksiyon.jpg' },
     { ad: 'Sinema', img: '/images/demo/sinema.jpg' },
