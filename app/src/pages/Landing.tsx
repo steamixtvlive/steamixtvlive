@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck, Send } from 'lucide-react'
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
+import TelegramIcon from '@/sections/TelegramIcon'
 
 const APK_URL = 'https://www.dropbox.com/scl/fi/p9q2jxt3gr3w49xmftlfo/Steamix-TV.apk?rlkey=qas258lcd9oxcpzqgn93dsyiz&st=il22kjk1&dl=1'
 const MOBIL_APK_URL = 'https://www.dropbox.com/scl/fi/p9q2jxt3gr3w49xmftlfo/Steamix-TV.apk?rlkey=qas258lcd9oxcpzqgn93dsyiz&st=il22kjk1&dl=1'
@@ -758,7 +759,7 @@ export default function Landing() {
           <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-6 md:p-8 max-w-lg w-full border border-white/10 shadow-2xl shadow-[#0099ff]/10 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-11 h-11 rounded-full bg-[#0099ff]/15 flex items-center justify-center shrink-0">
-                <Send className="w-5 h-5 text-[#0099ff]" />
+                <TelegramIcon className="w-5 h-5" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>{seciliTest.ad}</h2>
@@ -796,7 +797,7 @@ export default function Landing() {
               )}
               <a href={`https://t.me/streamsupport00?text=${encodeURIComponent(seciliTest.govde)}`} target="_blank" rel="noopener noreferrer"
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(0,153,255,0.5)] transition-all flex items-center justify-center gap-2">
-                <Send className="w-4 h-4" />{seciliTest.id === '7gun' ? 'Telegram ile Bilgi İste' : seciliTest.buton}
+                <TelegramIcon />{seciliTest.id === '7gun' ? 'Telegram ile Bilgi İste' : seciliTest.buton}
               </a>
               <button onClick={() => setSeciliTest(null)}
                 className="w-full py-3 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-all">
