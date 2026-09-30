@@ -57,12 +57,12 @@ export default function MaintenanceOverlay() {
 
       {/* glow orblar */}
       <div className="absolute -top-28 -left-28 w-[520px] h-[520px] rounded-full bg-[#0099ff]/18 blur-[90px]" style={{ animation: 'floatA 9s ease-in-out infinite' }} />
-      <div className="absolute -bottom-32 -right-28 w-[520px] h-[520px] rounded-full bg-purple-500/14 blur-[100px]" style={{ animation: 'floatB 11s ease-in-out infinite' }} />
+      <div className="absolute -bottom-32 -right-28 w-[520px] h-[520px] rounded-full bg-[#0099ff]/10 blur-[100px]" style={{ animation: 'floatB 11s ease-in-out infinite' }} />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] rounded-full bg-[#0099ff]/[0.06] blur-[80px] pointer-events-none" />
 
       {/* ince üst çizgi */}
       <div className="absolute top-0 inset-x-0 h-[2px] bg-white/5 overflow-hidden">
-        <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-[#0099ff] to-purple-500 shadow-[0_0_18px_rgba(0,153,255,0.9)]" style={{ animation: 'shimmer 2.2s linear infinite' }} />
+        <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-[#0099ff] to-cyan-300 shadow-[0_0_18px_rgba(0,153,255,0.9)]" style={{ animation: 'shimmer 2.2s linear infinite' }} />
       </div>
 
       {/* kart */}
@@ -85,9 +85,9 @@ export default function MaintenanceOverlay() {
             </div>
 
             {/* badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/20 mb-5">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
-              <span className="text-[11px] font-semibold tracking-[0.18em] text-amber-300 uppercase">Sistem Güncellemesi</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0099ff]/10 border border-[#0099ff]/25 mb-5">
+              <span className="w-2 h-2 rounded-full bg-[#0099ff] animate-pulse shadow-[0_0_8px_rgba(0,153,255,0.8)]" />
+              <span className="text-[11px] font-semibold tracking-[0.18em] text-[#7dd3ff] uppercase">Sistem Güncellemesi</span>
             </div>
 
             <h1 className="text-[28px] md:text-[34px] font-extrabold leading-tight tracking-tight text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
@@ -96,18 +96,8 @@ export default function MaintenanceOverlay() {
 
             <p className="text-[13px] md:text-[14.5px] leading-relaxed text-gray-300/90 max-w-[520px] mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
               Sizlere <span className="text-white font-semibold">daha iyi hizmet verebilmek için</span> bakıma girdik.<br className="hidden md:block" />
-              Bakım çalışmaları <span className="text-[#7dd3ff] font-semibold">kısa sürecek</span>, en kısa zamanda dönüyoruz.
+              <span className="text-[#7dd3ff] font-semibold text-base">En kısa sürede döneceğiz.</span>
             </p>
-
-            {/* geri sayım */}
-            <div className="mt-6 flex justify-center gap-2.5 md:gap-3">
-              {units.map(u => (
-                <div key={u.label} className="w-[68px] md:w-[76px] rounded-2xl bg-white/[0.04] border border-white/10 py-3 backdrop-blur-xl">
-                  <div className="text-[22px] md:text-[26px] font-extrabold text-white tabular-nums" style={{ fontFamily: 'Orbitron, sans-serif' }}>{u.v}</div>
-                  <div className="text-[10px] tracking-[0.2em] text-gray-500 uppercase mt-1">{u.label}</div>
-                </div>
-              ))}
-            </div>
 
             {/* animasyonlu bar + dişli */}
             <div className="mt-7 flex flex-col items-center gap-4">
