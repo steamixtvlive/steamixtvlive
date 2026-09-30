@@ -297,24 +297,24 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <div id="top" className="relative z-10 flex-1 flex items-center px-4 md:px-12 py-10 md:py-14">
-        <div className="w-full flex flex-col md:flex-row items-center gap-10 md:gap-14 max-w-6xl mx-auto">
+      <div id="top" className="relative z-10 flex-1 flex items-center px-4 md:px-12 py-6 md:py-14">
+        <div className="w-full flex flex-col md:flex-row items-center gap-6 md:gap-14 max-w-6xl mx-auto">
           <div className="flex-1 text-center md:text-left">
         <div className="inline-flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full bg-[#0099ff]/10 border border-[#0099ff]/30">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
           <span className="text-xs text-gray-300 tracking-widest uppercase">Canlı • Yüzlerce Kanal • Yüzlerce Film & Dizi</span>
         </div>
-        <h1 className="text-4xl md:text-6xl font-bold text-white mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+        <h1 className="text-3xl md:text-6xl font-bold text-white mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
           Steamix <span className="text-[#0099ff]">TV</span>
         </h1>
-        <p className="text-lg md:text-2xl text-gray-300 leading-relaxed font-light">
+        <p className="text-base md:text-2xl text-gray-300 leading-relaxed font-light">
           Sınırsız eğlence, kesintisiz keyif.
         </p>
-        <p className="text-sm md:text-base text-gray-400 mt-3 leading-relaxed max-w-xl mx-auto md:mx-0">
+        <p className="text-xs md:text-base text-gray-400 mt-3 leading-relaxed max-w-xl mx-auto md:mx-0">
           Süper Lig dahil dünyadan tüm kanalları izleyeceksiniz. 4K Ultra HD kalitesinde
           binlerce film, dizi ve VOD içeriği. Dilediğin zaman, dilediğin yerde izle.
         </p>
-          <div className="flex items-center justify-center md:justify-start gap-4 mt-8">
+          <div className="flex items-center justify-center md:justify-start gap-4 mt-5 md:mt-8">
             <button onClick={() => { setPlanSlide(0); setPlanModal(true) }} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm hover:shadow-[0_0_30px_rgba(0,153,255,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all">
               Paketleri İncele
             </button>
@@ -322,7 +322,7 @@ export default function Landing() {
             <PlayCircle className="w-4 h-4" />Test Yayını Al
           </a>
         </div>
-        <div className="flex items-center justify-center md:justify-start gap-4 mt-10">
+        <div className="flex items-center justify-center md:justify-start gap-4 mt-6 md:mt-10">
           <div className="relative w-20 h-[3px] bg-white/5 overflow-hidden rounded-full">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#0099ff] to-transparent opacity-100 rounded-full shadow-[0_0_12px_rgba(0,153,255,1)]"
               style={{ animation: 'lightSweep 2s ease-in-out infinite' }} />
@@ -343,8 +343,8 @@ export default function Landing() {
       </div>
 
       {/* beIN şeridi */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 py-4 md:py-6 w-full">
-        <div className="flex flex-col md:flex-row items-center gap-5 p-3 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-2 md:py-6 w-full">
+        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-5 p-3 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
           <div className="w-full md:w-1/2 shrink-0">
             <div className="group relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]">
               <img src="/images/bein-lig.jpg" alt="Süper Lig beIN SPORTS" className="w-full object-cover" />
@@ -355,7 +355,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="flex-1 text-left">
-            <h3 className="text-xl md:text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+            <h3 className="text-lg md:text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
               Süper Lig <span className="text-[#0099ff]">Heyecanı</span>
             </h3>
             <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
@@ -367,8 +367,8 @@ export default function Landing() {
 
       {/* Slogan şeridi */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 pb-2 w-full">
-        <div className="text-center rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-5">
-          <p className="text-lg md:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+        <div className="text-center rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 md:py-5">
+          <p className="text-base md:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Kumandayla Koltuktan, <span className="text-[#0099ff]">Dokunarak Cebinden</span>
           </p>
           <p className="text-xs md:text-sm text-gray-400">TV'de maç, telefonda dizi — Steamix TV arayüzü her ekranda aynı akıcılıkta.</p>
@@ -376,12 +376,12 @@ export default function Landing() {
       </div>
 
       {/* İstatistik barı */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 py-8 md:py-10 w-full">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-4 md:py-10 w-full">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {STATS.map(s => (
-            <div key={s.label} className="rounded-2xl p-5 border border-white/10 bg-white/5 text-center hover:border-[#0099ff]/40 hover:shadow-[0_0_25px_rgba(0,153,255,0.15)] transition-all" style={{ animation: 'floatGlow 3s ease-in-out infinite' }}>
+            <div key={s.label} className="rounded-2xl p-3 md:p-5 border border-white/10 bg-white/5 text-center hover:border-[#0099ff]/40 hover:shadow-[0_0_25px_rgba(0,153,255,0.15)] transition-all" style={{ animation: 'floatGlow 3s ease-in-out infinite' }}>
               <s.icon className="w-6 h-6 text-[#0099ff] mx-auto mb-2" />
-              <div className="text-2xl md:text-3xl font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+              <div className="text-xl md:text-3xl font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>
                 <Counter value={s.value} suffix={s.suffix} />
               </div>
               <p className="text-xs text-gray-500 mt-1">{s.label}</p>
@@ -407,29 +407,29 @@ export default function Landing() {
       </div>
 
       {/* Test alanı */}
-      <div id="test" className="relative z-10 max-w-6xl mx-auto px-4 py-8 md:py-10 w-full">
+      <div id="test" className="relative z-10 max-w-6xl mx-auto px-4 py-4 md:py-10 w-full">
         <div className="flex items-center justify-center gap-2 mb-4">
           <Check className="w-4 h-4 text-green-400" />
           <span className="text-xs text-gray-300 tracking-widest uppercase">Satın almadan önce gerçek deneyim</span>
         </div>
         <div className="text-center mb-6">
-          <h2 className="text-2xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          <h2 className="text-xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             IPTV Teste: Önce Deneyin, <span className="text-[#0099ff]">Sonra Karar Verin</span>
           </h2>
-          <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-xs md:text-sm text-gray-400 leading-relaxed max-w-2xl mx-auto">
             IPTV teste, paket satın almadan önce görüntü kalitesini, kanal geçişlerini ve sunucu
             kararlılığını kendi cihazınızda görmenizi sağlar. Normal paketimizi 24 saat boyunca ücretsiz
             deneyebilir, size uygun olup olmadığına gerçek kullanım koşullarında karar verebilirsiniz.
           </p>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-8">
+        <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-5 md:mb-8">
           {['24 saat ücretsiz', 'Kolay kurulum', 'Tüm cihazlarda', 'Hızlı destek'].map(b => (
             <span key={b} className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-gray-300">{b}</span>
           ))}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 max-w-5xl mx-auto">
           {TESTLER.map(t => (
-            <div key={t.id} className={`relative rounded-2xl p-5 border transition-all duration-300 hover:scale-[1.03] flex flex-col ${t.vip ? 'border-purple-500/60 bg-purple-500/5 shadow-lg shadow-purple-500/10' : 'border-white/10 bg-white/5'}`}>
+              <div key={t.id} className={`relative rounded-2xl p-4 md:p-5 border transition-all duration-300 hover:scale-[1.03] flex flex-col ${t.vip ? 'border-purple-500/60 bg-purple-500/5 shadow-lg shadow-purple-500/10' : 'border-white/10 bg-white/5'}`}>
               <p className="text-[11px] text-gray-500 tracking-widest uppercase mb-2">{t.etiket}</p>
               <h3 className="text-base font-bold text-white mb-1">{t.ad}</h3>
               <div className="mb-3"><span className="text-2xl font-extrabold text-[#0099ff]">{t.fiyat}</span><span className="text-xs text-gray-500"> {t.sure}</span></div>
@@ -448,7 +448,7 @@ export default function Landing() {
             </div>
           ))}
         </div>
-        <div className="mt-8 p-4 rounded-xl bg-white/5 border border-white/10 max-w-2xl mx-auto">
+        <div className="mt-5 md:mt-8 p-4 rounded-xl bg-white/5 border border-white/10 max-w-2xl mx-auto">
           <p className="text-xs text-gray-400 leading-relaxed text-center">
             <span className="text-[#0099ff] font-semibold">Kısa cevap:</span> İlk kez deneyecekseniz 24 saatlik ücretsiz
             IPTV teste seçeneğiyle başlayın. Günün farklı saatlerinde yayın açarak görüntü kalitesini,
@@ -458,14 +458,14 @@ export default function Landing() {
       </div>
 
       {/* Cihaz sahnesi */}
-      <div id="cihazlar" className="relative z-10 max-w-6xl mx-auto px-4 py-8 md:py-10 w-full">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+      <div id="cihazlar" className="relative z-10 max-w-6xl mx-auto px-4 py-4 md:py-10 w-full">
+        <div className="text-center mb-6 md:mb-10">
+          <h2 className="text-xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Kumandayla Koltuktan, <span className="text-[#0099ff]">Dokunarak Cebinden</span>
           </h2>
           <p className="text-sm text-gray-500 max-w-xl mx-auto">TV'de maç, telefonda dizi — Steamix TV arayüzü her ekranda aynı akıcılıkta.</p>
         </div>
-        <div className="flex flex-col md:flex-row items-center justify-center gap-10 md:gap-14">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-14">
           {/* TV + kumanda */}
           <div className="flex items-end gap-4">
             <div className="flex flex-col items-center">
@@ -510,8 +510,8 @@ export default function Landing() {
             </div>
           </div>
         </div>
-        <div className="mt-10 max-w-2xl mx-auto">
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.1] to-purple-500/[0.06] border border-[#0099ff]/30 shadow-[0_0_30px_rgba(0,153,255,0.15)]" style={{ animation: 'floatGlow 3s ease-in-out infinite' }}>
+        <div className="mt-6 md:mt-10 max-w-2xl mx-auto">
+          <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.1] to-purple-500/[0.06] border border-[#0099ff]/30 shadow-[0_0_30px_rgba(0,153,255,0.15)]" style={{ animation: 'floatGlow 3s ease-in-out infinite' }}>
             <p className="text-xs md:text-sm text-gray-300 leading-relaxed text-center">
               <span className="text-[#0099ff] font-bold">📡 Çözünürlüğe göre sınıflı yayın:</span> yayınlarımız
               çözünürlük kalitesine göre sınıflandırılmıştır. Çözünürlük kanallarını kendinize göre sınıflayıp
@@ -522,14 +522,14 @@ export default function Landing() {
       </div>
 
       {/* Sinema vitrini */}
-      <div id="icerik" className="relative z-10 max-w-6xl mx-auto px-4 pb-8 md:pb-10 w-full">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+      <div id="icerik" className="relative z-10 max-w-6xl mx-auto px-4 pb-4 md:pb-10 w-full">
+        <div className="text-center mb-5 md:mb-8">
+          <h2 className="text-xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Sinema Salonu <span className="text-[#0099ff]">Evinizde</span>
           </h2>
           <p className="text-sm text-gray-500 max-w-xl mx-auto">Vizyondan arşive binlerce film, kaldığınız yerden devam eden diziler — hepsi tek abonelikte.</p>
         </div>
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
           {POSTERS.map(p => (
             <div key={p} className="group relative rounded-xl overflow-hidden border border-white/10 hover:border-[#0099ff]/50 hover:scale-[1.04] hover:shadow-[0_0_25px_rgba(0,153,255,0.25)] transition-all duration-300">
               <img src={`/images/${p}`} alt="" loading="lazy" className="w-full aspect-[2/3] object-cover" />
@@ -540,16 +540,16 @@ export default function Landing() {
       </div>
 
       {/* Müşterilerimiz Ne Diyor */}
-      <div className="relative z-10 max-w-6xl mx-auto px-4 pb-8 md:pb-10 w-full">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pb-4 md:pb-10 w-full">
+        <div className="text-center mb-5 md:mb-8">
+          <h2 className="text-xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Müşterilerimiz <span className="text-[#0099ff]">Ne Diyor?</span>
           </h2>
           <p className="text-sm text-gray-500 max-w-xl mx-auto">Avrupa'dan Türkiye'ye binlerce mutlu izleyici — hız, kalite ve destek farkıyla.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {YORUMLAR.map(y => (
-            <div key={y.ad} className="rounded-2xl p-5 border border-white/10 bg-white/5 hover:border-[#0099ff]/40 hover:shadow-[0_0_25px_rgba(0,153,255,0.12)] transition-all flex flex-col">
+              <div key={y.ad} className="rounded-2xl p-4 md:p-5 border border-white/10 bg-white/5 hover:border-[#0099ff]/40 hover:shadow-[0_0_25px_rgba(0,153,255,0.12)] transition-all flex flex-col">
               <div className="flex gap-1 mb-3">
                 {[0, 1, 2, 3, 4].map(i => (
                   <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
@@ -571,9 +571,9 @@ export default function Landing() {
       </div>
 
       {/* SSS */}
-      <div className="relative z-10 max-w-3xl mx-auto px-4 pb-8 md:pb-10 w-full">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+      <div className="relative z-10 max-w-3xl mx-auto px-4 pb-4 md:pb-10 w-full">
+        <div className="text-center mb-5 md:mb-8">
+          <h2 className="text-xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Sık Sorulan <span className="text-[#0099ff]">Sorular</span>
           </h2>
         </div>
@@ -592,9 +592,9 @@ export default function Landing() {
       </div>
 
       {/* Uygulama */}
-      <div id="uygulama" className="relative z-10 max-w-xl mx-auto px-4 py-8 md:py-10 w-full">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+      <div id="uygulama" className="relative z-10 max-w-xl mx-auto px-4 py-4 md:py-10 w-full">
+        <div className="text-center mb-5 md:mb-8">
+          <h2 className="text-xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Her Player'da <span className="text-[#0099ff]">İzleyin</span>
           </h2>
           <p className="text-sm text-gray-500">M3U bağlantınızı yapıştırın, izlemeye başlayın</p>
