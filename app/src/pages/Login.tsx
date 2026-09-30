@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useLang } from '@/lib/language'
 import { useAuth } from '@/hooks/use-auth'
-import TelegramIcon from '@/sections/TelegramIcon'
-import { Eye, EyeOff, Globe, ChevronDown, Loader2, ShoppingCart, X, CreditCard, Check, Mail, AlertTriangle, Send } from 'lucide-react'
+import { Eye, EyeOff, Globe, ChevronDown, Loader2, ShoppingCart, X, CreditCard, Check, Mail, AlertTriangle } from 'lucide-react'
 
 export default function Login() {
   const { t, lang, setLang, langNames, languages } = useLang()
@@ -64,7 +63,7 @@ export default function Login() {
       </div>
       <div className="relative z-10 flex items-center justify-between p-4 md:p-6">
         <div className="flex items-center gap-2">
-          <img src="/images/steamix-logo.png" alt="" className="w-8 h-8 md:w-10 md:h-10 rounded-lg" />
+          <img src="/images/steamix-logo.jpg" alt="" className="w-8 h-8 md:w-10 md:h-10 rounded-lg" />
           <span className="text-lg md:text-xl font-bold text-white tracking-wider" style={{ fontFamily: 'Orbitron, sans-serif' }}>Steamix <span className="text-[#0099ff]">TV</span></span>
         </div>
         <div className="flex items-center gap-1">
@@ -74,7 +73,7 @@ export default function Login() {
           </button>
           <button onClick={() => setShowTestModal(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-[#0099ff] border border-[#0099ff]/30 hover:bg-[#0099ff]/10 hover:border-[#0099ff] transition-all">
-            <TelegramIcon /><span className="hidden sm:inline">Test Al</span>
+            <img src="/images/telegram.png" alt="Telegram" className="w-6 h-6 shrink-0" /><span className="hidden sm:inline">Test Al</span>
           </button>
           <div className="relative">
             <button onClick={() => setLangOpen(!langOpen)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all">
@@ -261,7 +260,7 @@ export default function Login() {
           <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-6 md:p-8 max-w-lg w-full mx-4 border border-white/10 shadow-2xl shadow-[#0099ff]/5">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                <TelegramIcon className="w-7 h-7" /> TEST <span className="text-[#0099ff]">YAYINI</span>
+                <Mail className="w-5 h-5 text-[#0099ff]" /> TEST <span className="text-[#0099ff]">YAYINI</span>
               </h2>
               <button onClick={() => setShowTestModal(false)} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all">
                 <X className="w-4 h-4" />
@@ -270,7 +269,7 @@ export default function Login() {
             <div className="p-5 rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border border-yellow-500/20 space-y-3">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <TelegramIcon className="w-6 h-6" />
+                  <Mail className="w-5 h-5 text-yellow-400" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-300 font-semibold mb-2">3 Saatlik Ücretsiz Test Yayını</p>
@@ -284,7 +283,7 @@ export default function Login() {
               </div>
               <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold text-sm hover:opacity-90 hover:shadow-[0_0_20px_rgba(234,179,8,0.3)] transition-all">
-                <TelegramIcon /> Telegram 7/24 Destek
+                <img src="/images/telegram.png" alt="Telegram" className="w-6 h-6 shrink-0" /> Telegram 7/24 Destek
               </a>
               <p className="text-[11px] text-gray-500 text-center leading-relaxed">
                 Mesaja <span className="text-white font-medium">"Test Talebi + cihazınız"</span> yazmanız

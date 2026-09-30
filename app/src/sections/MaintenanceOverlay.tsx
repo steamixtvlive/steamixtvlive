@@ -71,7 +71,7 @@ export default function MaintenanceOverlay() {
         <div className="flex justify-center mb-7">
           <div className="relative">
             <div className="absolute inset-0 rounded-2xl bg-[#0099ff]/25 blur-[18px]" style={{ animation: 'glowPulse 2.8s ease-in-out infinite' }} />
-            <img src="/images/steamix-logo.png" alt="Steamix TV" className="relative w-[84px] h-[84px] rounded-2xl object-cover shadow-[0_0_30px_rgba(0,153,255,0.45)] ring-1 ring-white/15" />
+            <img src="/images/steamix-logo.jpg" alt="Steamix TV" className="relative w-[84px] h-[84px] rounded-2xl object-cover shadow-[0_0_30px_rgba(0,153,255,0.45)] ring-1 ring-white/15" />
             <span className="absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#0099ff] border-2 border-[#0a0f1e] flex items-center justify-center text-[10px]">⚙️</span>
           </div>
         </div>
