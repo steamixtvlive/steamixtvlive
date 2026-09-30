@@ -418,7 +418,7 @@ export default function Landing() {
             IPTV Test: Önce Deneyin, <span className="text-[#0099ff]">Sonra Karar Verin</span>
           </h2>
           <p className="text-xs md:text-sm text-gray-400 leading-relaxed max-w-2xl mx-auto">
-            IPTV teste, paket satın almadan önce görüntü kalitesini, kanal geçişlerini ve sunucu
+            IPTV test yayınları, paket satın almadan önce görüntü kalitesini, kanal geçişlerini ve sunucu
             kararlılığını kendi cihazınızda görmenizi sağlar. Normal paketimizi 24 saat boyunca ücretsiz
             deneyebilir, size uygun olup olmadığına gerçek kullanım koşullarında karar verebilirsiniz.
           </p>
