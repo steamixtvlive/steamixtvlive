@@ -345,7 +345,7 @@ export default function Landing() {
       {/* beIN şeridi */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 py-2 md:py-6 w-full">
         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-5 p-3 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
-          <div className="hidden md:block w-full md:w-1/2 shrink-0">
+          <div className="w-full md:w-1/2 shrink-0">
             <div className="group relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]">
               <img src="/images/bein-lig.jpg" alt="Süper Lig beIN SPORTS" className="w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
