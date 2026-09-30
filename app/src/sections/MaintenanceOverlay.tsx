@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const MAINTENANCE_END = new Date('2027-01-10T00:00:00+03:00').getTime()
+const MAINTENANCE_END = Date.now() + 4 * 3600 * 1000
 
 function useCountdown() {
   const [now, setNow] = useState(() => Date.now())
@@ -96,7 +96,7 @@ export default function MaintenanceOverlay() {
 
             <p className="text-[13px] md:text-[14.5px] leading-relaxed text-gray-300/90 max-w-[520px] mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
               Sizlere <span className="text-white font-semibold">daha iyi hizmet verebilmek için</span> bakıma girdik.<br className="hidden md:block" />
-              Bakım çalışmaları <span className="text-[#7dd3ff] font-semibold">10 Ocak 2027</span> tarihine kadar devam edecek.
+              Bakım çalışmaları <span className="text-[#7dd3ff] font-semibold">kısa sürecek</span>, en kısa zamanda dönüyoruz.
             </p>
 
             {/* geri sayım */}
@@ -124,7 +124,7 @@ export default function MaintenanceOverlay() {
               <div className="w-full max-w-[360px] h-[6px] rounded-full bg-white/5 border border-white/10 overflow-hidden p-[2px]">
                 <div className="h-full rounded-full bg-gradient-to-r from-[#0099ff] via-blue-400 to-purple-500 shadow-[0_0_12px_rgba(0,153,255,0.7)]" style={{ animation: 'barLoad 1.8s ease-in-out infinite' }} />
               </div>
-              <p className="text-[11px] tracking-[0.18em] text-gray-500 uppercase">10 Ocak 2027 • Tekrar görüşmek üzere</p>
+              <p className="text-[11px] tracking-[0.18em] text-gray-500 uppercase">En kısa sürede dönüyoruz</p>
             </div>
 
             {/* alt bilgi */}
