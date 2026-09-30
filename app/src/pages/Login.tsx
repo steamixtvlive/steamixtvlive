@@ -64,7 +64,7 @@ export default function Login() {
       </div>
       <div className="relative z-10 flex items-center justify-between p-4 md:p-6">
         <div className="flex items-center gap-2">
-          <img src="/images/steamix-logo.jpg" alt="" className="w-8 h-8 md:w-10 md:h-10 rounded-lg" />
+          <img src="/images/steamix-logo.png" alt="" className="w-8 h-8 md:w-10 md:h-10 rounded-lg" />
           <span className="text-lg md:text-xl font-bold text-white tracking-wider" style={{ fontFamily: 'Orbitron, sans-serif' }}>Steamix <span className="text-[#0099ff]">TV</span></span>
         </div>
         <div className="flex items-center gap-1">

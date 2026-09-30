@@ -271,7 +271,7 @@ export default function Landing() {
       <nav className="sticky top-[3px] z-40 backdrop-blur-md bg-black/50 border-b border-white/10">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
           <a href="#top" className="flex items-center gap-2">
-            <img src="/images/steamix-logo.jpg" alt="" className="w-8 h-8 rounded-lg" />
+            <img src="/images/steamix-logo.png" alt="" className="w-8 h-8 rounded-lg" />
             <span className="text-base md:text-lg font-bold text-white tracking-wider" style={{ fontFamily: 'Orbitron, sans-serif' }}>Steamix <span className="text-[#0099ff]">TV</span></span>
             <RendirBadge />
           </a>
