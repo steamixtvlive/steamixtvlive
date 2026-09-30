@@ -758,7 +758,7 @@ export default function Landing() {
           <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-6 md:p-8 max-w-lg w-full border border-white/10 shadow-2xl shadow-[#0099ff]/10 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-11 h-11 rounded-full bg-[#0099ff]/15 flex items-center justify-center shrink-0">
-                <Mail className="w-5 h-5 text-[#0099ff]" />
+                <Send className="w-5 h-5 text-[#0099ff]" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>{seciliTest.ad}</h2>
