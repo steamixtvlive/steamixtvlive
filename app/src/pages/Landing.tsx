@@ -415,7 +415,7 @@ export default function Landing() {
         </div>
         <div className="text-center mb-6">
           <h2 className="text-xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-            IPTV Teste: Önce Deneyin, <span className="text-[#0099ff]">Sonra Karar Verin</span>
+            IPTV Test: Önce Deneyin, <span className="text-[#0099ff]">Sonra Karar Verin</span>
           </h2>
           <p className="text-xs md:text-sm text-gray-400 leading-relaxed max-w-2xl mx-auto">
             IPTV teste, paket satın almadan önce görüntü kalitesini, kanal geçişlerini ve sunucu
