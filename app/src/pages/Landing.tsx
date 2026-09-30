@@ -806,6 +806,14 @@ export default function Landing() {
           </div>
         </div>
       )}
+      {/* Yüzen Telegram destek butonu */}
+      <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full bg-[#0f172a]/90 border border-[#229ED9]/50 shadow-[0_0_20px_rgba(34,158,217,0.35)] backdrop-blur-md hover:shadow-[0_0_35px_rgba(34,158,217,0.7)] hover:scale-105 active:scale-95 transition-all"
+        style={{ animation: 'destekYuz 3s ease-in-out infinite' }}>
+        <img src="/images/telegram.png" alt="Telegram" className="w-9 h-9 rounded-full" />
+        <span className="text-xs text-white font-bold leading-tight">7/24<br /><span className="text-[#7dd3ff]">Destek Hattı</span></span>
+        <style>{`@keyframes destekYuz { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }`}</style>
+      </a>
     </div>
   )
 }
