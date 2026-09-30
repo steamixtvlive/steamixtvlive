@@ -51,7 +51,7 @@ export default function Subscription() {
           <div className="p-4 rounded-xl bg-white/5 border border-white/10">
             <p className="text-xs text-gray-400 leading-relaxed text-center">
               <span className="text-yellow-400 font-semibold">📌 Önemli:</span> Satın aldıktan sonra{' '}
-              <span className="text-[#0099ff] font-medium">steamixgame@yandex.com</span> mail adresine
+              <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-medium hover:underline">Telegram 7/24 destek</a> hattına
               satın aldığınıza dair ekran görüntüsü atın. Yönetici tarafından onaylanıp en kısa sürede
               abonelik giriş bilgileriniz size teslim edilecektir.
             </p>

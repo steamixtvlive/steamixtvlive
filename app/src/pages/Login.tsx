@@ -237,7 +237,7 @@ export default function Login() {
               <div className="p-4 rounded-2xl bg-gradient-to-r from-yellow-500/[0.07] to-transparent border border-yellow-500/15 border-l-4 border-l-yellow-500/50">
                 <p className="text-xs text-gray-400 leading-relaxed">
                   <span className="text-yellow-400 font-bold">📌 Önemli:</span> Satın aldıktan sonra{' '}
-                  <span className="text-[#0099ff] font-semibold">steamixgame@yandex.com</span> mail adresine
+                  <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">Telegram 7/24 destek</a> hattına
                   satın aldığınıza dair ekran görüntüsü atın. Yönetici tarafından onaylanıp en kısa sürede
                   abonelik giriş bilgileriniz size teslim edilecektir.
                 </p>
@@ -276,17 +276,17 @@ export default function Login() {
                   <p className="text-xs text-gray-400 leading-relaxed">
                     Steamix TV'yi denemek için 3 saatlik ücretsiz test yayını talep edebilirsiniz.
                     Test yayını tüm içerikleri kapsamaktadır. Talebinizi aşağıdaki
-                    e-posta adresine ilettikten sonra yöneticimiz tarafından en kısa sürede
+                    Telegram hattına ilettikten sonra yöneticimiz tarafından en kısa sürede
                     giriş bilgileriniz size teslim edilecektir.
                   </p>
                 </div>
               </div>
-              <a href="mailto:steamixgame@yandex.com"
+              <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold text-sm hover:opacity-90 hover:shadow-[0_0_20px_rgba(234,179,8,0.3)] transition-all">
-                <Mail className="w-4 h-4" /> steamixgame@yandex.com
+                <Mail className="w-4 h-4" /> Telegram 7/24 Destek
               </a>
               <p className="text-[11px] text-gray-500 text-center leading-relaxed">
-                E-posta konusuna <span className="text-white font-medium">"Test Talebi"</span> yazmanız
+                Mesaja <span className="text-white font-medium">"Test Talebi + cihazınız"</span> yazmanız
                 yeterlidir. En geç 24 saat içinde dönüş sağlanacaktır.
               </p>
             </div>

@@ -116,7 +116,7 @@ export default function MaintenanceOverlay() {
         {/* alt bilgi */}
         <div className="mt-8 flex flex-col items-center gap-1.5">
           <span className="text-[11px] tracking-[0.22em] text-gray-500 uppercase">Steamix TV Company</span>
-          <span className="text-[11px] text-gray-500">Destek: steamixgame@yandex.com</span>
+          <span className="text-[11px] text-gray-500">Destek: <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer" className="text-[#7dd3ff] hover:underline">Telegram 7/24</a></span>
         </div>
         <style>{`@keyframes barKay { 0% { transform: translateX(-110%) } 100% { transform: translateX(320%) } }`}</style>
       </div>

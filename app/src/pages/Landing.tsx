@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck } from 'lucide-react'
+import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck, Send } from 'lucide-react'
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
 
@@ -331,7 +331,7 @@ export default function Landing() {
           <style>{`@keyframes lightSweep { 0%,100% { transform: translateX(-100%) } 50% { transform: translateX(100%) } }`}</style>
         </div>
           </div>
-          <div className="flex-1 w-full max-w-xl">
+          <div className="hidden md:block flex-1 w-full max-w-xl">
             <div className="relative rounded-3xl overflow-hidden border border-white/15 shadow-[0_0_60px_rgba(0,153,255,0.3),0_0_120px_rgba(168,85,247,0.15)] hover:scale-[1.02] transition-transform duration-500">
               <img src="/images/hero-aile.jpg" alt="Steamix TV" className="w-full object-cover" style={{ animation: 'heroYakin 10s ease-in-out infinite alternate' }} />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/50 via-transparent to-transparent pointer-events-none" />
@@ -345,7 +345,7 @@ export default function Landing() {
       {/* beIN şeridi */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 py-2 md:py-6 w-full">
         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-5 p-3 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
-          <div className="w-full md:w-1/2 shrink-0">
+          <div className="hidden md:block w-full md:w-1/2 shrink-0">
             <div className="group relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]">
               <img src="/images/bein-lig.jpg" alt="Süper Lig beIN SPORTS" className="w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
@@ -465,7 +465,7 @@ export default function Landing() {
           </h2>
           <p className="text-sm text-gray-500 max-w-xl mx-auto">TV'de maç, telefonda dizi — Steamix TV arayüzü her ekranda aynı akıcılıkta.</p>
         </div>
-        <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-14">
+        <div className="hidden md:flex flex-col md:flex-row items-center justify-center gap-6 md:gap-14">
           {/* TV + kumanda */}
           <div className="flex items-end gap-4">
             <div className="flex flex-col items-center">
@@ -530,8 +530,8 @@ export default function Landing() {
           <p className="text-sm text-gray-500 max-w-xl mx-auto">Vizyondan arşive binlerce film, kaldığınız yerden devam eden diziler — hepsi tek abonelikte.</p>
         </div>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
-          {POSTERS.map(p => (
-            <div key={p} className="group relative rounded-xl overflow-hidden border border-white/10 hover:border-[#0099ff]/50 hover:scale-[1.04] hover:shadow-[0_0_25px_rgba(0,153,255,0.25)] transition-all duration-300">
+          {POSTERS.map((p, i) => (
+            <div key={p} className={`${i > 5 ? 'hidden md:block' : ''} group relative rounded-xl overflow-hidden border border-white/10 hover:border-[#0099ff]/50 hover:scale-[1.04] hover:shadow-[0_0_25px_rgba(0,153,255,0.25)] transition-all duration-300`}>
               <img src={`/images/${p}`} alt="" loading="lazy" className="w-full aspect-[2/3] object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
@@ -600,7 +600,7 @@ export default function Landing() {
           <p className="text-sm text-gray-500">M3U bağlantınızı yapıştırın, izlemeye başlayın</p>
         </div>
         <div className="p-5 rounded-xl bg-gradient-to-br from-[#0099ff]/10 to-purple-500/5 border border-[#0099ff]/20 space-y-4">
-  <div className="rounded-2xl bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 p-2 pb-3 border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
+  <div className="hidden md:block rounded-2xl bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 p-2 pb-3 border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
     <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
       {demoAsama === 0 ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-[#0f172a] to-black p-4">
@@ -724,9 +724,10 @@ export default function Landing() {
             <div className="space-y-3 mb-6">
               <div className="p-4 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/20 border-l-4 border-l-[#0099ff]/60">
                 <p className="text-xs text-gray-300 leading-relaxed">
-                  Satın aldıktan sonra <span className="text-[#0099ff] font-semibold">steamixgame@yandex.com</span> mail
-                  adresine satın aldığınıza dair ekran görüntüsü atın; yönetici onayının ardından abonelik giriş
-                  bilgileriniz en kısa sürede size teslim edilir ve size özel oynatıcı bağlantınız mail üzerinden
+                  Satın aldıktan sonra <span className="text-[#0099ff] font-semibold">Telegram 7/24 destek</span> hattına
+                  (<a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">t.me/streamsupport00</a>)
+                  satın aldığınıza dair ekran görüntüsü atın; yönetici onayının ardından abonelik giriş
+                  bilgileriniz en kısa sürede size teslim edilir ve size özel oynatıcı bağlantınız Telegram üzerinden
                   gönderilir — bağlantıyla birlikte aşağıdaki uygulamamızın apk'sını indirip kullanabilirsiniz.
                   En iyi sonuç için <span className="text-white font-semibold">TiviMate altyapılı uygulamamız Steamix TV'yi</span> kullanın; aboneliğiniz TiviMate, Televizio ve İMPlayer uygulamalarında da çalışır ancak kendi uygulamamızın verdiği performansı alamazsınız. Shopier resmi
                   kuralları gereği abonelikler sınırlıdır; tamamlanan abonelik yalnızca bir defaya mahsus tekrar
@@ -776,12 +777,12 @@ export default function Landing() {
               <p className="text-xs text-gray-400 leading-relaxed">
                 {seciliTest.id === '7gun' ? (
                   <>Önce aşağıdaki butonla ödemeyi tamamlayın, ardından satın aldığınıza dair ekran görüntüsünü{' '}
-                    <span className="text-[#0099ff] font-semibold">steamixgame@yandex.com</span> adresine
-                    <span className="text-white font-medium"> "7 günlük VIP test yayını istiyorum"</span> konulu
-                    bir mail ile gönderin. Giriş bilgileriniz en kısa sürede teslim edilecektir.</>
+                    <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">Telegram 7/24 destek</a> hattına
+                    <span className="text-white font-medium"> "7 günlük VIP test yayını istiyorum"</span> yazarak
+                    gönderin. Giriş bilgileriniz en kısa sürede teslim edilecektir.</>
                 ) : (
-                  <>Aşağıdaki butona basınca mail uygulamanız açılır. Konu otomatik yazılı gelir — mailde{' '}
-                    <span className="text-white font-medium">hangi cihazda</span> deneyeceğinizi yazıp göndermeniz
+                  <>Aşağıdaki butonla Telegram 7/24 desteğe bağlanın. Mesajda{' '}
+                    <span className="text-white font-medium">hangi cihazda</span> deneyeceğinizi yazmanız
                     yeterli. Ücretsizdir, giriş bilgileriniz en kısa sürede teslim edilecektir.</>
                 )}
               </p>
@@ -793,9 +794,9 @@ export default function Landing() {
                   <ShoppingCart className="w-4 h-4" />250 TL — Ödemeye Git
                 </a>
               )}
-              <a href={`mailto:steamixgame@yandex.com?subject=${encodeURIComponent(seciliTest.konu)}&body=${encodeURIComponent(seciliTest.govde)}`}
+              <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer"
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(0,153,255,0.5)] transition-all flex items-center justify-center gap-2">
-                <Mail className="w-4 h-4" />{seciliTest.id === '7gun' ? 'Mail ile Bilgi İste' : seciliTest.buton}
+                <Send className="w-4 h-4" />{seciliTest.id === '7gun' ? 'Telegram ile Bilgi İste' : seciliTest.buton}
               </a>
               <button onClick={() => setSeciliTest(null)}
                 className="w-full py-3 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-all">

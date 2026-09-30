@@ -214,7 +214,7 @@ export default function ProfilePanel() {
               <div className="p-4 rounded-2xl bg-gradient-to-r from-yellow-500/[0.07] to-transparent border border-yellow-500/15 border-l-4 border-l-yellow-500/50">
                 <p className="text-xs text-gray-400 leading-relaxed">
                   <span className="text-yellow-400 font-bold">📌 Önemli:</span> Satın aldıktan sonra{' '}
-                  <span className="text-[#0099ff] font-semibold">steamixgame@yandex.com</span> mail adresine
+                  <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">Telegram 7/24 destek</a> hattına
                   satın aldığınıza dair ekran görüntüsü atın. Yönetici tarafından onaylanıp en kısa sürede
                   abonelik giriş bilgileriniz size teslim edilecektir.
                 </p>
