@@ -794,7 +794,7 @@ export default function Landing() {
                   <ShoppingCart className="w-4 h-4" />250 TL — Ödemeye Git
                 </a>
               )}
-              <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer"
+              <a href={`https://t.me/streamsupport00?text=${encodeURIComponent(seciliTest.govde)}`} target="_blank" rel="noopener noreferrer"
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(0,153,255,0.5)] transition-all flex items-center justify-center gap-2">
                 <Send className="w-4 h-4" />{seciliTest.id === '7gun' ? 'Telegram ile Bilgi İste' : seciliTest.buton}
               </a>
