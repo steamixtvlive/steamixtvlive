@@ -261,7 +261,7 @@ export default function Login() {
           <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-6 md:p-8 max-w-lg w-full mx-4 border border-white/10 shadow-2xl shadow-[#0099ff]/5">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                <TelegramIcon className="w-5 h-5" /> TEST <span className="text-[#0099ff]">YAYINI</span>
+                <TelegramIcon className="w-7 h-7" /> TEST <span className="text-[#0099ff]">YAYINI</span>
               </h2>
               <button onClick={() => setShowTestModal(false)} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all">
                 <X className="w-4 h-4" />
@@ -270,7 +270,7 @@ export default function Login() {
             <div className="p-5 rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border border-yellow-500/20 space-y-3">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <TelegramIcon className="w-5 h-5" />
+                  <TelegramIcon className="w-6 h-6" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-300 font-semibold mb-2">3 Saatlik Ücretsiz Test Yayını</p>

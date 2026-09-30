@@ -1,4 +1,4 @@
-export default function TelegramIcon({ className = 'w-4 h-4' }: { className?: string }) {
+export default function TelegramIcon({ className = 'w-6 h-6 shrink-0' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <circle cx="12" cy="12" r="10" fill="#229ED9" />
