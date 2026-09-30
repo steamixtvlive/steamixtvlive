@@ -758,7 +758,7 @@ export default function Landing() {
           <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-6 md:p-8 max-w-lg w-full border border-white/10 shadow-2xl shadow-[#0099ff]/10 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-11 h-11 rounded-full bg-[#0099ff]/15 flex items-center justify-center shrink-0">
-                <Mail className="w-5 h-5 text-[#0099ff]" />
+                <img src="/images/telegram.png" alt="Telegram" className="w-7 h-7 shrink-0" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>{seciliTest.ad}</h2>
@@ -796,7 +796,7 @@ export default function Landing() {
               )}
               <a href={`https://t.me/streamsupport00?text=${encodeURIComponent(seciliTest.govde)}`} target="_blank" rel="noopener noreferrer"
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(0,153,255,0.5)] transition-all flex items-center justify-center gap-2">
-                <img src="/images/telegram.png" alt="Telegram" className="w-6 h-6 shrink-0" />{seciliTest.id === '7gun' ? 'Telegram ile Bilgi İste' : seciliTest.buton}
+                <img src="/images/telegram.png" alt="Telegram" className="w-6 h-6 shrink-0" />{seciliTest.buton}
               </a>
               <button onClick={() => setSeciliTest(null)}
                 className="w-full py-3 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-all">

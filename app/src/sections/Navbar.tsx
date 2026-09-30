@@ -41,7 +41,7 @@ export default function Navbar({ categoryName }: NavbarProps) {
         <div className="flex items-center justify-between h-16 md:h-20">
           <div className="flex items-center gap-2 md:gap-6">
             <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 shrink-0">
-              <img src="/images/steamix-logo.jpg" alt="" className="w-8 h-8 md:w-10 md:h-10 rounded-lg" />
+              <img src="/images/steamix-logo.jpg" alt="" className="w-9 h-9 md:w-11 md:h-11 rounded-lg ring-1 ring-white/20 shadow-[0_0_12px_rgba(0,153,255,0.35)]" />
               <span className="text-lg md:text-xl font-bold text-white tracking-wider" style={{ fontFamily: 'Orbitron, sans-serif' }}>Steamix <span className="text-[#0099ff]">TV</span></span>
               <RendirBadge />
             </button>
