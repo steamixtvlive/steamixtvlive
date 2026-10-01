@@ -354,7 +354,7 @@ export default function Landing() {
               <span className="text-sm text-white font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Bildirimler</span>
               <span className="text-[10px] text-gray-500">5 yeni</span>
             </div>
-            <div className="bildirim-kaydir max-h-[55vh] overflow-y-auto">
+            <div className="bildirim-kaydir max-h-[45vh] md:max-h-[55vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
             {BILDIRIMLER.map((b, i) => (
               <button key={b.baslik} onClick={() => { setBildirimAcik(false); setSeciliBildirim(i) }}
                 className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3 border-b border-white/5 last:border-0">
