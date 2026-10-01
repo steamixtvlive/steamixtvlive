@@ -304,6 +304,10 @@ export default function Landing() {
               <a key={h} href={h} onClick={() => setMenuOpen(false)} className="block px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5">{t}</a>
             ))}
             <button onClick={() => { setMenuOpen(false); setPlanSlide(0); setPlanModal(true) }} className="block w-full text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>Paketleri İncele</button>
+            <button onClick={() => { setMenuOpen(false); setBildirimAcik(true) }} className="flex w-full items-center gap-2 text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5">
+              <Bell className="w-4 h-4 text-[#0099ff]" /> Bildirimler
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            </button>
           </div>
         )}
       </nav>
