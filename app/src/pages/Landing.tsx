@@ -211,7 +211,19 @@ export default function Landing() {
   const [planSlide, setPlanSlide] = useState(0)
   const planTrackRef = useRef<HTMLDivElement>(null)
   const [bildirimAcik, setBildirimAcik] = useState(false)
-  const [bildirimModal, setBildirimModal] = useState(false)
+  const [seciliBildirim, setSeciliBildirim] = useState<number | null>(null)
+  const BILDIRIMLER = [
+    {
+      baslik: 'Periyodik Yayın Güncellemesi',
+      ozet: 'Premium kanallarda frekans güncellemesi — dokun, detayı gör.',
+      metin: 'Zaman zaman bazı premium kanallarda orijinal yayın frekansı ve veri akışı güncellemeleri yapılmaktadır. Yayın kalitesini ve akıcılığını en üst seviyede tutmak adına sistem otomatik senkronizasyon sağlar. Bu süreçte etkilenen kanallar kısa süre içinde kendiliğinden aktif olmaktadır. Anlayışınız için teşekkür ederiz.',
+    },
+    {
+      baslik: 'Yayın Akışı ve Frekans Güncellemesi',
+      ozet: 'Altyapı çalışması — kanallar kısa sürede döner.',
+      metin: 'Kalite standartlarımızı korumak adına zaman zaman altyapı çalışmaları yapılmaktadır. Yapılan frekans ve veri akışı güncellemeleri nedeniyle bazı premium kanallarımız anlık olarak kapanabilir. Sistem otomatik senkronizasyonu tamamladığında kanallarınız kısa süre içinde kendiliğinden aktif olur. Anlayışınız için teşekkür ederiz.',
+    },
+  ]
   const DEMO_KLIPLER = [
     { ad: 'Spor', img: '/images/demo/spor.jpg' },
     { ad: 'Spor', img: '/images/bein-lig.jpg' },
@@ -304,10 +316,6 @@ export default function Landing() {
               <a key={h} href={h} onClick={() => setMenuOpen(false)} className="block px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5">{t}</a>
             ))}
             <button onClick={() => { setMenuOpen(false); setPlanSlide(0); setPlanModal(true) }} className="block w-full text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>Paketleri İncele</button>
-            <button onClick={() => { setMenuOpen(false); setBildirimAcik(true) }} className="flex w-full items-center gap-2 text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5">
-              <Bell className="w-4 h-4 text-[#0099ff]" /> Bildirimler
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            </button>
           </div>
         )}
       </nav>
@@ -318,33 +326,35 @@ export default function Landing() {
           <div className="fixed top-[70px] right-4 z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border border-white/10 shadow-2xl shadow-[#0099ff]/10 overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <span className="text-sm text-white font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Bildirimler</span>
-              <span className="text-[10px] text-gray-500">1 yeni</span>
+              <span className="text-[10px] text-gray-500">2 yeni</span>
             </div>
-            <button onClick={() => { setBildirimAcik(false); setBildirimModal(true) }}
-              className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3">
-              <span className="text-lg shrink-0">📢</span>
-              <span>
-                <span className="block text-xs text-white font-semibold mb-0.5">Periyodik Yayın Güncellemesi</span>
-                <span className="block text-[11px] text-gray-400 leading-relaxed">Premium kanallarda frekans güncellemesi — dokun, detayı gör.</span>
-                <span className="block text-[10px] text-[#0099ff] mt-1">Otomatik • az önce</span>
-              </span>
-            </button>
+            {BILDIRIMLER.map((b, i) => (
+              <button key={b.baslik} onClick={() => { setBildirimAcik(false); setSeciliBildirim(i) }}
+                className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3 border-b border-white/5 last:border-0">
+                <span className="text-lg shrink-0">📢</span>
+                <span>
+                  <span className="block text-xs text-white font-semibold mb-0.5">{b.baslik}</span>
+                  <span className="block text-[11px] text-gray-400 leading-relaxed">{b.ozet}</span>
+                  <span className="block text-[10px] text-[#0099ff] mt-1">Otomatik • az önce</span>
+                </span>
+              </button>
+            ))}
           </div>
         </>
       )}
       {/* Bildirim detayı */}
-      {bildirimModal && (
+      {seciliBildirim !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setBildirimModal(false)} />
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSeciliBildirim(null)} />
           <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-6 md:p-8 max-w-lg w-full border border-white/10 shadow-2xl shadow-[#0099ff]/10">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-11 h-11 rounded-full bg-[#0099ff]/15 flex items-center justify-center shrink-0 text-xl">📢</div>
-              <h2 className="text-base font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>Periyodik Yayın Güncellemesi</h2>
+              <h2 className="text-base font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>{BILDIRIMLER[seciliBildirim].baslik}</h2>
             </div>
             <p className="text-xs text-gray-300 leading-relaxed mb-6">
-              Zaman zaman bazı premium kanallarda orijinal yayın frekansı ve veri akışı güncellemeleri yapılmaktadır. Yayın kalitesini ve akıcılığını en üst seviyede tutmak adına sistem otomatik senkronizasyon sağlar. Bu süreçte etkilenen kanallar kısa süre içinde kendiliğinden aktif olmaktadır. Anlayışınız için teşekkür ederiz.
+              {BILDIRIMLER[seciliBildirim].metin}
             </p>
-            <button onClick={() => setBildirimModal(false)}
+            <button onClick={() => setSeciliBildirim(null)}
               className="w-full py-3 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-all">
               Anladım
             </button>
