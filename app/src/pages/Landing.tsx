@@ -369,7 +369,6 @@ export default function Landing() {
             </div>
             <style>{`.bildirim-kaydir::-webkit-scrollbar { width: 6px } .bildirim-kaydir::-webkit-scrollbar-track { background: rgba(255,255,255,0.05) } .bildirim-kaydir::-webkit-scrollbar-thumb { background: #0099ff; border-radius: 3px } .bildirim-kaydir { scrollbar-width: thin; scrollbar-color: #0099ff rgba(255,255,255,0.05) }`}</style>
           </div>
-          </div>
         </>
       )}
       {/* Bildirim detayı */}
