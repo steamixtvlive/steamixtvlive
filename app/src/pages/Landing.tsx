@@ -368,7 +368,7 @@ export default function Landing() {
               </span>
             </div>
             <div className="relative">
-            <div ref={kaydirRef} onScroll={kaydirIzle} className="bildirim-kaydir max-h-[70vh] md:max-h-[55vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
+            <div ref={kaydirRef} onScroll={kaydirIzle} className="bildirim-kaydir max-h-[42vh] md:max-h-[55vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
             {BILDIRIMLER.map((b, i) => (
               <button key={b.baslik} onClick={() => { setBildirimAcik(false); setSeciliBildirim(i) }}
                 className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3 border-b border-white/5 last:border-0">
