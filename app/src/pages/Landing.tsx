@@ -356,8 +356,8 @@ export default function Landing() {
       {/* Bildirim havuzu */}
       {bildirimAcik && (
         <>
-          <div className="hidden md:block fixed inset-0 z-40" onClick={() => setBildirimAcik(false)} />
-          <div className="relative z-40 mx-4 mt-2 md:mx-0 md:mt-0 md:fixed md:top-[70px] md:right-4 md:z-50 w-auto md:w-[320px] md:max-w-[calc(100vw-2rem)] rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border border-white/10 shadow-2xl shadow-[#0099ff]/10 overflow-hidden">
+          <div className="fixed inset-0 z-40" onClick={() => setBildirimAcik(false)} />
+          <div className="fixed top-[70px] right-4 z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border border-white/10 shadow-2xl shadow-[#0099ff]/10 overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <span className="text-sm text-white font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Bildirimler</span>
               <span className="flex items-center gap-2">
@@ -368,7 +368,7 @@ export default function Landing() {
               </span>
             </div>
             <div className="relative">
-            <div ref={kaydirRef} onScroll={kaydirIzle} className="bildirim-kaydir max-h-[42vh] md:max-h-[55vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
+            <div ref={kaydirRef} onScroll={kaydirIzle} className="bildirim-kaydir max-h-[70vh] md:max-h-[55vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
             {BILDIRIMLER.map((b, i) => (
               <button key={b.baslik} onClick={() => { setBildirimAcik(false); setSeciliBildirim(i) }}
                 className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3 border-b border-white/5 last:border-0">
