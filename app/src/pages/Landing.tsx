@@ -212,23 +212,24 @@ export default function Landing() {
   const planTrackRef = useRef<HTMLDivElement>(null)
   const [bildirimAcik, setBildirimAcik] = useState(false)
   const [seciliBildirim, setSeciliBildirim] = useState<number | null>(null)
-  const bugun = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
-  const simdi = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
   const BILDIRIMLER = [
     {
       simge: '📢',
+      tarih: '30 Eylül 2026 • 09:15',
       baslik: 'Periyodik Yayın Güncellemesi',
       ozet: 'Premium kanallarda frekans güncellemesi, dokun detayı gör.',
       metin: 'Zaman zaman bazı premium kanallarda orijinal yayın frekansı ve veri akışı güncellemeleri yapılmaktadır. Yayın kalitesini ve akıcılığını en üst seviyede tutmak adına sistem otomatik senkronizasyon sağlar. Bu süreçte etkilenen kanallar kısa süre içinde kendiliğinden aktif olmaktadır. Anlayışınız için teşekkür ederiz.',
     },
     {
       simge: '📢',
+      tarih: '30 Eylül 2026 • 11:40',
       baslik: 'Yayın Akışı ve Frekans Güncellemesi',
       ozet: 'Altyapı çalışması, kanallar kısa sürede döner.',
       metin: 'Kalite standartlarımızı korumak adına zaman zaman altyapı çalışmaları yapılmaktadır. Yapılan frekans ve veri akışı güncellemeleri nedeniyle bazı premium kanallarımız anlık olarak kapanabilir. Sistem otomatik senkronizasyonu tamamladığında kanallarınız kısa süre içinde kendiliğinden aktif olur. Anlayışınız için teşekkür ederiz.',
     },
     {
       simge: '📢',
+      tarih: '30 Eylül 2026 • 13:05',
       baslik: 'Test Yayını Nasıl İstenir?',
       ozet: 'Önce 4 test planına göz at, sonra Telegram’dan yaz.',
       metin: 'Test yayını istemek için lütfen Telegram’dan yazın. Ama önce sitedeki 4 test planına göz atın, size uygun planı seçip ona göre yazın — işleminiz çok daha hızlı tamamlanır.',
@@ -236,12 +237,14 @@ export default function Landing() {
     },
     {
       simge: '📢',
+      tarih: '30 Eylül 2026 • 15:20',
       baslik: '7.310 Kanal, 20.000+ Film & Dizi',
       ozet: 'Dev arşiv seni bekliyor.',
       metin: 'Steamix Live IPTV’de 7.310 canlı kanal ve 20.000’in üzerinde film & dizi bulunuyor. Spor, sinema, belgesel, çocuk, haber, ailecek herkesin izleyeceği bir şey var. Arşiv her hafta güncelleniyor, yeni çıkanlar listeye ekleniyor.',
     },
     {
       simge: '📢',
+      tarih: '30 Eylül 2026 • 17:45',
       baslik: 'Önerilen Playerlar',
       ozet: 'TiviMate ve ABC IPTV, kesin önerimizdir.',
       metin: 'Kesinlikle önerimizdir: TiviMate ve ABC IPTV Player. Neden mi? Kanal geçişleri hızlı, EPG tam görünüyor, 4K akış takılmadan oynuyor ve donmaya karşı kurtarma güçlü. Diğer oynatıcılarda da çalışır ama en akıcı deneyimi bu ikisinde alırsınız.',
@@ -351,6 +354,7 @@ export default function Landing() {
               <span className="text-sm text-white font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Bildirimler</span>
               <span className="text-[10px] text-gray-500">5 yeni</span>
             </div>
+            <div className="bildirim-kaydir max-h-[55vh] overflow-y-auto">
             {BILDIRIMLER.map((b, i) => (
               <button key={b.baslik} onClick={() => { setBildirimAcik(false); setSeciliBildirim(i) }}
                 className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3 border-b border-white/5 last:border-0">
@@ -358,10 +362,13 @@ export default function Landing() {
                 <span>
                   <span className="block text-xs text-white font-semibold mb-0.5">{b.baslik}</span>
                   <span className="block text-[11px] text-gray-400 leading-relaxed">{b.ozet}</span>
-                  <span className="block text-[10px] text-gray-500 mt-1">{bugun} • {simdi} • Otomatik</span>
+                  <span className="block text-[10px] text-gray-500 mt-1">{b.tarih} • Otomatik</span>
                 </span>
               </button>
             ))}
+            </div>
+            <style>{`.bildirim-kaydir::-webkit-scrollbar { width: 6px } .bildirim-kaydir::-webkit-scrollbar-track { background: rgba(255,255,255,0.05) } .bildirim-kaydir::-webkit-scrollbar-thumb { background: #0099ff; border-radius: 3px } .bildirim-kaydir { scrollbar-width: thin; scrollbar-color: #0099ff rgba(255,255,255,0.05) }`}</style>
+          </div>
           </div>
         </>
       )}
@@ -374,7 +381,7 @@ export default function Landing() {
               <div className="w-11 h-11 rounded-full bg-[#0099ff]/15 flex items-center justify-center shrink-0 text-xl" style={{ animation: 'glowPulse 2.2s ease-in-out infinite' }}>{BILDIRIMLER[seciliBildirim].simge}</div>
               <div>
                 <h2 className="text-base font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>{BILDIRIMLER[seciliBildirim].baslik}</h2>
-                <p className="text-[10px] text-gray-500">{bugun} • {simdi}</p>
+                <p className="text-[10px] text-gray-500">{BILDIRIMLER[seciliBildirim].tarih}</p>
               </div>
             </div>
             <p className="text-xs text-gray-300 leading-relaxed mb-6">
