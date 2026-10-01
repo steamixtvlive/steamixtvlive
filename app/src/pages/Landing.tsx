@@ -212,16 +212,39 @@ export default function Landing() {
   const planTrackRef = useRef<HTMLDivElement>(null)
   const [bildirimAcik, setBildirimAcik] = useState(false)
   const [seciliBildirim, setSeciliBildirim] = useState<number | null>(null)
+  const bugun = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const simdi = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
   const BILDIRIMLER = [
     {
+      simge: '📢',
       baslik: 'Periyodik Yayın Güncellemesi',
       ozet: 'Premium kanallarda frekans güncellemesi — dokun, detayı gör.',
       metin: 'Zaman zaman bazı premium kanallarda orijinal yayın frekansı ve veri akışı güncellemeleri yapılmaktadır. Yayın kalitesini ve akıcılığını en üst seviyede tutmak adına sistem otomatik senkronizasyon sağlar. Bu süreçte etkilenen kanallar kısa süre içinde kendiliğinden aktif olmaktadır. Anlayışınız için teşekkür ederiz.',
     },
     {
+      simge: '📢',
       baslik: 'Yayın Akışı ve Frekans Güncellemesi',
       ozet: 'Altyapı çalışması — kanallar kısa sürede döner.',
       metin: 'Kalite standartlarımızı korumak adına zaman zaman altyapı çalışmaları yapılmaktadır. Yapılan frekans ve veri akışı güncellemeleri nedeniyle bazı premium kanallarımız anlık olarak kapanabilir. Sistem otomatik senkronizasyonu tamamladığında kanallarınız kısa süre içinde kendiliğinden aktif olur. Anlayışınız için teşekkür ederiz.',
+    },
+    {
+      simge: '✈️',
+      baslik: 'Test Yayını Nasıl İstenir?',
+      ozet: 'Önce 4 test planına göz at, sonra Telegram’dan yaz.',
+      metin: 'Test yayını istemek için lütfen Telegram’dan yazın. Ama önce sitedeki 4 test planına göz atın, size uygun planı seçip ona göre yazın — işleminiz çok daha hızlı tamamlanır.',
+      buton: true,
+    },
+    {
+      simge: '🎬',
+      baslik: '7.310 Kanal, 20.000+ Film & Dizi',
+      ozet: 'Dev arşiv seni bekliyor.',
+      metin: 'Steamix Live IPTV’de 7.310 canlı kanal ve 20.000’in üzerinde film & dizi bulunuyor. Spor, sinema, belgesel, çocuk, haber — ailecek herkesin izleyeceği bir şey var. Arşiv her hafta güncelleniyor, yeni çıkanlar listeye ekleniyor.',
+    },
+    {
+      simge: '📺',
+      baslik: 'Önerilen Playerlar',
+      ozet: 'TiviMate ve ABC IPTV — kesin önerimizdir.',
+      metin: 'Kesinlikle önerimizdir: TiviMate ve ABC IPTV Player. Neden mi? Kanal geçişleri hızlı, EPG tam görünüyor, 4K akış takılmadan oynuyor ve donmaya karşı kurtarma güçlü. Diğer oynatıcılarda da çalışır ama en akıcı deneyimi bu ikisinde alırsınız.',
     },
   ]
   const DEMO_KLIPLER = [
@@ -326,16 +349,16 @@ export default function Landing() {
           <div className="fixed top-[70px] right-4 z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border border-white/10 shadow-2xl shadow-[#0099ff]/10 overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <span className="text-sm text-white font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Bildirimler</span>
-              <span className="text-[10px] text-gray-500">2 yeni</span>
+              <span className="text-[10px] text-gray-500">5 yeni</span>
             </div>
             {BILDIRIMLER.map((b, i) => (
               <button key={b.baslik} onClick={() => { setBildirimAcik(false); setSeciliBildirim(i) }}
                 className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3 border-b border-white/5 last:border-0">
-                <span className="text-lg shrink-0">📢</span>
+                <span className="text-lg shrink-0">{b.simge}</span>
                 <span>
                   <span className="block text-xs text-white font-semibold mb-0.5">{b.baslik}</span>
                   <span className="block text-[11px] text-gray-400 leading-relaxed">{b.ozet}</span>
-                  <span className="block text-[10px] text-[#0099ff] mt-1">Otomatik • az önce</span>
+                  <span className="block text-[10px] text-gray-500 mt-1">{bugun} • {simdi} • Otomatik</span>
                 </span>
               </button>
             ))}
@@ -348,12 +371,21 @@ export default function Landing() {
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSeciliBildirim(null)} />
           <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-6 md:p-8 max-w-lg w-full border border-white/10 shadow-2xl shadow-[#0099ff]/10">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-11 h-11 rounded-full bg-[#0099ff]/15 flex items-center justify-center shrink-0 text-xl">📢</div>
-              <h2 className="text-base font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>{BILDIRIMLER[seciliBildirim].baslik}</h2>
+              <div className="w-11 h-11 rounded-full bg-[#0099ff]/15 flex items-center justify-center shrink-0 text-xl" style={{ animation: 'glowPulse 2.2s ease-in-out infinite' }}>{BILDIRIMLER[seciliBildirim].simge}</div>
+              <div>
+                <h2 className="text-base font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>{BILDIRIMLER[seciliBildirim].baslik}</h2>
+                <p className="text-[10px] text-gray-500">{bugun} • {simdi}</p>
+              </div>
             </div>
             <p className="text-xs text-gray-300 leading-relaxed mb-6">
               {BILDIRIMLER[seciliBildirim].metin}
             </p>
+            {'buton' in BILDIRIMLER[seciliBildirim] && BILDIRIMLER[seciliBildirim].buton && (
+              <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(0,153,255,0.5)] transition-all flex items-center justify-center gap-2 mb-3">
+                <img src="/images/telegram.png" alt="Telegram" className="w-6 h-6 shrink-0" /> Telegram’a Yaz
+              </a>
+            )}
             <button onClick={() => setSeciliBildirim(null)}
               className="w-full py-3 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-all">
               Anladım
