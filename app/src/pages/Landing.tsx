@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck } from 'lucide-react'
+import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck, Bell } from 'lucide-react'
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
 
@@ -210,6 +210,8 @@ export default function Landing() {
   const [seciliTest, setSeciliTest] = useState<typeof TESTLER[0] | null>(null)
   const [planSlide, setPlanSlide] = useState(0)
   const planTrackRef = useRef<HTMLDivElement>(null)
+  const [bildirimAcik, setBildirimAcik] = useState(false)
+  const [bildirimModal, setBildirimModal] = useState(false)
   const DEMO_KLIPLER = [
     { ad: 'Spor', img: '/images/demo/spor.jpg' },
     { ad: 'Spor', img: '/images/bein-lig.jpg' },
@@ -271,7 +273,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
           <a href="#top" className="flex items-center gap-2">
             <img src="/images/steamix-logo.jpg" alt="" className="w-8 h-8 rounded-lg" />
-            <span className="text-base md:text-lg font-bold text-white tracking-wider" style={{ fontFamily: 'Orbitron, sans-serif' }}>Steamix <span className="text-[#0099ff]">TV</span></span>
+            <span className="text-base md:text-lg font-bold text-white tracking-wider" style={{ fontFamily: 'Orbitron, sans-serif' }}>Steamix <span className="text-[#0099ff]">Live IPTV</span></span>
             <RendirBadge />
           </a>
           <div className="hidden md:flex items-center gap-1 text-sm">
@@ -281,10 +283,20 @@ export default function Landing() {
             <a href="#uygulama" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all">Uygulama</a>
             <button onClick={() => { setPlanSlide(0); setPlanModal(true) }} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all" style={{ animation: 'paketVurgu 2.2s ease-in-out infinite' }}>Paketleri İncele</button>
             <a href="#test" className="ml-2 px-4 py-1.5 rounded-lg text-sm text-white bg-gradient-to-r from-[#0099ff] to-blue-600 hover:shadow-[0_0_20px_rgba(0,153,255,0.5)] transition-all">Test Al</a>
+            <button onClick={() => setBildirimAcik(v => !v)} aria-label="Bildirimler" className="relative ml-1 w-9 h-9 rounded-lg bg-white/5 border border-[#0099ff]/30 flex items-center justify-center text-gray-300 hover:text-white hover:border-[#0099ff]/60 hover:shadow-[0_0_15px_rgba(0,153,255,0.4)] transition-all">
+              <Bell className="w-4 h-4" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-black animate-pulse" />
+            </button>
           </div>
-          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-gray-300">
-            {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          <div className="flex md:hidden items-center gap-2">
+            <button onClick={() => setBildirimAcik(v => !v)} aria-label="Bildirimler" className="relative w-9 h-9 rounded-lg bg-white/5 border border-[#0099ff]/30 flex items-center justify-center text-gray-300">
+              <Bell className="w-4 h-4" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-black animate-pulse" />
+            </button>
+            <button onClick={() => setMenuOpen(!menuOpen)} className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-gray-300">
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
         {menuOpen && (
           <div className="md:hidden border-t border-white/10 bg-black/70 px-4 py-3 space-y-1 text-sm">
@@ -295,6 +307,46 @@ export default function Landing() {
           </div>
         )}
       </nav>
+      {/* Bildirim havuzu */}
+      {bildirimAcik && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setBildirimAcik(false)} />
+          <div className="fixed top-[70px] right-4 z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border border-white/10 shadow-2xl shadow-[#0099ff]/10 overflow-hidden">
+            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+              <span className="text-sm text-white font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Bildirimler</span>
+              <span className="text-[10px] text-gray-500">1 yeni</span>
+            </div>
+            <button onClick={() => { setBildirimAcik(false); setBildirimModal(true) }}
+              className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3">
+              <span className="text-lg shrink-0">📢</span>
+              <span>
+                <span className="block text-xs text-white font-semibold mb-0.5">Periyodik Yayın Güncellemesi</span>
+                <span className="block text-[11px] text-gray-400 leading-relaxed">Premium kanallarda frekans güncellemesi — dokun, detayı gör.</span>
+                <span className="block text-[10px] text-[#0099ff] mt-1">Otomatik • az önce</span>
+              </span>
+            </button>
+          </div>
+        </>
+      )}
+      {/* Bildirim detayı */}
+      {bildirimModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setBildirimModal(false)} />
+          <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-6 md:p-8 max-w-lg w-full border border-white/10 shadow-2xl shadow-[#0099ff]/10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 rounded-full bg-[#0099ff]/15 flex items-center justify-center shrink-0 text-xl">📢</div>
+              <h2 className="text-base font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>Periyodik Yayın Güncellemesi</h2>
+            </div>
+            <p className="text-xs text-gray-300 leading-relaxed mb-6">
+              Zaman zaman bazı premium kanallarda orijinal yayın frekansı ve veri akışı güncellemeleri yapılmaktadır. Yayın kalitesini ve akıcılığını en üst seviyede tutmak adına sistem otomatik senkronizasyon sağlar. Bu süreçte etkilenen kanallar kısa süre içinde kendiliğinden aktif olmaktadır. Anlayışınız için teşekkür ederiz.
+            </p>
+            <button onClick={() => setBildirimModal(false)}
+              className="w-full py-3 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-all">
+              Anladım
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <div id="top" className="relative z-10 flex-1 flex items-center px-4 md:px-12 py-6 md:py-14">
@@ -304,8 +356,8 @@ export default function Landing() {
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
           <span className="text-xs text-gray-300 tracking-widest uppercase">Canlı • Yüzlerce Kanal • Yüzlerce Film & Dizi</span>
         </div>
-        <h1 className="text-3xl md:text-6xl font-bold text-white mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          Steamix <span className="text-[#0099ff]">TV</span>
+          <h1 className="text-3xl md:text-6xl font-bold text-white mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          Steamix <span className="text-[#0099ff]">Live IPTV</span>
         </h1>
         <p className="text-base md:text-2xl text-gray-300 leading-relaxed font-light">
           Sınırsız eğlence, kesintisiz keyif.
