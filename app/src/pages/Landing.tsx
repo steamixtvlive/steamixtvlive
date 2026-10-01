@@ -212,6 +212,14 @@ export default function Landing() {
   const planTrackRef = useRef<HTMLDivElement>(null)
   const [bildirimAcik, setBildirimAcik] = useState(false)
   const [seciliBildirim, setSeciliBildirim] = useState<number | null>(null)
+  const kaydirRef = useRef<HTMLDivElement>(null)
+  const [kaydirOran, setKaydirOran] = useState(0)
+  const kaydirIzle = () => {
+    const el = kaydirRef.current
+    if (!el) return
+    const max = el.scrollHeight - el.clientHeight
+    setKaydirOran(max > 0 ? el.scrollTop / max : 0)
+  }
   const BILDIRIMLER = [
     {
       simge: '📢',
@@ -354,7 +362,8 @@ export default function Landing() {
               <span className="text-sm text-white font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Bildirimler</span>
               <span className="text-[10px] text-gray-500">5 yeni</span>
             </div>
-            <div className="bildirim-kaydir max-h-[45vh] md:max-h-[55vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
+            <div className="relative">
+            <div ref={kaydirRef} onScroll={kaydirIzle} className="bildirim-kaydir max-h-[45vh] md:max-h-[55vh] overflow-y-auto pr-3" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
             {BILDIRIMLER.map((b, i) => (
               <button key={b.baslik} onClick={() => { setBildirimAcik(false); setSeciliBildirim(i) }}
                 className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3 border-b border-white/5 last:border-0">
@@ -366,6 +375,10 @@ export default function Landing() {
                 </span>
               </button>
             ))}
+            </div>
+            <div className="absolute top-2 bottom-2 right-1 w-1.5 rounded-full bg-white/10 pointer-events-none">
+              <div className="w-full rounded-full bg-[#0099ff] shadow-[0_0_8px_rgba(0,153,255,0.8)]" style={{ height: '25%', transform: `translateY(${kaydirOran * 300}%)` }} />
+            </div>
             </div>
             <style>{`.bildirim-kaydir::-webkit-scrollbar { width: 6px } .bildirim-kaydir::-webkit-scrollbar-track { background: rgba(255,255,255,0.05) } .bildirim-kaydir::-webkit-scrollbar-thumb { background: #0099ff; border-radius: 3px } .bildirim-kaydir { scrollbar-width: thin; scrollbar-color: #0099ff rgba(255,255,255,0.05) }`}</style>
           </div>
