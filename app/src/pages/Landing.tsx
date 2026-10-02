@@ -111,12 +111,12 @@ const YORUMLAR = [
 ]
 
 const SSS = [
-  { s: 'Aboneliği nasıl satın alırım?', c: 'Paketler bölümünden size uygun planın Satın Al butonuna basın, Shopier üzerinden ödemeyi tamamlayın ve ekran görüntüsünü mail adresimize gönderin. Onay sonrası giriş bilgileriniz en kısa sürede teslim edilir.' },
+  { s: 'Aboneliği nasıl satın alırım?', c: 'Paketler bölümünden size uygun planın Satın Al butonuna basın, Shopier üzerinden ödemeyi tamamlayın ve ekran görüntüsünü Telegram 7/24 destek hattına gönderin. Onay sonrası giriş bilgileriniz en kısa sürede teslim edilir.' },
   { s: 'Kurulum zor mu, kaç dakika sürer?', c: 'Hayır. Uygulamayı indirip size gönderilen giriş bilgileriyle oturum açmanız yeterli. Ortalama 10 dakikada rutin bir kurulum ile izlemeye başlarsınız, takıldığınız yerde 7/24 destek yanınızda.' },
   { s: 'Hangi cihazlarda çalışır?', c: 'Android telefon, tablet, Smart TV, TV Box, Windows Bluestacks emülatör gibi cihazlarda çalışır. En az 100 Mbps internet ve donanımı iyi güncel bir cihaz önerilir.' },
   { s: 'Yayınlar donuyor mu?', c: 'Sunucumuz 4K kapasitelidir ve donanımınıza uygun çözünürlükteki kanalı seçtiğinizde takılma yaşamazsınız. Kanallar çözünürlüğe göre sınıflandırılmıştır.' },
   { s: 'Test yayını var mı?', c: 'Evet. 3 saatlik, 12 saatlik ve 24 saatlik ücretsiz test seçenekleri ile 7 günlük VIP test mevcuttur. Test bölümünden talebinizi iletebilirsiniz.' },
-  { s: 'Ödeme güvenli mi?', c: 'Ödemeler Shopier altyapısıyla alınır, kart bilgileriniz bize ulaşmaz. Dekontu mail ile iletmeniz yeterlidir.' },
+  { s: 'Ödeme güvenli mi?', c: 'Ödemeler Shopier altyapısıyla alınır, kart bilgileriniz bize ulaşmaz. Dekontu Telegram ile iletmeniz yeterlidir.' },
   { s: 'Aboneliğimi nasıl yenilerim?', c: 'Siteye gidip Paketleri İncele seçeneğine tıklayarak yeni dönem planınızı seçip aynı adımlarla yenileyebilirsiniz.' },
 ]
 
