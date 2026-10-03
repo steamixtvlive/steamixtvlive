@@ -5,7 +5,7 @@ import AnimatedBackground from '@/sections/AnimatedBackground'
 import MaintenanceOverlay from '@/sections/MaintenanceOverlay'
 
 // true = bakım ekranı aktif
-const MAINTENANCE_MODE = false
+const MAINTENANCE_MODE = true
 
 export default function App() {
   if (MAINTENANCE_MODE) {
