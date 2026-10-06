@@ -513,16 +513,6 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Slogan şeridi */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 pb-2 w-full">
-        <div className="text-center rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 md:py-5">
-          <p className="text-base md:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-            Kumandayla Koltuktan, <span className="text-[#0099ff]">Dokunarak Cebinden</span>
-          </p>
-          <p className="text-xs md:text-sm text-gray-400">TV'de maç, telefonda dizi — Steamix TV arayüzü her ekranda aynı akıcılıkta.</p>
-        </div>
-      </div>
-
       {/* İstatistik barı */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 py-4 md:py-10 w-full">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
