@@ -252,10 +252,10 @@ export default function Landing() {
     },
     {
       simge: '📢',
-      tarih: '30 Eylül 2026 • 17:45',
-      baslik: 'Önerilen Playerlar',
-      ozet: 'TiviMate ve ABC IPTV, kesin önerimizdir.',
-      metin: 'Kesinlikle önerimizdir: TiviMate ve ABC IPTV Player. Neden mi? Kanal geçişleri hızlı, EPG tam görünüyor, 4K akış takılmadan oynuyor ve donmaya karşı kurtarma güçlü. Diğer oynatıcılarda da çalışır ama en akıcı deneyimi bu ikisinde alırsınız.',
+      tarih: '6 Ekim 2026 • 14:20',
+      baslik: 'Liste Güncelleme Sıklığı',
+      ozet: 'Player’da güncelleme aralığını 1 saate ayarlayın.',
+      metin: 'Oynatma listemiz kalite standartları gereği sürekli otomatik yenilenmektedir. ABC IPTV Player ve benzeri oynatıcılarda liste güncelleme sıklığını lütfen 1 saatte bir olacak şekilde ayarlayın — güncel liste, kesintisiz keyif demektir.',
     },
   ]
   const DEMO_KLIPLER = [
@@ -361,7 +361,7 @@ export default function Landing() {
             <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <span className="text-sm text-white font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Bildirimler</span>
               <span className="flex items-center gap-2">
-                <span className="text-[10px] text-gray-500">5 yeni</span>
+                <span className="text-[10px] text-gray-500">6 yeni</span>
                 <button onClick={() => setBildirimAcik(false)} aria-label="Kapat" className="md:hidden w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -769,6 +769,27 @@ export default function Landing() {
           <p className="text-[11px] text-gray-500 text-center leading-relaxed">
             Her player'da izleyebilirsiniz — önerimiz öncelikle <a href="https://play.google.com/store/search?q=ABC%20Player&c=apps" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">ABC Player</a> ve <a href="https://play.google.com/store/apps/details?id=ar.tvplayer.tv" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">TiviMate</a>, ikisini de Google Play'den indirebilirsiniz.
           </p>
+        </div>
+      </div>
+
+      {/* Liste yenileme */}
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-4 md:py-6 w-full">
+        <div className="flex flex-col md:flex-row items-center gap-5 p-4 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
+          <div className="w-full md:w-1/2 shrink-0">
+            <div className="relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]" style={{ animation: 'listeGlow 3s ease-in-out infinite' }}>
+              <img src="/images/liste-yenileme.jpg" alt="Otomatik liste yenileme ayarı" className="w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+            </div>
+            <style>{`@keyframes listeGlow { 0%,100% { box-shadow: 0 0 15px rgba(0,153,255,0.2) } 50% { box-shadow: 0 0 35px rgba(0,153,255,0.45) } }`}</style>
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="text-lg md:text-xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+              Listeler <span className="text-[#0099ff]">Otomatik Yenilenir</span>
+            </h3>
+            <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
+              Canlı, film ve dizi listelerimiz kalite standartları gereği <span className="text-white font-semibold">sürekli otomatik yenilenir.</span> ABC IPTV Player ve benzeri oynatıcılarda <span className="text-amber-300 font-semibold">liste güncelleme sıklığını 1 saatte bir</span> olacak şekilde ayarlayın — böylece her zaman güncel listeyle izlersiniz.
+            </p>
+          </div>
         </div>
       </div>
 
