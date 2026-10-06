@@ -469,36 +469,43 @@ export default function Landing() {
 
       {/* Liste yenileme */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 py-3 md:py-4 w-full">
-        <div className="flex flex-col md:flex-row items-center gap-4 p-3 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
-          <div className="w-full md:w-2/5 shrink-0">
-            <div className="relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]" style={{ animation: 'listeGlow 3s ease-in-out infinite' }}>
-              <img src="/images/liste-yenileme.jpg" alt="Otomatik liste yenileme ayarı" className="w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
-              <span className="absolute text-3xl md:text-4xl text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.9)] pointer-events-none" style={{ left: '29%', top: '51%', animation: 'okSaga 1.1s ease-in-out infinite' }}>➤</span>
-            </div>
-            <style>{`@keyframes listeGlow { 0%,100% { box-shadow: 0 0 15px rgba(0,153,255,0.2) } 50% { box-shadow: 0 0 35px rgba(0,153,255,0.45) } } @keyframes okSaga { 0%,100% { transform: translateX(0) scale(1); opacity: 1 } 50% { transform: translateX(10px) scale(1.2); opacity: 0.7 } }`}</style>
-          </div>
-          <div className="flex-1 text-left">
-            <h3 className="text-lg md:text-xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+        <div className="p-3 md:p-4 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
+          <div className="text-left mb-3">
+            <h3 className="text-lg md:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Orbitron, sans-serif' }}>
               Listeler <span className="text-[#0099ff]">Otomatik Yenilenir</span>
             </h3>
             <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
-              Canlı, film ve dizi listelerimiz kalite standartları gereği <span className="text-white font-semibold">sürekli otomatik yenilenir.</span> ABC IPTV Player ve benzeri oynatıcılarda <span className="text-amber-300 font-semibold">liste güncelleme sıklığını 1 saatte bir</span> olacak şekilde ayarlayın — böylece her zaman güncel listeyle izlersiniz.
+              Canlı, film ve dizi listelerimiz kalite standartları gereği <span className="text-white font-semibold">sürekli otomatik yenilenir.</span> Player’ınızda <span className="text-amber-300 font-semibold">güncelleme sıklığını 1 saatte bir</span> seçin — hep güncel liste, kesintisiz keyif.
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* beIN ince şerit */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 py-2 w-full">
-        <div className="group relative flex items-center gap-3 px-3 py-2 rounded-xl bg-gradient-to-r from-[#0099ff]/[0.1] to-transparent border border-[#0099ff]/25 overflow-hidden">
-          <img src="/images/bein-lig.jpg" alt="Süper Lig" className="w-20 md:w-24 shrink-0 rounded-lg object-cover border border-white/15" />
-          <p className="text-[11px] md:text-xs text-gray-300 leading-relaxed flex-1">
-            <span className="text-white font-bold">Süper Lig Heyecanı</span> — tuttuğun takımın tüm maçları hem evinde hem cebinde, düşük gecikmeyle, 4K kaliteyle.
-          </p>
-          <span className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            style={{ animation: 'beinParla 3s ease-in-out infinite' }} />
-          <style>{`@keyframes beinParla { 0% { transform: translateX(-150%) skewX(-20deg) } 100% { transform: translateX(350%) skewX(-20deg) } }`}</style>
+          <div className="flex flex-col md:flex-row items-stretch gap-3">
+            <div className="w-full md:w-2/5 shrink-0">
+              <div className="relative rounded-xl overflow-hidden border border-white/15 h-full" style={{ animation: 'listeGlow 3s ease-in-out infinite' }}>
+                <img src="/images/bein-lig.jpg" alt="Süper Lig" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+              </div>
+            </div>
+            <div className="flex-1 rounded-xl overflow-hidden bg-black border border-white/15">
+              <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between bg-white/[0.03]">
+                <span className="text-[11px] text-white font-bold tracking-wider">OTOMATİK YENİLEME</span>
+                <span className="flex items-center gap-1.5 text-[10px] text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />Açık</span>
+              </div>
+              <div className="p-2.5 space-y-1.5">
+                {([['1 saat', true], ['3 saat', false], ['5 saat', false], ['7 saat', false], ['12 saat', false], ['24 saat', false]] as [string, boolean][]).map(([t, secili]) => (
+                  <div key={t} className={`relative flex items-center gap-2.5 px-3 py-1.5 rounded-lg border transition-all ${secili ? 'bg-[#0099ff]/15 border-[#0099ff]/60 shadow-[0_0_15px_rgba(0,153,255,0.3)]' : 'bg-white/[0.02] border-white/10'}`}>
+                    <span className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center ${secili ? 'border-[#0099ff]' : 'border-gray-600'}`}>
+                      {secili && <span className="w-1.5 h-1.5 rounded-full bg-[#0099ff]" />}
+                    </span>
+                    <span className={`text-[11px] ${secili ? 'text-white font-bold' : 'text-gray-400'}`}>{t}</span>
+                    {secili && (
+                      <span className="absolute -left-1 top-1/2 -translate-y-1/2 -translate-x-full text-lg text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.9)]" style={{ animation: 'okSaga 1.1s ease-in-out infinite' }}>➤</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <style>{`@keyframes listeGlow { 0%,100% { box-shadow: 0 0 15px rgba(0,153,255,0.2) } 50% { box-shadow: 0 0 35px rgba(0,153,255,0.45) } } @keyframes okSaga { 0%,100% { transform: translate(-100%,-50%) scale(1); opacity: 1 } 50% { transform: translate(calc(-100% + 8px),-50%) scale(1.25); opacity: 0.75 } }`}</style>
         </div>
       </div>
 
