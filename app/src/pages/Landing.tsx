@@ -223,6 +223,14 @@ export default function Landing() {
   const BILDIRIMLER = [
     {
       simge: '📢',
+      tarih: '6 Ekim 2026 • 14:20',
+      yeni: true,
+      baslik: 'Liste Güncelleme Sıklığı',
+      ozet: 'Player’da güncelleme aralığını 1 saate ayarlayın.',
+      metin: 'Oynatma listemiz kalite standartları gereği sürekli otomatik yenilenmektedir. ABC IPTV Player ve benzeri oynatıcılarda liste güncelleme sıklığını lütfen 1 saatte bir olacak şekilde ayarlayın — güncel liste, kesintisiz keyif demektir.',
+    },
+    {
+      simge: '📢',
       tarih: '30 Eylül 2026 • 09:15',
       baslik: 'Periyodik Yayın Güncellemesi',
       ozet: 'Premium kanallarda frekans güncellemesi, dokun detayı gör.',
@@ -245,17 +253,10 @@ export default function Landing() {
     },
     {
       simge: '📢',
-      tarih: '30 Eylül 2026 • 15:20',
-      baslik: '7.310 Kanal, 20.000+ Film & Dizi',
-      ozet: 'Dev arşiv seni bekliyor.',
-      metin: 'Steamix Live IPTV’de 7.310 canlı kanal ve 20.000’in üzerinde film & dizi bulunuyor. Spor, sinema, belgesel, çocuk, haber, ailecek herkesin izleyeceği bir şey var. Arşiv her hafta güncelleniyor, yeni çıkanlar listeye ekleniyor.',
-    },
-    {
-      simge: '📢',
-      tarih: '6 Ekim 2026 • 14:20',
-      baslik: 'Liste Güncelleme Sıklığı',
-      ozet: 'Player’da güncelleme aralığını 1 saate ayarlayın.',
-      metin: 'Oynatma listemiz kalite standartları gereği sürekli otomatik yenilenmektedir. ABC IPTV Player ve benzeri oynatıcılarda liste güncelleme sıklığını lütfen 1 saatte bir olacak şekilde ayarlayın — güncel liste, kesintisiz keyif demektir.',
+      tarih: '30 Eylül 2026 • 17:45',
+      baslik: 'Önerilen Playerlar',
+      ozet: 'TiviMate ve ABC IPTV, kesin önerimizdir.',
+      metin: 'Kesinlikle önerimizdir: TiviMate ve ABC IPTV Player. Neden mi? Kanal geçişleri hızlı, EPG tam görünüyor, 4K akış takılmadan oynuyor ve donmaya karşı kurtarma güçlü. Diğer oynatıcılarda da çalışır ama en akıcı deneyimi bu ikisinde alırsınız.',
     },
   ]
   const DEMO_KLIPLER = [
@@ -374,7 +375,9 @@ export default function Landing() {
                 className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3 border-b border-white/5 last:border-0">
                 <span className="text-lg shrink-0">{b.simge}</span>
                 <span>
-                  <span className="block text-xs text-white font-semibold mb-0.5">{b.baslik}</span>
+                  <span className="flex items-center gap-1.5 text-xs text-white font-semibold mb-0.5">{b.baslik}
+                    {'yeni' in b && b.yeni && (<span className="px-1.5 py-px rounded text-[9px] font-bold bg-[#0099ff] text-white animate-pulse">YENİ</span>)}
+                  </span>
                   <span className="block text-[11px] text-gray-400 leading-relaxed">{b.ozet}</span>
                   <span className="block text-[10px] text-gray-500 mt-1">{b.tarih} • Otomatik</span>
                 </span>
@@ -460,6 +463,28 @@ export default function Landing() {
               <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/20 pointer-events-none" />
               <style>{`@keyframes heroYakin { 0% { transform: scale(1) } 100% { transform: scale(1.08) } }`}</style>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Liste yenileme */}
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-3 md:py-4 w-full">
+        <div className="flex flex-col md:flex-row items-center gap-4 p-3 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
+          <div className="w-full md:w-2/5 shrink-0">
+            <div className="relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]" style={{ animation: 'listeGlow 3s ease-in-out infinite' }}>
+              <img src="/images/liste-yenileme.jpg" alt="Otomatik liste yenileme ayarı" className="w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+              <span className="absolute text-2xl md:text-3xl text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.9)] pointer-events-none" style={{ left: '26%', top: '46%', animation: 'okSaga 1.1s ease-in-out infinite' }}>➤</span>
+            </div>
+            <style>{`@keyframes listeGlow { 0%,100% { box-shadow: 0 0 15px rgba(0,153,255,0.2) } 50% { box-shadow: 0 0 35px rgba(0,153,255,0.45) } } @keyframes okSaga { 0%,100% { transform: translateX(0) scale(1); opacity: 1 } 50% { transform: translateX(10px) scale(1.2); opacity: 0.7 } }`}</style>
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="text-lg md:text-xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+              Listeler <span className="text-[#0099ff]">Otomatik Yenilenir</span>
+            </h3>
+            <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
+              Canlı, film ve dizi listelerimiz kalite standartları gereği <span className="text-white font-semibold">sürekli otomatik yenilenir.</span> ABC IPTV Player ve benzeri oynatıcılarda <span className="text-amber-300 font-semibold">liste güncelleme sıklığını 1 saatte bir</span> olacak şekilde ayarlayın — böylece her zaman güncel listeyle izlersiniz.
+            </p>
           </div>
         </div>
       </div>
@@ -769,27 +794,6 @@ export default function Landing() {
           <p className="text-[11px] text-gray-500 text-center leading-relaxed">
             Her player'da izleyebilirsiniz — önerimiz öncelikle <a href="https://play.google.com/store/search?q=ABC%20Player&c=apps" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">ABC Player</a> ve <a href="https://play.google.com/store/apps/details?id=ar.tvplayer.tv" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">TiviMate</a>, ikisini de Google Play'den indirebilirsiniz.
           </p>
-        </div>
-      </div>
-
-      {/* Liste yenileme */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 py-4 md:py-6 w-full">
-        <div className="flex flex-col md:flex-row items-center gap-5 p-4 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
-          <div className="w-full md:w-1/2 shrink-0">
-            <div className="relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]" style={{ animation: 'listeGlow 3s ease-in-out infinite' }}>
-              <img src="/images/liste-yenileme.jpg" alt="Otomatik liste yenileme ayarı" className="w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
-            </div>
-            <style>{`@keyframes listeGlow { 0%,100% { box-shadow: 0 0 15px rgba(0,153,255,0.2) } 50% { box-shadow: 0 0 35px rgba(0,153,255,0.45) } }`}</style>
-          </div>
-          <div className="flex-1 text-left">
-            <h3 className="text-lg md:text-xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-              Listeler <span className="text-[#0099ff]">Otomatik Yenilenir</span>
-            </h3>
-            <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
-              Canlı, film ve dizi listelerimiz kalite standartları gereği <span className="text-white font-semibold">sürekli otomatik yenilenir.</span> ABC IPTV Player ve benzeri oynatıcılarda <span className="text-amber-300 font-semibold">liste güncelleme sıklığını 1 saatte bir</span> olacak şekilde ayarlayın — böylece her zaman güncel listeyle izlersiniz.
-            </p>
-          </div>
         </div>
       </div>
 
