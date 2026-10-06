@@ -223,14 +223,6 @@ export default function Landing() {
   const BILDIRIMLER = [
     {
       simge: '📢',
-      tarih: '6 Ekim 2026 • 14:20',
-      yeni: true,
-      baslik: 'Liste Güncelleme Sıklığı',
-      ozet: 'Player’da güncelleme aralığını 1 saate ayarlayın.',
-      metin: 'Oynatma listemiz kalite standartları gereği sürekli otomatik yenilenmektedir. ABC IPTV Player ve benzeri oynatıcılarda liste güncelleme sıklığını lütfen 1 saatte bir olacak şekilde ayarlayın — güncel liste, kesintisiz keyif demektir.',
-    },
-    {
-      simge: '📢',
       tarih: '30 Eylül 2026 • 09:15',
       baslik: 'Periyodik Yayın Güncellemesi',
       ozet: 'Premium kanallarda frekans güncellemesi, dokun detayı gör.',
@@ -362,7 +354,7 @@ export default function Landing() {
             <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <span className="text-sm text-white font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>Bildirimler</span>
               <span className="flex items-center gap-2">
-                <span className="text-[10px] text-gray-500">6 yeni</span>
+                <span className="text-[10px] text-gray-500">5 yeni</span>
                 <button onClick={() => setBildirimAcik(false)} aria-label="Kapat" className="md:hidden w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -375,9 +367,7 @@ export default function Landing() {
                 className="w-full text-left px-4 py-3.5 hover:bg-white/5 transition-all flex items-start gap-3 border-b border-white/5 last:border-0">
                 <span className="text-lg shrink-0">{b.simge}</span>
                 <span>
-                  <span className="flex items-center gap-1.5 text-xs text-white font-semibold mb-0.5">{b.baslik}
-                    {'yeni' in b && b.yeni && (<span className="px-1.5 py-px rounded text-[9px] font-bold bg-[#0099ff] text-white animate-pulse">YENİ</span>)}
-                  </span>
+                  <span className="block text-xs text-white font-semibold mb-0.5">{b.baslik}</span>
                   <span className="block text-[11px] text-gray-400 leading-relaxed">{b.ozet}</span>
                   <span className="block text-[10px] text-gray-500 mt-1">{b.tarih} • Otomatik</span>
                 </span>
