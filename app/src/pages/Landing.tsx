@@ -467,6 +467,29 @@ export default function Landing() {
         </div>
       </div>
 
+      {/* beIN şeridi */}
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-3 md:py-4 w-full">
+        <div className="flex flex-col md:flex-row items-center gap-4 p-3 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
+          <div className="w-full md:w-1/2 shrink-0">
+            <div className="group relative rounded-xl overflow-hidden border border-white/15 shadow-[0_0_30px_rgba(0,153,255,0.25)]">
+              <img src="/images/bein-lig.jpg" alt="Süper Lig beIN SPORTS" className="w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+              <span className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ animation: 'beinParla 3s ease-in-out infinite' }} />
+              <style>{`@keyframes beinParla { 0% { transform: translateX(-150%) skewX(-20deg) } 100% { transform: translateX(350%) skewX(-20deg) } }`}</style>
+            </div>
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="text-lg md:text-xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+              Süper Lig <span className="text-[#0099ff]">Heyecanı</span>
+            </h3>
+            <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
+              Tuttuğun takımın tüm maçları hem evinde hem cebinde, düşük gecikmeyle, 4K kaliteyle.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Liste yenileme */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 py-3 md:py-4 w-full">
         <div className="p-3 md:p-4 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
@@ -506,19 +529,6 @@ export default function Landing() {
             </div>
           </div>
           <style>{`@keyframes listeGlow { 0%,100% { box-shadow: 0 0 15px rgba(0,153,255,0.2) } 50% { box-shadow: 0 0 35px rgba(0,153,255,0.45) } } @keyframes okSaga { 0%,100% { transform: translate(-100%,-50%) scale(1); opacity: 1 } 50% { transform: translate(calc(-100% + 6px),-50%) scale(1.25); opacity: 0.75 } }`}</style>
-        </div>
-      </div>
-
-      {/* beIN ince şerit */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 py-2 w-full">
-        <div className="group relative flex items-center gap-3 px-3 py-2 rounded-xl bg-gradient-to-r from-[#0099ff]/[0.1] to-transparent border border-[#0099ff]/25 overflow-hidden">
-          <img src="/images/bein-lig.jpg" alt="Süper Lig" className="w-20 md:w-24 shrink-0 rounded-lg object-cover border border-white/15" />
-          <p className="text-[11px] md:text-xs text-gray-300 leading-relaxed flex-1">
-            <span className="text-white font-bold">Süper Lig Heyecanı</span> — tuttuğun takımın tüm maçları hem evinde hem cebinde, düşük gecikmeyle, 4K kaliteyle.
-          </p>
-          <span className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            style={{ animation: 'beinParla 3s ease-in-out infinite' }} />
-          <style>{`@keyframes beinParla { 0% { transform: translateX(-150%) skewX(-20deg) } 100% { transform: translateX(350%) skewX(-20deg) } }`}</style>
         </div>
       </div>
 
