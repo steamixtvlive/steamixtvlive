@@ -513,18 +513,6 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Liste yenileme */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 py-3 md:py-4 w-full">
-        <div className="p-3 md:p-4 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/25">
-          <h3 className="text-lg md:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-            Listeler <span className="text-[#0099ff]">Otomatik Yenilenir</span>
-          </h3>
-          <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
-            Canlı, film ve dizi listelerimiz kalite standartları gereği <span className="text-white font-semibold">sürekli otomatik yenilenir.</span> Player’ınızda <span className="text-amber-300 font-semibold">güncelleme sıklığını 1 saatte bir</span> seçin, hep güncel liste, kesintisiz keyif.
-          </p>
-        </div>
-      </div>
-
       {/* Slogan şeridi */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 pb-2 w-full">
         <div className="text-center rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 md:py-5">
