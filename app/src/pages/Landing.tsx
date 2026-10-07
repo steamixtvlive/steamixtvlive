@@ -16,7 +16,7 @@ function mobilMi() {
 
 const PLANS = [
   { name: '1 AYLIK', price: '350 TL', link: 'https://www.shopier.com/platool/49623989', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
-  { name: '6 AYLIK', price: '500 TL', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '3 AYLIK', price: '500 TL', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
   { name: '12 AYLIK', price: '2.000 TL', link: 'https://www.shopier.com/platool/49624023', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
 ]
 
