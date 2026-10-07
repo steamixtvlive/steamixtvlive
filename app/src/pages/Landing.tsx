@@ -15,9 +15,9 @@ function mobilMi() {
 }
 
 const PLANS = [
-  { name: '1 AYLIK', price: '300 TL', link: 'https://www.shopier.com/platool/49623989', features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Hızlı aktivasyon', '7/24 destek'] },
-  { name: '3 AYLIK', price: '600 TL', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Hızlı kurulum desteği', '7/24 destek', 'En Popüler Seçim'] },
-  { name: '12 AYLIK', price: '1.200 TL', link: 'https://www.shopier.com/platool/49624023', features: ['Yüzlerce canlı kanal', 'Yüzlerce film & dizi arşivi', '4K çözünürlük', '3 cihaz desteği', 'Yıllık fiyat avantajı', 'Öncelikli destek', 'Hızlı aktivasyon', '7/24 destek'] },
+  { name: '1 AYLIK', price: '350 TL', link: 'https://www.shopier.com/platool/49623989', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '6 AYLIK', price: '500 TL', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '12 AYLIK', price: '2.000 TL', link: 'https://www.shopier.com/platool/49624023', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
 ]
 
 const POSTERS = ['poster01.jpg', 'poster02.jpg', 'poster03.jpg', 'poster04.jpg', 'poster05.jpg', 'poster06.jpg', 'poster07.jpg', 'poster08.jpg', 'poster10.jpg', 'poster11.jpg', 'poster12.jpg', 'poster13.jpg']
@@ -79,7 +79,7 @@ const TESTLER = [
     govde: 'Merhaba, 24 saatlik ücretsiz test yayını istiyorum.\nCihazım: ',
   },
   {
-    id: '7gun', etiket: 'Özel VIP deneyimi', ad: '7 Günlük VIP Strong Test', fiyat: '250 TL', sure: '/ 7 gün', vip: true,
+    id: '7gun', etiket: 'Özel VIP deneyimi', ad: '7 Günlük VIP Strong Test', fiyat: '200 TL', sure: '/ 7 gün', vip: true,
     aciklama: 'VIP Strong altyapısını bir hafta boyunca farklı gün ve saatlerde ayrıntılı şekilde değerlendirmek isteyenler için özel test seçeneğidir.',
     ozellikler: ['7 günlük VIP Strong deneyimi', 'Yoğun saatlerde uzun süreli kontrol', 'Geniş kullanım senaryosu', 'Kurulum sırasında hızlı destek'],
     buton: 'VIP Strong Test İste',
@@ -229,13 +229,6 @@ export default function Landing() {
       baslik: 'Liste Güncelleme Sıklığı',
       ozet: 'Player’da güncelleme aralığını 1 saate ayarlayın.',
       metin: 'Oynatma listemiz kalite standartları gereği sürekli otomatik yenilenmektedir. ABC IPTV Player ve benzeri oynatıcılarda liste güncelleme sıklığını lütfen 1 saatte bir olacak şekilde ayarlayın. Güncel liste, kesintisiz keyif demektir.',
-    },
-    {
-      simge: '📢',
-      tarih: '30 Eylül 2026 • 09:15',
-      baslik: 'Periyodik Yayın Güncellemesi',
-      ozet: 'Premium kanallarda frekans güncellemesi, dokun detayı gör.',
-      metin: 'Zaman zaman bazı premium kanallarda orijinal yayın frekansı ve veri akışı güncellemeleri yapılmaktadır. Yayın kalitesini ve akıcılığını en üst seviyede tutmak adına sistem otomatik senkronizasyon sağlar. Bu süreçte etkilenen kanallar kısa süre içinde kendiliğinden aktif olmaktadır. Anlayışınız için teşekkür ederiz.',
     },
     {
       simge: '📢',
@@ -927,7 +920,7 @@ export default function Landing() {
               {seciliTest.id === '7gun' && (
                 <a href="https://shopier.com/50780303" target="_blank" rel="noopener noreferrer"
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-700 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-all flex items-center justify-center gap-2">
-                  <ShoppingCart className="w-4 h-4" />250 TL — Ödemeye Git
+                  <ShoppingCart className="w-4 h-4" />200 TL — Ödemeye Git
                 </a>
               )}
               <a href={`https://t.me/streamsupport00?text=${encodeURIComponent(seciliTest.govde)}`} target="_blank" rel="noopener noreferrer"
