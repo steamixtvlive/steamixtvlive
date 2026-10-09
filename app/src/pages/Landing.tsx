@@ -15,9 +15,9 @@ function mobilMi() {
 }
 
 const PLANS = [
-  { name: '1 AYLIK', price: '350₺', link: 'https://www.shopier.com/platool/49623989', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
-  { name: '3 AYLIK', price: '500₺', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
-  { name: '12 AYLIK', price: '2.000₺', link: 'https://www.shopier.com/platool/49624023', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '1 AYLIK', price: '350₺', devices: '1 CİHAZ', link: 'https://www.shopier.com/platool/49623989', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '3 AYLIK', price: '500₺', devices: '1 CİHAZ', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '12 AYLIK', price: '2.000₺', devices: '3 CİHAZ', link: 'https://www.shopier.com/platool/49624023', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
 ]
 
 const POSTERS = ['poster01.jpg', 'poster02.jpg', 'poster03.jpg', 'poster04.jpg', 'poster05.jpg', 'poster06.jpg', 'poster07.jpg', 'poster08.jpg', 'poster10.jpg', 'poster11.jpg', 'poster12.jpg', 'poster13.jpg']
@@ -34,6 +34,11 @@ function PlanKarti({ p, onSec }: { p: typeof PLANS[0]; onSec: (p: typeof PLANS[0
       <div className="text-center mb-3 mt-1">
         <p className="text-[10px] font-semibold text-gray-400 tracking-[0.25em] uppercase mb-1.5">{p.name}</p>
         <div className="text-3xl font-extrabold bg-gradient-to-r from-[#0099ff] to-purple-400 bg-clip-text text-transparent mb-0.5 drop-shadow-[0_0_15px_rgba(0,153,255,0.35)]">{p.price}</div>
+        <div className="mt-2 flex justify-center">
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider ${p.devices.startsWith('3') ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-black shadow-[0_0_18px_rgba(251,191,36,0.45)]' : 'bg-[#0099ff]/15 text-[#66c2ff] ring-1 ring-[#0099ff]/40'}`}>
+            <Smartphone className="w-3.5 h-3.5" />{p.devices}
+          </span>
+        </div>
       </div>
       <div className="h-px bg-white/10 mb-3" />
       <ul className="space-y-1.5 mb-4 flex-1">
