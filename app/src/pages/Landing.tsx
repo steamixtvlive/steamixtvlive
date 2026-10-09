@@ -79,7 +79,7 @@ const TESTLER = [
     govde: 'Merhaba, 24 saatlik ücretsiz test yayını istiyorum.\nCihazım: ',
   },
   {
-    id: '7gun', etiket: 'Özel VIP deneyimi', ad: '7 Günlük VIP Strong Test', fiyat: '200 TL', sure: '/ 7 gün', vip: true,
+    id: '7gun', etiket: 'Özel VIP deneyimi', ad: '7 Günlük VIP Strong Test', fiyat: '150 TL', sure: '/ 7 gün', vip: true,
     aciklama: 'VIP Strong altyapısını bir hafta boyunca farklı gün ve saatlerde ayrıntılı şekilde değerlendirmek isteyenler için özel test seçeneğidir.',
     ozellikler: ['7 günlük VIP Strong deneyimi', 'Yoğun saatlerde uzun süreli kontrol', 'Geniş kullanım senaryosu', 'Kurulum sırasında hızlı destek'],
     buton: 'VIP Strong Test İste',
@@ -918,9 +918,9 @@ export default function Landing() {
             </div>
             <div className="flex flex-col gap-3">
               {seciliTest.id === '7gun' && (
-                <a href="https://shopier.com/50780303" target="_blank" rel="noopener noreferrer"
+                <a href="https://shopier.com/platool/51676164" target="_blank" rel="noopener noreferrer"
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-700 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-all flex items-center justify-center gap-2">
-                  <ShoppingCart className="w-4 h-4" />200 TL — Ödemeye Git
+                  <ShoppingCart className="w-4 h-4" />150 TL — Ödemeye Git
                 </a>
               )}
               <a href={`https://t.me/streamsupport00?text=${encodeURIComponent(seciliTest.govde)}`} target="_blank" rel="noopener noreferrer"
