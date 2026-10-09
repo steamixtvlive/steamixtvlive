@@ -15,9 +15,9 @@ function mobilMi() {
 }
 
 const PLANS = [
-  { name: '1 AYLIK', price: '350 TL', link: 'https://www.shopier.com/platool/49623989', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
-  { name: '3 AYLIK', price: '500 TL', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
-  { name: '12 AYLIK', price: '2.000 TL', link: 'https://www.shopier.com/platool/49624023', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '1 AYLIK', price: '350₺', link: 'https://www.shopier.com/platool/49623989', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '3 AYLIK', price: '500₺', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '12 AYLIK', price: '2.000₺', link: 'https://www.shopier.com/platool/49624023', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
 ]
 
 const POSTERS = ['poster01.jpg', 'poster02.jpg', 'poster03.jpg', 'poster04.jpg', 'poster05.jpg', 'poster06.jpg', 'poster07.jpg', 'poster08.jpg', 'poster10.jpg', 'poster11.jpg', 'poster12.jpg', 'poster13.jpg']
@@ -55,7 +55,7 @@ function PlanKarti({ p, onSec }: { p: typeof PLANS[0]; onSec: (p: typeof PLANS[0
 
 const TESTLER = [
   {
-    id: '3saat', etiket: 'Hızlı başlangıç', ad: '3 Saatlik Ücretsiz Test', fiyat: '0 TL', sure: '/ 3 saat',
+    id: '3saat', etiket: 'Hızlı başlangıç', ad: '3 Saatlik Ücretsiz Test', fiyat: '0₺', sure: '/ 3 saat',
     aciklama: 'Steamix TV ile ilk kez tanışanlar için ücretsiz hızlı deneme seçeneğidir.',
     ozellikler: ['3 saatlik erişim süresi', 'Görüntü ve ses kontrolü', 'Cihaz uyumluluğu denemesi', 'Kurulum desteği'],
     buton: 'Ücretsiz Test İste',
@@ -63,7 +63,7 @@ const TESTLER = [
     govde: 'Merhaba, 3 saatlik ücretsiz test yayını istiyorum.\nCihazım: ',
   },
   {
-    id: '12saat', etiket: 'Kısa deneme', ad: '12 Saatlik Ücretsiz Test', fiyat: '0 TL', sure: '/ 12 saat',
+    id: '12saat', etiket: 'Kısa deneme', ad: '12 Saatlik Ücretsiz Test', fiyat: '0₺', sure: '/ 12 saat',
     aciklama: 'Yarım gün boyunca farklı saatlerde yayını denemek isteyenler için ücretsiz seçenektir.',
     ozellikler: ['12 saatlik erişim süresi', 'Sabah ve akşam kontrolü', 'Kanal geçiş hızı denemesi', 'Kurulum desteği'],
     buton: 'Ücretsiz Test İste',
@@ -71,7 +71,7 @@ const TESTLER = [
     govde: 'Merhaba, 12 saatlik ücretsiz test yayını istiyorum.\nCihazım: ',
   },
   {
-    id: '24saat', etiket: 'Tüm saatlerde dene', ad: '24 Saatlik Ücretsiz Test', fiyat: '0 TL', sure: '/ 24 saat',
+    id: '24saat', etiket: 'Tüm saatlerde dene', ad: '24 Saatlik Ücretsiz Test', fiyat: '0₺', sure: '/ 24 saat',
     aciklama: 'Normal paketi ilk kez kendi cihazında denemek isteyenler için ücretsiz başlangıç seçeneğidir.',
     ozellikler: ['Normal paket testi', 'Görüntü ve ses kontrolü', 'Cihaz uyumluluğu denemesi', 'Kurulum desteği'],
     buton: 'Ücretsiz Test İste',
@@ -79,7 +79,7 @@ const TESTLER = [
     govde: 'Merhaba, 24 saatlik ücretsiz test yayını istiyorum.\nCihazım: ',
   },
   {
-    id: '7gun', etiket: 'Özel VIP deneyimi', ad: '7 Günlük VIP Strong Test', fiyat: '150 TL', sure: '/ 7 gün', vip: true,
+    id: '7gun', etiket: 'Özel VIP deneyimi', ad: '7 Günlük VIP Strong Test', fiyat: '150₺', sure: '/ 7 gün', vip: true,
     aciklama: 'VIP Strong altyapısını bir hafta boyunca farklı gün ve saatlerde ayrıntılı şekilde değerlendirmek isteyenler için özel test seçeneğidir.',
     ozellikler: ['7 günlük VIP Strong deneyimi', 'Yoğun saatlerde uzun süreli kontrol', 'Geniş kullanım senaryosu', 'Kurulum sırasında hızlı destek'],
     buton: 'VIP Strong Test İste',
@@ -920,7 +920,7 @@ export default function Landing() {
               {seciliTest.id === '7gun' && (
                 <a href="https://shopier.com/platool/51676164" target="_blank" rel="noopener noreferrer"
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-700 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-all flex items-center justify-center gap-2">
-                  <ShoppingCart className="w-4 h-4" />150 TL — Ödemeye Git
+                  <ShoppingCart className="w-4 h-4" />150₺ — Ödemeye Git
                 </a>
               )}
               <a href={`https://t.me/streamsupport00?text=${encodeURIComponent(seciliTest.govde)}`} target="_blank" rel="noopener noreferrer"
