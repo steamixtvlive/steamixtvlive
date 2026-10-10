@@ -596,6 +596,12 @@ export default function Landing() {
             </div>
           ))}
         </div>
+        <div className="mt-6 md:mt-8 flex justify-center">
+          <button onClick={() => { setPlanSlide(0); setPlanModal(true) }}
+            className="group inline-flex items-center gap-2 px-6 py-3 rounded-2xl border border-[#0099ff]/40 bg-[#0099ff]/10 text-sm font-bold text-white hover:bg-[#0099ff]/20 hover:shadow-[0_0_30px_rgba(0,153,255,0.4)] hover:scale-[1.03] active:scale-[0.97] transition-all">
+            <CreditCard className="w-4 h-4 text-[#0099ff] group-hover:scale-110 transition-transform" />Paketleri İncele
+          </button>
+        </div>
         <div className="mt-5 md:mt-8 p-4 rounded-xl bg-white/5 border border-white/10 max-w-2xl mx-auto">
           <p className="text-xs text-gray-400 leading-relaxed text-center">
             <span className="text-[#0099ff] font-semibold">Kısa cevap:</span> İlk kez deneyecekseniz 24 saatlik ücretsiz
