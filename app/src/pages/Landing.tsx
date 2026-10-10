@@ -50,9 +50,13 @@ function PlanKarti({ p, onSec }: { p: typeof PLANS[0]; onSec: (p: typeof PLANS[0
       <ul className="space-y-2 mb-5 flex-1">
         {p.features.map((f, i) => (
           <li key={i} className="flex items-center gap-2.5 text-[11.5px] text-gray-200">
+            {f === '7/24 Canlı Destek' ? (
+              <img src="/images/telegram.png" alt="Telegram" className="w-[18px] h-[18px] rounded-full shrink-0 shadow-[0_0_10px_rgba(34,158,217,0.6)]" />
+            ) : (
             <span className={`w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0 ${p.vip ? 'bg-amber-400/15' : 'bg-emerald-400/15'}`}>
               <Check className={`w-2.5 h-2.5 ${p.vip ? 'text-amber-300' : 'text-emerald-400'}`} strokeWidth={3} />
-            </span>{f}
+            </span>
+            )}{f}
           </li>
         ))}
       </ul>
@@ -803,7 +807,8 @@ export default function Landing() {
       {planModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/85 backdrop-blur-md" onClick={() => setPlanModal(false)} />
-          <div className="relative z-10 w-full max-w-5xl rounded-[28px] border border-white/10 bg-[#0b1220]/95 backdrop-blur-xl p-4 md:p-7 shadow-[0_0_90px_rgba(0,153,255,0.18)]">
+          <div className="relative z-10 w-full max-w-5xl rounded-[36px] p-[1.5px] bg-gradient-to-br from-[#0099ff]/70 via-white/15 to-purple-500/70 shadow-[0_0_90px_rgba(0,153,255,0.22)]">
+            <div className="rounded-[34px] bg-[#0b1220]/95 backdrop-blur-xl p-4 md:p-7 overflow-hidden">
             <div className="flex items-center justify-between gap-3 mb-1.5">
               <div className="flex items-center gap-3">
                 <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#0099ff] to-purple-600 flex items-center justify-center shadow-[0_0_25px_rgba(0,153,255,0.5)] shrink-0">
@@ -852,8 +857,9 @@ export default function Landing() {
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 mt-4 pt-3 border-t border-white/10 text-[10px] text-gray-500">
               <span className="flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5 text-[#0099ff]" />Shopier ile güvenli ödeme</span>
               <span className="flex items-center gap-1.5"><Gauge className="w-3.5 h-3.5 text-[#0099ff]" />Hızlı aktivasyon</span>
-              <span className="flex items-center gap-1.5"><MessageCircleQuestion className="w-3.5 h-3.5 text-[#0099ff]" />7/24 destek</span>
+              <span className="flex items-center gap-1.5"><img src="/images/telegram.png" alt="Telegram" className="w-4 h-4 rounded-full" />7/24 destek</span>
             </div>
+          </div>
           </div>
         </div>
       )}
