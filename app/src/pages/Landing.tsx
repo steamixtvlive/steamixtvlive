@@ -958,7 +958,7 @@ export default function Landing() {
       {/* Telif */}
       <footer className="relative z-10 mt-12 border-t border-white/10 bg-black/40 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-4 pt-5 pb-28 md:pb-10 flex flex-col items-center gap-1.5">
-          <span className="text-sm font-extrabold tracking-[0.2em] bg-gradient-to-r from-[#0099ff] to-purple-400 bg-clip-text text-transparent" style={{ fontFamily: 'Orbitron, sans-serif' }}>STEAMIX LIVE IPTV</span>
+          <span className="text-[13px] font-semibold text-gray-300">Steamix Live IPTV</span>
           <span className="text-[11px] tracking-wide text-gray-400">© 2027 Steamix Live IPTV — Tüm hakları saklıdır.</span>
         </div>
       </footer>
