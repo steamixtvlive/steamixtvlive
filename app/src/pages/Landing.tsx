@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck, Bell } from 'lucide-react'
+import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck, Bell, Crown } from 'lucide-react'
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
 
@@ -15,27 +15,32 @@ function mobilMi() {
 }
 
 const PLANS = [
-  { name: '1 AYLIK', price: '350₺', devices: '1 CİHAZ', link: 'https://www.shopier.com/platool/49623989', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
-  { name: '3 AYLIK', price: '500₺', devices: '1 CİHAZ', link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
-  { name: '12 AYLIK', price: '2.000₺', devices: '3 CİHAZ', link: 'https://www.shopier.com/platool/49624023', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '1 AYLIK', price: '350₺', devices: '1 CİHAZ', vip: false, link: 'https://www.shopier.com/platool/49623989', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '3 AYLIK', price: '500₺', devices: '1 CİHAZ', vip: false, link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '12 AYLIK', price: '2.500₺', devices: '5 CİHAZ', vip: true, link: 'https://www.shopier.com/platool/49624023', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
 ]
 
 const POSTERS = ['poster01.jpg', 'poster02.jpg', 'poster03.jpg', 'poster04.jpg', 'poster05.jpg', 'poster06.jpg', 'poster07.jpg', 'poster08.jpg', 'poster10.jpg', 'poster11.jpg', 'poster12.jpg', 'poster13.jpg']
 
 function PlanKarti({ p, onSec }: { p: typeof PLANS[0]; onSec: (p: typeof PLANS[0]) => void }) {
   return (
-    <div className={`relative rounded-2xl p-4 border transition-all duration-300 hover:-translate-y-1 flex flex-col ${p.popular ? 'border-[#0099ff]/60 bg-gradient-to-b from-[#0099ff]/[0.14] to-[#0099ff]/[0.02] shadow-[0_0_45px_rgba(0,153,255,0.18)]' : 'border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] hover:border-white/25 hover:shadow-[0_0_30px_rgba(0,153,255,0.1)]'}`}>
-      <div className={`absolute top-0 inset-x-0 h-1 rounded-t-2xl ${p.popular ? 'bg-gradient-to-r from-[#0099ff] via-blue-400 to-purple-500' : 'bg-gradient-to-r from-white/15 to-white/5'}`} />
+    <div className={`relative rounded-2xl p-4 border transition-all duration-300 hover:-translate-y-1 flex flex-col ${p.popular ? 'border-[#0099ff]/60 bg-gradient-to-b from-[#0099ff]/[0.14] to-[#0099ff]/[0.02] shadow-[0_0_45px_rgba(0,153,255,0.18)]' : p.vip ? 'border-amber-400/60 bg-gradient-to-b from-amber-400/[0.13] to-amber-400/[0.02] shadow-[0_0_45px_rgba(251,191,36,0.20)] hover:shadow-[0_0_55px_rgba(251,191,36,0.30)]' : 'border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] hover:border-white/25 hover:shadow-[0_0_30px_rgba(0,153,255,0.1)]'}`}>
+      <div className={`absolute top-0 inset-x-0 h-1 rounded-t-2xl ${p.popular ? 'bg-gradient-to-r from-[#0099ff] via-blue-400 to-purple-500' : p.vip ? 'bg-gradient-to-r from-amber-300 via-amber-400 to-orange-500' : 'bg-gradient-to-r from-white/15 to-white/5'}`} />
       {p.popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-[#0099ff] to-purple-500 text-white text-[10px] font-bold tracking-wide whitespace-nowrap shadow-lg shadow-[#0099ff]/40 ring-2 ring-[#0099ff]/20">
           En Popüler
+        </div>
+      )}
+      {p.vip && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-300 to-orange-500 text-black text-[10px] font-bold tracking-wide whitespace-nowrap shadow-lg shadow-amber-400/40 ring-2 ring-amber-300/30 flex items-center gap-1">
+          <Crown className="w-3 h-3" />VİP PATRON
         </div>
       )}
       <div className="text-center mb-3 mt-1">
         <p className="text-[10px] font-semibold text-gray-400 tracking-[0.25em] uppercase mb-1.5">{p.name}</p>
         <div className="text-3xl font-extrabold bg-gradient-to-r from-[#0099ff] to-purple-400 bg-clip-text text-transparent mb-0.5 drop-shadow-[0_0_15px_rgba(0,153,255,0.35)]">{p.price}</div>
         <div className="mt-2 flex justify-center">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider ${p.devices.startsWith('3') ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-black shadow-[0_0_18px_rgba(251,191,36,0.45)]' : 'bg-[#0099ff]/15 text-[#66c2ff] ring-1 ring-[#0099ff]/40'}`}>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider ${p.devices.startsWith('5') ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-black shadow-[0_0_18px_rgba(251,191,36,0.45)]' : 'bg-[#0099ff]/15 text-[#66c2ff] ring-1 ring-[#0099ff]/40'}`}>
             <Smartphone className="w-3.5 h-3.5" />{p.devices}
           </span>
         </div>
@@ -940,6 +945,10 @@ export default function Landing() {
           </div>
         </div>
       )}
+      {/* Telif */}
+      <footer className="mt-10 pb-28 md:pb-12 text-center text-[11px] tracking-wide text-gray-500">
+        © 2027 Steamix Live IPTV — Tüm hakları saklıdır.
+      </footer>
       {/* Yüzen Telegram destek butonu */}
       <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer"
         className="fixed bottom-5 right-5 z-40 flex items-center gap-2 md:gap-3 pl-1.5 pr-4 md:pr-5 py-1.5 md:py-2 rounded-full bg-[#0f172a]/90 border border-[#229ED9]/50 shadow-[0_0_20px_rgba(34,158,217,0.35)] backdrop-blur-md hover:shadow-[0_0_35px_rgba(34,158,217,0.7)] hover:scale-105 active:scale-95 transition-all"
