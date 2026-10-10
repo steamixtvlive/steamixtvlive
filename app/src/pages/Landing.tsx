@@ -23,42 +23,45 @@ const PLANS = [
 const POSTERS = ['poster01.jpg', 'poster02.jpg', 'poster03.jpg', 'poster04.jpg', 'poster05.jpg', 'poster06.jpg', 'poster07.jpg', 'poster08.jpg', 'poster10.jpg', 'poster11.jpg', 'poster12.jpg', 'poster13.jpg']
 
 function PlanKarti({ p, onSec }: { p: typeof PLANS[0]; onSec: (p: typeof PLANS[0]) => void }) {
+  const oneCikan = p.popular || p.vip
   return (
-    <div className={`relative rounded-2xl p-4 border transition-all duration-300 hover:-translate-y-1 flex flex-col ${p.popular ? 'border-[#0099ff]/60 bg-gradient-to-b from-[#0099ff]/[0.14] to-[#0099ff]/[0.02] shadow-[0_0_45px_rgba(0,153,255,0.18)]' : p.vip ? 'border-amber-400/60 bg-gradient-to-b from-amber-400/[0.13] to-amber-400/[0.02] shadow-[0_0_45px_rgba(251,191,36,0.20)] hover:shadow-[0_0_55px_rgba(251,191,36,0.30)]' : 'border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] hover:border-white/25 hover:shadow-[0_0_30px_rgba(0,153,255,0.1)]'}`}>
-      <div className={`absolute top-0 inset-x-0 h-1 rounded-t-2xl ${p.popular ? 'bg-gradient-to-r from-[#0099ff] via-blue-400 to-purple-500' : p.vip ? 'bg-gradient-to-r from-amber-300 via-amber-400 to-orange-500' : 'bg-gradient-to-r from-white/15 to-white/5'}`} />
+    <div className={`relative rounded-3xl p-5 pt-7 border flex flex-col transition-all duration-300 hover:-translate-y-1.5 ${p.popular ? 'md:scale-[1.045] border-[#0099ff]/70 bg-gradient-to-b from-[#0099ff]/[0.18] via-[#0b1a30] to-[#0a1120] shadow-[0_0_65px_rgba(0,153,255,0.28)]' : p.vip ? 'border-amber-300/60 bg-gradient-to-b from-amber-400/[0.15] via-[#1a1408] to-[#0a1120] shadow-[0_0_65px_rgba(251,191,36,0.25)] hover:shadow-[0_0_80px_rgba(251,191,36,0.35)]' : 'border-white/10 bg-white/[0.04] backdrop-blur-sm hover:border-[#0099ff]/40 hover:shadow-[0_0_40px_rgba(0,153,255,0.16)]'}`}>
+      <div className={`absolute top-0 inset-x-8 h-[3px] rounded-full ${p.popular ? 'bg-gradient-to-r from-transparent via-[#0099ff] to-transparent shadow-[0_0_14px_rgba(0,153,255,1)]' : p.vip ? 'bg-gradient-to-r from-transparent via-amber-300 to-transparent shadow-[0_0_14px_rgba(251,191,36,1)]' : 'bg-gradient-to-r from-transparent via-white/25 to-transparent'}`} />
       {p.popular && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-[#0099ff] to-purple-500 text-white text-[10px] font-bold tracking-wide whitespace-nowrap shadow-lg shadow-[#0099ff]/40 ring-2 ring-[#0099ff]/20">
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[#0099ff] to-purple-500 text-white text-[10px] font-extrabold tracking-widest whitespace-nowrap shadow-lg shadow-[#0099ff]/50 ring-2 ring-[#0099ff]/30">
           En Popüler
         </div>
       )}
       {p.vip && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-300 to-orange-500 text-black text-[10px] font-bold tracking-wide whitespace-nowrap shadow-lg shadow-amber-400/40 ring-2 ring-amber-300/30 flex items-center gap-1">
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-300 to-orange-500 text-black text-[10px] font-extrabold tracking-widest whitespace-nowrap shadow-lg shadow-amber-400/50 ring-2 ring-amber-200/40 flex items-center gap-1">
           <Crown className="w-3 h-3" />VİP PATRON
         </div>
       )}
-      <div className="text-center mb-3 mt-1">
-        <p className="text-[10px] font-semibold text-gray-400 tracking-[0.25em] uppercase mb-1.5">{p.name}</p>
-        <div className="text-3xl font-extrabold bg-gradient-to-r from-[#0099ff] to-purple-400 bg-clip-text text-transparent mb-0.5 drop-shadow-[0_0_15px_rgba(0,153,255,0.35)]">{p.price}</div>
-        <div className="mt-2 flex justify-center">
+      <div className="text-center mb-4 mt-1">
+        <span className={`inline-block px-3 py-1 rounded-full border text-[10px] font-bold tracking-[0.25em] uppercase mb-2 ${p.popular ? 'bg-[#0099ff]/10 border-[#0099ff]/30 text-[#7dd3ff]' : p.vip ? 'bg-amber-400/10 border-amber-300/30 text-amber-200' : 'bg-white/5 border-white/10 text-gray-400'}`}>{p.name}</span>
+        <div className={`text-4xl font-extrabold bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(0,153,255,0.4)] ${p.vip ? 'bg-gradient-to-r from-amber-200 to-orange-400' : 'bg-gradient-to-r from-[#0099ff] to-purple-400'}`}>{p.price}</div>
+        <div className="mt-2.5 flex justify-center">
           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider ${p.devices.startsWith('5') ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-black shadow-[0_0_18px_rgba(251,191,36,0.45)]' : 'bg-[#0099ff]/15 text-[#66c2ff] ring-1 ring-[#0099ff]/40'}`}>
             <Smartphone className="w-3.5 h-3.5" />{p.devices}
           </span>
         </div>
       </div>
-      <div className="h-px bg-white/10 mb-3" />
-      <ul className="space-y-1.5 mb-4 flex-1">
+      <div className={`h-px mb-4 ${oneCikan ? 'bg-gradient-to-r from-transparent via-white/25 to-transparent' : 'bg-white/10'}`} />
+      <ul className="space-y-2 mb-5 flex-1">
         {p.features.map((f, i) => (
-          <li key={i} className="flex items-center gap-2 text-[11px] text-gray-300">
-            <span className="w-3.5 h-3.5 rounded-full bg-[#0099ff]/15 flex items-center justify-center shrink-0">
-              <Check className="w-2 h-2 text-[#0099ff]" />
+          <li key={i} className="flex items-center gap-2.5 text-[11.5px] text-gray-200">
+            <span className={`w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0 ${p.vip ? 'bg-amber-400/15' : 'bg-emerald-400/15'}`}>
+              <Check className={`w-2.5 h-2.5 ${p.vip ? 'text-amber-300' : 'text-emerald-400'}`} strokeWidth={3} />
             </span>{f}
           </li>
         ))}
       </ul>
       <button onClick={() => onSec(p)}
-        className="block w-full py-2.5 rounded-xl bg-gradient-to-r from-[#0099ff] via-blue-500 to-purple-600 text-white font-bold text-xs tracking-wide text-center hover:shadow-[0_0_25px_rgba(0,153,255,0.5)] hover:scale-[1.02] active:scale-[0.97] transition-all flex items-center justify-center gap-2">
+        className={`relative overflow-hidden block w-full py-3 rounded-2xl text-white font-bold text-sm tracking-wide text-center transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.97] ${p.vip ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-black hover:shadow-[0_0_30px_rgba(251,191,36,0.55)] shadow-[0_0_20px_rgba(251,191,36,0.3)]' : 'bg-gradient-to-r from-[#0099ff] via-blue-500 to-purple-600 hover:shadow-[0_0_30px_rgba(0,153,255,0.55)] shadow-[0_0_20px_rgba(0,153,255,0.3)]'}`}>
+        <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent" style={{ animation: 'kartParla 3.2s ease-in-out infinite' }} />
         <ShoppingCart className="w-4 h-4" />Satın Al
       </button>
+      <style>{`@keyframes kartParla { 0%,60% { transform: translateX(-100%) } 100% { transform: translateX(100%) } }`}</style>
     </div>
   )
 }
@@ -799,17 +802,24 @@ export default function Landing() {
       {/* Plan modalı */}
       {planModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setPlanModal(false)} />
-          <div className="relative z-10 bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl p-4 md:p-5 max-w-5xl w-full border border-white/10 shadow-2xl shadow-[#0099ff]/10">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                <CreditCard className="w-5 h-5 text-[#0099ff]" /> Paketleri İncele
-              </h2>
-              <button onClick={() => setPlanModal(false)} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all">
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-md" onClick={() => setPlanModal(false)} />
+          <div className="relative z-10 w-full max-w-5xl rounded-[28px] border border-white/10 bg-[#0b1220]/95 backdrop-blur-xl p-4 md:p-7 shadow-[0_0_90px_rgba(0,153,255,0.18)]">
+            <div className="flex items-center justify-between gap-3 mb-1.5">
+              <div className="flex items-center gap-3">
+                <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#0099ff] to-purple-600 flex items-center justify-center shadow-[0_0_25px_rgba(0,153,255,0.5)] shrink-0">
+                  <CreditCard className="w-5 h-5 text-white" />
+                </span>
+                <div>
+                  <h2 className="text-lg md:text-xl font-extrabold text-white leading-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                    Paketleri İncele
+                  </h2>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Sana uygun planı seç — ödeme sonrası giriş bilgilerin en kısa sürede teslim edilir.</p>
+                </div>
+              </div>
+              <button onClick={() => setPlanModal(false)} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/15 hover:rotate-90 transition-all shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[11px] text-gray-500 mb-3">Sana uygun planı seç — ödeme sonrası giriş bilgilerin en kısa sürede teslim edilir.</p>
             <div ref={planTrackRef}
               onScroll={(e) => {
                 const el = e.currentTarget
@@ -946,8 +956,11 @@ export default function Landing() {
         </div>
       )}
       {/* Telif */}
-      <footer className="mt-10 pb-28 md:pb-12 text-center text-[11px] tracking-wide text-gray-500">
-        © 2027 Steamix Live IPTV — Tüm hakları saklıdır.
+      <footer className="relative z-10 mt-12 border-t border-white/10 bg-black/40 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-4 pt-5 pb-28 md:pb-10 flex flex-col items-center gap-1.5">
+          <span className="text-sm font-extrabold tracking-[0.2em] bg-gradient-to-r from-[#0099ff] to-purple-400 bg-clip-text text-transparent" style={{ fontFamily: 'Orbitron, sans-serif' }}>STEAMIX LIVE IPTV</span>
+          <span className="text-[11px] tracking-wide text-gray-400">© 2027 Steamix Live IPTV — Tüm hakları saklıdır.</span>
+        </div>
       </footer>
       {/* Yüzen Telegram destek butonu */}
       <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer"
