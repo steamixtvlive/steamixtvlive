@@ -824,7 +824,6 @@ export default function Landing() {
                   <h2 className="text-lg md:text-xl font-extrabold text-white leading-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>
                     Paketleri İncele
                   </h2>
-                  <p className="text-[11px] text-gray-400 mt-0.5">Sana uygun planı seç — ödeme sonrası giriş bilgilerin en kısa sürede teslim edilir.</p>
                 </div>
               </div>
               <button onClick={() => setPlanModal(false)} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/15 hover:rotate-90 transition-all shrink-0">
@@ -840,7 +839,7 @@ export default function Landing() {
                 setPlanSlide(Math.min(PLANS.length - 1, Math.max(0, i)))
               }}
               style={{ scrollbarWidth: 'none' }}
-              className="flex md:grid md:grid-cols-3 gap-3 items-stretch pt-2 overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none [&::-webkit-scrollbar]:hidden -mx-1 px-1">
+              className="flex md:grid md:grid-cols-3 gap-3 items-stretch pt-5 md:pt-2 overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none [&::-webkit-scrollbar]:hidden -mx-1 px-1">
               {PLANS.map(p => (
                 <div key={p.name} className="min-w-[86%] sm:min-w-[70%] md:min-w-0 snap-center shrink-0 md:shrink">
                   <PlanKarti p={p} onSec={(pl) => { setPlanModal(false); setSeciliPlan(pl) }} />
