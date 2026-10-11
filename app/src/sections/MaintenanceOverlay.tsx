@@ -8,6 +8,7 @@ export default function MaintenanceOverlay() {
         @keyframes parazit { 0% { background-position: 0 0 } 20% { background-position: -60px 30px } 40% { background-position: 40px -50px } 60% { background-position: -30px -70px } 80% { background-position: 70px 60px } 100% { background-position: 0 0 } }
         @keyframes yayinNokta { 0%,100% { opacity: 1 } 50% { opacity: 0.25 } }
         @keyframes altaKay { 0% { transform: translateY(-100%) } 100% { transform: translateY(100%) } }
+        @keyframes yukBar { 0% { transform: translateX(-110%) } 100% { transform: translateX(220%) } }
       `}</style>
 
       {/* renk barları */}
@@ -43,11 +44,15 @@ export default function MaintenanceOverlay() {
             Sorularınız için destek hattımız açık.
           </p>
 
-          <div>
-            <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#0099ff] to-blue-600 text-white text-sm font-bold hover:shadow-[0_0_30px_rgba(0,153,255,0.5)] hover:scale-[1.03] active:scale-[0.97] transition-all">
-              <img src="/images/telegram.png" alt="Telegram" className="w-5 h-5" />7/24 Destek Hattı
-            </a>
+          <div className="w-full max-w-[420px] mx-auto">
+            <div className="flex items-center justify-between mb-2 px-0.5">
+              <span className="text-[10px] font-semibold tracking-[0.25em] text-gray-500 uppercase">Çalışma durumu</span>
+              <span className="text-[10px] font-semibold tracking-[0.25em] text-[#7dd3ff] uppercase" style={{ animation: 'yayinNokta 1.6s ease-in-out infinite' }}>Sürüyor</span>
+            </div>
+            <div className="relative h-[10px] rounded-full bg-white/[0.06] border border-white/10 overflow-hidden shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]">
+              <div className="absolute inset-y-0 left-0 w-1/2 rounded-full bg-gradient-to-r from-[#0099ff] via-cyan-300 to-[#0099ff] shadow-[0_0_16px_rgba(0,153,255,0.9)]" style={{ animation: 'yukBar 2.4s ease-in-out infinite' }} />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+            </div>
           </div>
         </div>
       </div>
