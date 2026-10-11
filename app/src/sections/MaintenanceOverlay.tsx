@@ -1,19 +1,6 @@
-import { useEffect, useState } from 'react'
-
-function useClock() {
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(t)
-  }, [])
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
-}
-
 const BARLAR = ['#c0c0c0', '#c0c000', '#00c0c0', '#00c000', '#c000c0', '#c00000', '#0000c0']
 
 export default function MaintenanceOverlay() {
-  const saat = useClock()
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden bg-black">
       <style>{`
@@ -44,20 +31,17 @@ export default function MaintenanceOverlay() {
         <div className="relative text-center max-w-[560px]">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-red-500/50 bg-red-500/10 mb-6">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.9)]" style={{ animation: 'yayinNokta 1.2s ease-in-out infinite' }} />
-            <span className="text-[11px] font-bold tracking-[0.25em] text-red-400 uppercase">Bakımdayız</span>
+            <span className="text-[11px] font-bold tracking-[0.25em] text-red-400 uppercase">Planlı Bakım</span>
           </div>
 
           <h1 className="text-[34px] md:text-[52px] font-black leading-none tracking-tight text-white mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-            YAYIN<br />YAKINDA
+            TEKNİK<br />BAKIM
           </h1>
 
-          <p className="text-[13px] md:text-sm text-gray-400 leading-relaxed mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Altyapımızı güçlendiriyoruz. Test ve paket satışları kısa süreliğine duraklatıldı.
+          <p className="text-[13px] md:text-sm text-gray-400 leading-relaxed mb-7" style={{ fontFamily: 'Inter, sans-serif' }}>
+            Sistemlerimizde iyileştirme çalışması yapılıyor. Çalışma tamamlandığında bu ekrandan duyuracağız.<br />
+            Sorularınız için destek hattımız açık.
           </p>
-
-          <div className="inline-block px-6 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 mb-7">
-            <span className="text-2xl md:text-3xl font-bold text-white tabular-nums tracking-widest" style={{ fontFamily: 'Orbitron, sans-serif' }}>{saat}</span>
-          </div>
 
           <div>
             <a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer"
