@@ -47,7 +47,7 @@ export default function MaintenanceOverlay() {
           </h1>
 
           <p className="text-[13px] md:text-sm text-gray-400 leading-relaxed mb-7" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Sistemlerimizde iyileştirme çalışması yapılıyor. Çalışma tamamlandığında bu ekrandan duyuracağız.
+            Sistemlerimizde iyileştirme çalışması yapılıyor. Anlayışınız için teşekkür ederiz.
           </p>
 
           {/* cam çipler */}
