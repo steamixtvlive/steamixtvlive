@@ -38,26 +38,17 @@ export default function MaintenanceOverlay() {
 
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.05] border border-white/15 mb-5">
             <span className="w-2 h-2 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.9)]" style={{ animation: 'nabiz 1.6s ease-in-out infinite' }} />
-            <span className="text-[11px] font-semibold tracking-[0.22em] text-gray-300 uppercase">Planlı Bakım</span>
+            <span className="text-[11px] font-semibold tracking-[0.22em] text-gray-300 uppercase">Çok Yakında</span>
           </div>
 
           <h1 className="text-[36px] md:text-[54px] font-black leading-none tracking-tight mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-            <span className="bg-gradient-to-r from-[#0099ff] via-cyan-200 to-purple-400 bg-clip-text text-transparent">TEKNİK</span>
-            <span className="text-white"> BAKIM</span>
+            <span className="bg-gradient-to-r from-[#0099ff] via-cyan-200 to-purple-400 bg-clip-text text-transparent">NETFLAX</span>
+            <span className="text-white"> ÇOK YAKINDA</span>
           </h1>
 
           <p className="text-[13px] md:text-sm text-gray-400 leading-relaxed mb-7" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Sistemlerimizde iyileştirme çalışması yapılıyor. Anlayışınız için teşekkür ederiz.
+            Yüzlerce film dizi çok yakında.
           </p>
-
-          {/* cam çipler */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 mb-8">
-            {['Sunucular', 'Veritabanı', 'Ağ Altyapısı'].map(c => (
-              <span key={c} className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.05] border border-white/10 backdrop-blur-md text-xs text-gray-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(103,232,249,0.9)]" style={{ animation: 'nabiz 1.8s ease-in-out infinite' }} />{c}
-              </span>
-            ))}
-          </div>
 
           {/* yükleniyor */}
           <div className="w-full max-w-[400px] mx-auto">
