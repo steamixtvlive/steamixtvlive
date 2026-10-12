@@ -79,20 +79,22 @@ export default function MaintenanceOverlay() {
 
       {!sabit ? (
         <div className="flex-1 flex items-center justify-center px-4">
-          <div className="text-center"
+          <div className="relative w-full max-w-[680px]"
             style={{
               animation: 'dumanDagil 1.4s ease-in 6.6s both',
               filter: 'url(#dumanDagit)',
             }}>
             <img src="/images/noxflix-logo.jpg" alt="Noxflix"
-              className="w-full max-w-[520px] mx-auto object-contain"
-              style={{ clipPath: 'inset(0 0 30% 0)', animation: 'logoYakin 6.8s ease-out both' }} />
-            <h1 className="font-black tracking-[0.3em] text-[#E50914] text-[40px] md:text-[64px] -mt-6" style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 0 34px rgba(229,9,20,0.65)' }}>
-              {'NOXFLİX'.split('').map((h, i) => (
-                <span key={i} className="inline-block"
-                  style={{ animation: 'harfSplash 1.1s ease-out both', animationDelay: `${1.0 + i * 0.35}s` }}>{h}</span>
-              ))}
-            </h1>
+              className="w-full object-contain"
+              style={{ animation: 'logoYakin 6.8s ease-out both' }} />
+            <div className="absolute bottom-0 inset-x-0 bg-black flex items-center justify-center" style={{ height: '24%' }}>
+              <h1 className="font-black tracking-[0.3em] text-[#E50914] text-[7vw] md:text-[54px] pl-[0.3em]" style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 0 34px rgba(229,9,20,0.65)' }}>
+                {'NOXFLİX'.split('').map((h, i) => (
+                  <span key={i} className="inline-block"
+                    style={{ animation: 'harfSplash 1.1s ease-out both', animationDelay: `${1.0 + i * 0.35}s` }}>{h}</span>
+                ))}
+              </h1>
+            </div>
           </div>
         </div>
       ) : (
