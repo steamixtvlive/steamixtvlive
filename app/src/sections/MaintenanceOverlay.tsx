@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 
-const SATIR = 'NOXFLAX ÇOK YAKINDA'.split('')
-
 function useTudum() {
   const caldi = useRef(false)
   useEffect(() => {
@@ -66,6 +64,7 @@ export default function MaintenanceOverlay() {
         @keyframes logoYakin { 0% { transform: scale(0.92) } 100% { transform: scale(1) } }
         @keyframes dumanDagil { 0% { opacity: 1; filter: blur(0); transform: scale(1) } 100% { opacity: 0; filter: blur(22px); transform: scale(1.1) } }
         @keyframes harfYavas { 0% { opacity: 0; transform: translateY(34px); filter: blur(10px) } 100% { opacity: 1; transform: translateY(0); filter: blur(0) } }
+        @keyframes harfSplash { 0% { opacity: 0; transform: translateY(46px) scale(1.3); filter: blur(14px) } 100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0) } }
       `}</style>
 
       {/* duman filtresi */}
@@ -80,12 +79,21 @@ export default function MaintenanceOverlay() {
 
       {!sabit ? (
         <div className="flex-1 flex items-center justify-center px-4">
-          <img src="/images/noxflax-logo.jpg" alt="Noxflax"
-            className="w-full max-w-[680px] object-contain"
+          <div className="text-center"
             style={{
-              animation: 'logoYakin 6.8s ease-out both, dumanDagil 1.4s ease-in 6.6s both',
+              animation: 'dumanDagil 1.4s ease-in 6.6s both',
               filter: 'url(#dumanDagit)',
-            }} />
+            }}>
+            <img src="/images/noxflax-logo.jpg" alt="Noxflax"
+              className="w-full max-w-[520px] mx-auto object-contain"
+              style={{ clipPath: 'inset(0 0 30% 0)', animation: 'logoYakin 6.8s ease-out both' }} />
+            <h1 className="font-black tracking-[0.3em] text-[#E50914] text-[40px] md:text-[64px] -mt-6" style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 0 34px rgba(229,9,20,0.65)' }}>
+              {'NOXFLAX'.split('').map((h, i) => (
+                <span key={i} className="inline-block"
+                  style={{ animation: 'harfSplash 1.1s ease-out both', animationDelay: `${1.0 + i * 0.35}s` }}>{h}</span>
+              ))}
+            </h1>
+          </div>
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center px-4">
@@ -95,12 +103,7 @@ export default function MaintenanceOverlay() {
               İlk Yerli Projemiz
             </p>
             <h1 className="font-black tracking-[0.18em] text-[#E50914] text-[26px] md:text-[42px]" style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 0 30px rgba(229,9,20,0.5)' }}>
-              {SATIR.map((h, i) => (
-                <span key={i} className="inline-block"
-                  style={{ animation: 'harfYavas 1.1s ease-out both', animationDelay: `${0.15 + i * 0.2}s` }}>
-                  {h === ' ' ? '\u00A0' : h}
-                </span>
-              ))}
+              NOXFLAX ÇOK YAKINDA
             </h1>
           </div>
         </div>
