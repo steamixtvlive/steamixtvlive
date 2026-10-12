@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+const SATIR = 'NOXFLAX ÇOK YAKINDA'.split('')
+
 function useTudum() {
   const caldi = useRef(false)
   useEffect(() => {
@@ -61,25 +63,44 @@ export default function MaintenanceOverlay() {
     <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden bg-black">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Inter:wght@400;500;600&display=swap');
-        @keyframes tozKaybol { 0% { opacity: 1; filter: blur(0); transform: scale(1) } 100% { opacity: 0; filter: blur(18px); transform: scale(1.12) } }
         @keyframes logoYakin { 0% { transform: scale(0.92) } 100% { transform: scale(1) } }
+        @keyframes dumanDagil { 0% { opacity: 1; filter: blur(0); transform: scale(1) } 100% { opacity: 0; filter: blur(22px); transform: scale(1.1) } }
+        @keyframes harfYavas { 0% { opacity: 0; transform: translateY(34px); filter: blur(10px) } 100% { opacity: 1; transform: translateY(0); filter: blur(0) } }
       `}</style>
+
+      {/* duman filtresi */}
+      <svg width="0" height="0" className="absolute" aria-hidden="true">
+        <filter id="dumanDagit">
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.035" numOctaves="2" seed="7" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="0">
+            <animate attributeName="scale" values="0;95" keyTimes="0;1" dur="1.4s" begin="6.6s" fill="freeze" />
+          </feDisplacementMap>
+        </filter>
+      </svg>
 
       {!sabit ? (
         <div className="flex-1 flex items-center justify-center px-4">
-          <img src="/images/netflax-logo.jpg" alt="Netflax"
+          <img src="/images/noxflax-logo.jpg" alt="Noxflax"
             className="w-full max-w-[680px] object-contain"
-            style={{ animation: 'logoYakin 6.8s ease-out both, tozKaybol 1.4s ease-in 6.6s both' }} />
+            style={{
+              animation: 'logoYakin 6.8s ease-out both, dumanDagil 1.4s ease-in 6.6s both',
+              filter: 'url(#dumanDagit)',
+            }} />
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center">
-            <img src="/images/netflax-logo.jpg" alt="Netflax" className="w-[240px] md:w-[300px] mx-auto object-contain mb-6" />
-            <p className="text-[13px] md:text-sm font-semibold tracking-[0.3em] text-gray-300 uppercase mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <img src="/images/noxflax-logo.jpg" alt="Noxflax" className="w-[230px] md:w-[290px] mx-auto object-contain mb-7" />
+            <p className="text-[12px] md:text-sm font-semibold tracking-[0.35em] text-gray-300 uppercase mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>
               İlk Yerli Projemiz
             </p>
-            <h1 className="text-[30px] md:text-[46px] font-black tracking-tight text-[#E50914]" style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 0 30px rgba(229,9,20,0.5)' }}>
-              NETFLAX ÇOK YAKINDA
+            <h1 className="font-black tracking-[0.18em] text-[#E50914] text-[26px] md:text-[42px]" style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 0 30px rgba(229,9,20,0.5)' }}>
+              {SATIR.map((h, i) => (
+                <span key={i} className="inline-block"
+                  style={{ animation: 'harfYavas 1.1s ease-out both', animationDelay: `${0.15 + i * 0.2}s` }}>
+                  {h === ' ' ? '\u00A0' : h}
+                </span>
+              ))}
             </h1>
           </div>
         </div>
