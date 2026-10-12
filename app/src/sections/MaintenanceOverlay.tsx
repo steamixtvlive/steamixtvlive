@@ -1,4 +1,57 @@
+import { useEffect, useRef } from 'react'
+
+function useTudum() {
+  const caldi = useRef(false)
+  useEffect(() => {
+    const cal = () => {
+      if (caldi.current) return
+      try {
+        const W = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext }
+        const AC = W.AudioContext || W.webkitAudioContext
+        if (!AC) return
+        const ctx = new AC()
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => undefined)
+        }
+        const t0 = ctx.currentTime + 0.05
+        const vur = ctx.createOscillator()
+        const vg = ctx.createGain()
+        vur.type = 'sine'
+        vur.frequency.value = 55
+        vg.gain.setValueAtTime(0.5, t0)
+        vg.gain.exponentialRampToValueAtTime(0.001, t0 + 0.7)
+        vur.connect(vg)
+        vg.connect(ctx.destination)
+        vur.start(t0)
+        vur.stop(t0 + 0.75)
+        ;[146.83, 185, 220].forEach(f => {
+          const o = ctx.createOscillator()
+          const g = ctx.createGain()
+          o.type = 'sine'
+          o.frequency.value = f
+          g.gain.setValueAtTime(0.0001, t0 + 0.3)
+          g.gain.exponentialRampToValueAtTime(0.16, t0 + 1.1)
+          g.gain.exponentialRampToValueAtTime(0.001, t0 + 2.8)
+          o.connect(g)
+          g.connect(ctx.destination)
+          o.start(t0 + 0.3)
+          o.stop(t0 + 2.9)
+        })
+        caldi.current = true
+      } catch { /* sessiz kal */ }
+    }
+    cal()
+    window.addEventListener('pointerdown', cal)
+    window.addEventListener('keydown', cal)
+    return () => {
+      window.removeEventListener('pointerdown', cal)
+      window.removeEventListener('keydown', cal)
+    }
+  }, [])
+}
+
 export default function MaintenanceOverlay() {
+  useTudum()
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden bg-[#05070f]">
       <style>{`
@@ -7,7 +60,8 @@ export default function MaintenanceOverlay() {
         @keyframes yorunge { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }
         @keyframes nabiz { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }
         @keyframes yukBar { 0% { transform: translateX(-110%) } 100% { transform: translateX(220%) } }
-        @keyframes suruklen { 0% { transform: translateY(0) } 100% { transform: translateY(-50%) } }
+        @keyframes logoAc { 0% { transform: scale(0.55); opacity: 0 } 60% { transform: scale(1.06); opacity: 1 } 100% { transform: scale(1); opacity: 1 } }
+        @keyframes yaziGir { 0% { transform: translateY(26px); opacity: 0 } 100% { transform: translateY(0); opacity: 1 } }
       `}</style>
 
       {/* yıldız tarlası */}
@@ -24,18 +78,15 @@ export default function MaintenanceOverlay() {
       {/* içerik */}
       <div className="relative flex-1 flex items-center justify-center px-4 overflow-y-auto">
         <div className="text-center max-w-[560px] py-10">
-          {/* yörüngeli logo */}
+          {/* splash tarzı logo açılışı */}
           <div className="flex justify-center mb-7">
-            <div className="relative w-[120px] h-[120px] flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border border-dashed border-[#0099ff]/40" style={{ animation: 'yorunge 14s linear infinite' }}>
-                <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,1)]" />
-              </div>
-              <div className="absolute inset-3 rounded-full border border-white/10" />
-              <div className="absolute inset-0 rounded-full bg-[#0099ff]/15 blur-2xl" />
-              <img src="/images/steamix-logo.jpg" alt="Steamix TV" className="relative w-[72px] h-[72px] rounded-2xl object-cover ring-1 ring-white/20 shadow-[0_0_35px_rgba(0,153,255,0.5)]" />
+            <div className="relative">
+              <div className="absolute inset-0 rounded-3xl bg-[#E50914]/30 blur-[26px]" style={{ animation: 'nabiz 2.4s ease-in-out infinite' }} />
+              <img src="/images/netflax-logo.jpg" alt="Netflax" className="relative w-[110px] h-[110px] rounded-3xl object-cover ring-1 ring-white/20" style={{ animation: 'logoAc 3s ease-out both' }} />
             </div>
           </div>
 
+          <div style={{ animation: 'yaziGir 1.2s ease-out 1.6s both' }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.05] border border-white/15 mb-5">
             <span className="w-2 h-2 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.9)]" style={{ animation: 'nabiz 1.6s ease-in-out infinite' }} />
             <span className="text-[11px] font-semibold tracking-[0.22em] text-gray-300 uppercase">Çok Yakında</span>
@@ -49,6 +100,7 @@ export default function MaintenanceOverlay() {
           <p className="text-[13px] md:text-sm text-gray-400 leading-relaxed mb-7" style={{ fontFamily: 'Inter, sans-serif' }}>
             Yüzlerce film dizi çok yakında.
           </p>
+          </div>
 
           {/* yükleniyor */}
           <div className="w-full max-w-[400px] mx-auto">
