@@ -84,11 +84,11 @@ export default function MaintenanceOverlay() {
               animation: 'dumanDagil 1.4s ease-in 6.6s both',
               filter: 'url(#dumanDagit)',
             }}>
-            <img src="/images/noxflax-logo.jpg" alt="Noxflax"
+            <img src="/images/noxflix-logo.jpg" alt="Noxflix"
               className="w-full max-w-[520px] mx-auto object-contain"
               style={{ clipPath: 'inset(0 0 30% 0)', animation: 'logoYakin 6.8s ease-out both' }} />
             <h1 className="font-black tracking-[0.3em] text-[#E50914] text-[40px] md:text-[64px] -mt-6" style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 0 34px rgba(229,9,20,0.65)' }}>
-              {'NOXFLAX'.split('').map((h, i) => (
+              {'NOXFLİX'.split('').map((h, i) => (
                 <span key={i} className="inline-block"
                   style={{ animation: 'harfSplash 1.1s ease-out both', animationDelay: `${1.0 + i * 0.35}s` }}>{h}</span>
               ))}
@@ -98,12 +98,12 @@ export default function MaintenanceOverlay() {
       ) : (
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center">
-            <img src="/images/noxflax-logo.jpg" alt="Noxflax" className="w-[230px] md:w-[290px] mx-auto object-contain mb-7" />
+            <img src="/images/noxflix-logo.jpg" alt="Noxflix" className="w-[230px] md:w-[290px] mx-auto object-contain mb-7" />
             <p className="text-[12px] md:text-sm font-semibold tracking-[0.35em] text-gray-300 uppercase mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>
               İlk Yerli Projemiz
             </p>
             <h1 className="font-black tracking-[0.18em] text-[#E50914] text-[26px] md:text-[42px]" style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 0 30px rgba(229,9,20,0.5)' }}>
-              NOXFLAX ÇOK YAKINDA
+              NOXFLİX ÇOK YAKINDA
             </h1>
           </div>
         </div>
