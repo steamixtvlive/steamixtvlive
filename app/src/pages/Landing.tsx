@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck, Bell, Crown } from 'lucide-react'
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
-import SiteSplash from '@/sections/SiteSplash'
 
 const APK_URL = 'https://www.dropbox.com/scl/fi/p9q2jxt3gr3w49xmftlfo/Steamix-TV.apk?rlkey=qas258lcd9oxcpzqgn93dsyiz&st=il22kjk1&dl=1'
 const MOBIL_APK_URL = 'https://www.dropbox.com/scl/fi/p9q2jxt3gr3w49xmftlfo/Steamix-TV.apk?rlkey=qas258lcd9oxcpzqgn93dsyiz&st=il22kjk1&dl=1'
@@ -282,9 +281,6 @@ export default function Landing() {
     { ad: 'Dizi', img: '/images/demo/dizi-stan.webp' },
   ]
   const [demoAsama, setDemoAsama] = useState(0)
-  const [splash, setSplash] = useState(() => {
-    try { return sessionStorage.getItem('rmSplash') !== '1' } catch { return true }
-  })
   useEffect(() => {
     let i = 0
     let t: ReturnType<typeof setTimeout>
@@ -299,7 +295,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex flex-col relative overflow-hidden">
-      {splash && <SiteSplash onDone={() => { try { sessionStorage.setItem('rmSplash', '1') } catch { /* yoksay */ } setSplash(false) }} />}
       <AnimatedBackground />
       {/* Işıklı status barı */}
       <div className="fixed top-0 inset-x-0 z-50 h-[3px] bg-white/5 overflow-hidden">
