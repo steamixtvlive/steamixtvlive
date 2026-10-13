@@ -886,13 +886,11 @@ export default function Landing() {
             <div className="space-y-3 mb-6">
               <div className="p-4 rounded-2xl bg-gradient-to-r from-[#0099ff]/[0.08] to-transparent border border-[#0099ff]/20 border-l-4 border-l-[#0099ff]/60">
                 <p className="text-xs text-gray-300 leading-relaxed">
-                  Satın aldıktan sonra Telegram 7/24 destek hattına (<a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">t.me/streamsupport00</a>) satın aldığınıza dair ekran görüntüsü atın; yönetici onayının ardından abonelik giriş
-                  bilgileriniz en kısa sürede size teslim edilir ve size özel oynatıcı bağlantınız Telegram üzerinden
-                  gönderilir — bağlantıyla birlikte aşağıdaki uygulamamızın apk'sını indirip kullanabilirsiniz.
-                  En iyi sonuç için TiviMate ve ABC IPTV Player uygulamalarını kullanın, Google Play'de mevcuttur. Shopier resmi
-                  kuralları gereği abonelikler sınırlıdır; tamamlanan abonelik yalnızca bir defaya mahsus tekrar
-                  alınabilir. Steamix TV'yi cihazlarınızda oynatabilmek için en az 100 Mbps internet hızı ve güncel
-                  donanımlı bir akıllı televizyon ya da TV Box kullanmanız şarttır, aksi halde donma ve takılmalar donanım yetersizliğinden ve ağ alt yapınızın zayıf olmasından kaynaklanır.
+                  Satın alma işleminizin ardından ödeme ekran görüntüsünü Telegram 7/24 destek hattımıza (<a href="https://t.me/streamsupport00" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">t.me/streamsupport00</a>) iletiniz.
+                  Yönetici onayını takiben abonelik giriş bilgileriniz ve size özel oynatıcı bağlantınız Telegram üzerinden teslim edilir.
+                  En iyi deneyim için uygulamamızı, TiviMate veya ABC IPTV Player ile kullanınız.
+                  Shopier satış koşulları gereği abonelikler kontenjanla sınırlıdır; süresi dolan abonelik bir defaya mahsus yenilenebilir.
+                  Akıcı izleme için en az 100 Mbps bağlantı ile güncel bir akıllı televizyon veya TV Box önerilir; donma ve takılmaların başlıca nedeni yetersiz donanım ve zayıf ağ altyapısıdır.
                 </p>
               </div>
             </div>
