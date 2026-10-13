@@ -890,7 +890,17 @@ export default function Landing() {
                   Yönetici onayını takiben abonelik giriş bilgileriniz ve size özel oynatıcı bağlantınız Telegram üzerinden teslim edilir.
                   En iyi deneyim için uygulamamızı, TiviMate veya ABC IPTV Player ile kullanınız.
                   Shopier satış koşulları gereği abonelikler kontenjanla sınırlıdır; süresi dolan abonelik bir defaya mahsus yenilenebilir.
-                  Akıcı izleme için en az 100 Mbps bağlantı ile güncel bir akıllı televizyon veya TV Box önerilir; donma ve takılmaların başlıca nedeni yetersiz donanım ve zayıf ağ altyapısıdır.
+                  Akıcı izleme için en az 100 Mbps bağlantı ile güncel bir akıllı televizyon veya TV Box önerilir.
+                </p>
+                <ul className="mt-3 space-y-1.5">
+                  {['Güncel olmayan veya düşük donanımlı televizyon ya da TV Box', 'Yetersiz internet hızı', 'Modeme uzaklık ve zayıf Wi-Fi sinyali (kablolu bağlantı önerilir)', 'Aynı anda çok sayıda cihazın interneti kullanması', 'Arka planda çalışan uygulamalar ve dolu önbellek'].map(m => (
+                    <li key={m} className="flex items-start gap-2 text-xs text-gray-300 leading-relaxed">
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#0099ff] shrink-0" />{m}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs text-gray-300 leading-relaxed">
+                  Donma ve takılmalar yukarıdaki nedenlerden kaynaklanır; bu durumun bizimle ilgisi yoktur.
                 </p>
               </div>
             </div>
