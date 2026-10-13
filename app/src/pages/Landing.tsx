@@ -239,12 +239,13 @@ export default function Landing() {
   }
   const BILDIRIMLER = [
     {
-      simge: '⚠️',
-      tarih: '13 Ekim 2026',
+      simge: '📢',
+      tarih: '6 Ekim 2026 • 14:20',
       yeni: true,
-      baslik: 'Donma Yaşıyorsanız: Çözüm Adımları',
-      ozet: 'Donmaların nedeni sizde olabilir, çözümü yazdık.',
-      metin: 'Yayın donuyorsa nedeni çoğunlukla sizin tarafınızdadır, çözümü de öyle: en az 100 Mbps internet kullanın, güncel bir akıllı televizyon veya TV Box ile izleyin, modeme yakın durun ya da kablolu bağlanın, aynı anda interneti kullanan cihaz sayısını azaltın, arka plan uygulamalarını kapatıp önbelleği temizleyin. Bunları yaptığınız halde sorun sürerse Telegram 7/24 destek hattına yazın.',
+      tvMock: true,
+      baslik: 'Liste Güncelleme Sıklığı',
+      ozet: 'Player’da güncelleme aralığını 1 saate ayarlayın.',
+      metin: 'Oynatma listemiz kalite standartları gereği sürekli otomatik yenilenmektedir. ABC IPTV Player ve benzeri oynatıcılarda liste güncelleme sıklığını lütfen 1 saatte bir olacak şekilde ayarlayın. Güncel liste, kesintisiz keyif demektir.',
     },
     {
       simge: '📢',
