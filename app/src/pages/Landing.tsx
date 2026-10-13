@@ -239,13 +239,12 @@ export default function Landing() {
   }
   const BILDIRIMLER = [
     {
-      simge: '📢',
-      tarih: '6 Ekim 2026 • 14:20',
+      simge: '⚠️',
+      tarih: '13 Ekim 2026',
       yeni: true,
-      tvMock: true,
-      baslik: 'Liste Güncelleme Sıklığı',
-      ozet: 'Player’da güncelleme aralığını 1 saate ayarlayın.',
-      metin: 'Oynatma listemiz kalite standartları gereği sürekli otomatik yenilenmektedir. ABC IPTV Player ve benzeri oynatıcılarda liste güncelleme sıklığını lütfen 1 saatte bir olacak şekilde ayarlayın. Güncel liste, kesintisiz keyif demektir.',
+      baslik: 'Donma Yaşıyorsanız: Çözüm Adımları',
+      ozet: 'Donmaların nedeni sizde olabilir, çözümü yazdık.',
+      metin: 'Yayın donuyorsa nedeni çoğunlukla sizin tarafınızdadır, çözümü de öyle: en az 100 Mbps internet kullanın, güncel bir akıllı televizyon veya TV Box ile izleyin, modeme yakın durun ya da kablolu bağlanın, aynı anda interneti kullanan cihaz sayısını azaltın, arka plan uygulamalarını kapatıp önbelleği temizleyin. Bunları yaptığınız halde sorun sürerse Telegram 7/24 destek hattına yazın.',
     },
     {
       simge: '📢',
@@ -891,16 +890,6 @@ export default function Landing() {
                   En iyi deneyim için uygulamamızı, TiviMate veya ABC IPTV Player ile kullanınız.
                   Shopier satış koşulları gereği abonelikler kontenjanla sınırlıdır; süresi dolan abonelik bir defaya mahsus yenilenebilir.
                   Akıcı izleme için en az 100 Mbps bağlantı ile güncel bir akıllı televizyon veya TV Box önerilir.
-                </p>
-                <ul className="mt-3 space-y-1.5">
-                  {['Güncel olmayan veya düşük donanımlı televizyon ya da TV Box', 'Yetersiz internet hızı', 'Modeme uzaklık ve zayıf Wi-Fi sinyali (kablolu bağlantı önerilir)', 'Aynı anda çok sayıda cihazın interneti kullanması', 'Arka planda çalışan uygulamalar ve dolu önbellek'].map(m => (
-                    <li key={m} className="flex items-start gap-2 text-xs text-gray-300 leading-relaxed">
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#0099ff] shrink-0" />{m}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-3 text-xs text-gray-300 leading-relaxed">
-                  Donma ve takılmalar yukarıdaki nedenlerden kaynaklanır; bu durumun bizimle ilgisi yoktur.
                 </p>
               </div>
             </div>
