@@ -17,7 +17,7 @@ function mobilMi() {
 const PLANS = [
   { name: '1 AYLIK', price: '350₺', devices: '1 CİHAZ', vip: false, link: 'https://www.shopier.com/platool/49623989', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
   { name: '3 AYLIK', price: '500₺', devices: '1 CİHAZ', vip: false, link: 'https://www.shopier.com/platool/49624003', popular: true, features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
-  { name: '12 AYLIK', price: '2.500₺', devices: '5 CİHAZ', vip: true, link: 'https://www.shopier.com/platool/49624023', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
+  { name: '12 AYLIK', price: '2.500₺', devices: '4 CİHAZ', vip: true, link: 'https://www.shopier.com/platool/49624023', features: ['ÜST DÜZEY SUNUCU DESTEĞİ', 'YERLİ VE YABANCI KANALLAR', 'ÜCRETSİZ KURULUM DESTEĞİ', '5.000’DEN FAZLA KANAL', 'TÜM CİHAZLARLA UYUMLU', 'SD, HD, FHD, UHD, 4K', '%100 MÜŞTERİ MEMNUNİYETİ', '7/24 Canlı Destek'] },
 ]
 
 const POSTERS = ['poster01.jpg', 'poster02.jpg', 'poster03.jpg', 'poster04.jpg', 'poster05.jpg', 'poster06.jpg', 'poster07.jpg', 'poster08.jpg', 'poster10.jpg', 'poster11.jpg', 'poster12.jpg', 'poster13.jpg']
@@ -117,10 +117,10 @@ const YORUMLAR = [
   { ad: 'Zeynep D.', yer: '🇹🇷 İstanbul, Türkiye', yazi: "Önce 1 aylığına denedim, beğenince 3 aylığa geçtim. Hem canlı hem arşiv var. Yıllığa da geçmeyi düşünüyorum, içerik gerçekten çok zengin." },
   { ad: 'Hakan Y.', yer: '🇳🇱 Rotterdam, Hollanda', yazi: "Kurulum 10 dakika sürdü, destek gece 2'de bile anında yanıtladı. Hollanda'dan Süper Lig'i 4K izliyorum. Daha önce kullandıklarımın çok ötesinde." },
   { ad: 'Serkan T.', yer: '🇩🇪 Frankfurt, Almanya', yazi: "Şampiyonlar Ligi maçlarını artık çanak anten olmadan izliyorum. Spor kanallarının hepsi var ve hiç donmuyor. Gerçekten çok iyi bir hizmet." },
-  { ad: 'Ayşe N.', yer: '🇹🇷 Ankara, Türkiye', yazi: "Samsung Smart TV'ye uygulamayı indirip giriş yaptım, oldu bitti. Eşim de çocuklar da çok memnun. Çizgi filmler, haberler, diziler — her şey var." },
+  { ad: 'Ayşe N.', yer: '🇹🇷 Ankara, Türkiye', yazi: "Samsung Smart TV'ye uygulamayı indirip giriş yaptım, oldu bitti. Eşim de çocuklar da çok memnun. Çizgi filmler, haberler, diziler, her şey var." },
   { ad: 'Burak E.', yer: '🇫🇷 Paris, Fransa', yazi: "Paris'ten alıyorum, Avrupa paketi çok iyi. Hem Türk kanalları hem Fransız kanalları var. Fiyat makul, arkadaşlarıma da önerdim." },
   { ad: 'Elif R.', yer: '🇹🇷 İzmir, Türkiye', yazi: "Dizi hastasıyım ve yerli dizilerin tamamını anlık takip ediyorum. Canlı yayınların yanında arşiv de var, kaçırdığım bölümleri sonradan izleyebiliyorum." },
-  { ad: 'Kadir Y.', yer: '🇧🇪 Brüksel, Belçika', yazi: "Belçika'da 4 kişilik aileyiz, herkesin farklı zevki var. Çocuklar çizgi film, eşim dizi, ben futbol — hepsini aynı abonelikle izliyoruz." },
+  { ad: 'Kadir Y.', yer: '🇧🇪 Brüksel, Belçika', yazi: "Belçika'da 4 kişilik aileyiz, herkesin farklı zevki var. Çocuklar çizgi film, eşim dizi, ben futbol, hepsini aynı abonelikle izliyoruz." },
   { ad: 'Selin U.', yer: '🇩🇪 Münih, Almanya', yazi: "4K'yı test etmek için önce ücretsiz deneme aldım, kalite gerçekten çok iyi. Hemen yıllık pakete geçtim, pişman değilim." },
   { ad: 'Emre O.', yer: '🇹🇷 Bursa, Türkiye', yazi: "Bir sorun yaşadım, yazdım, 10 dakika içinde çözüldü. Bu kadar hızlı destek beklemiyordum. Teknik bilgisi olmayan biri bile rahatlıkla kullanabilir." },
   { ad: 'Özlem P.', yer: '🇳🇱 Amsterdam, Hollanda', yazi: "Diğer platformları iptal ettim, bu abonelikle devam ediyorum. İkisinden ucuz ve Türkçe kanal arşivi çok daha geniş. Tavsiye ederim." },
@@ -240,12 +240,12 @@ export default function Landing() {
   const BILDIRIMLER = [
     {
       simge: '📢',
-      tarih: '6 Ekim 2026 • 14:20',
+      tarih: '18 Ekim 2026 • 10:30',
       yeni: true,
       tvMock: true,
-      baslik: 'Liste Güncelleme Sıklığı',
-      ozet: 'Player’da güncelleme aralığını 1 saate ayarlayın.',
-      metin: 'Oynatma listemiz kalite standartları gereği sürekli otomatik yenilenmektedir. ABC IPTV Player ve benzeri oynatıcılarda liste güncelleme sıklığını lütfen 1 saatte bir olacak şekilde ayarlayın. Güncel liste, kesintisiz keyif demektir.',
+      baslik: 'Panel Altyapımızı Değiştirdik',
+      ozet: 'ClanXPortal altyapısına geçtik. Daha kaliteli ve donmasız yayın.',
+      metin: 'Panel altyapımızı değiştirdik. Yayınlarımız artık ClanXPortal altyapısı üzerinden geliyor. Bu geçişle birlikte daha yüksek görüntü kalitesi ve donmasız bir izleme keyfi sizi bekliyor.',
     },
     {
       simge: '📢',
@@ -259,7 +259,7 @@ export default function Landing() {
       tarih: '30 Eylül 2026 • 13:05',
       baslik: 'Test Yayını Nasıl İstenir?',
       ozet: 'Önce 4 test planına göz at, sonra Telegram’dan yaz.',
-      metin: 'Test yayını istemek için lütfen Telegram’dan yazın. Ama önce sitedeki 4 test planına göz atın, size uygun planı seçip ona göre yazın — işleminiz çok daha hızlı tamamlanır.',
+      metin: 'Test yayını istemek için lütfen Telegram’dan yazın. Ama önce sitedeki 4 test planına göz atın, size uygun planı seçip ona göre yazın. İşleminiz çok daha hızlı tamamlanır.',
       buton: true,
     },
     {
@@ -617,7 +617,7 @@ export default function Landing() {
           <h2 className="text-xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Kumandayla Koltuktan, <span className="text-[#0099ff]">Dokunarak Cebinden</span>
           </h2>
-          <p className="text-sm text-gray-500 max-w-xl mx-auto">TV'de maç, telefonda dizi — Steamix TV arayüzü her ekranda aynı akıcılıkta.</p>
+          <p className="text-sm text-gray-500 max-w-xl mx-auto">TV'de maç, telefonda dizi. Steamix TV arayüzü her ekranda aynı akıcılıkta.</p>
         </div>
         <div className="hidden md:flex flex-col md:flex-row items-center justify-center gap-6 md:gap-14">
           {/* TV + kumanda */}
@@ -681,7 +681,7 @@ export default function Landing() {
           <h2 className="text-xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Sinema Salonu <span className="text-[#0099ff]">Evinizde</span>
           </h2>
-          <p className="text-sm text-gray-500 max-w-xl mx-auto">Vizyondan arşive binlerce film, kaldığınız yerden devam eden diziler — hepsi tek abonelikte.</p>
+          <p className="text-sm text-gray-500 max-w-xl mx-auto">Vizyondan arşive binlerce film, kaldığınız yerden devam eden diziler, hepsi tek abonelikte.</p>
         </div>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
           {POSTERS.map((p, i) => (
@@ -699,7 +699,7 @@ export default function Landing() {
           <h2 className="text-xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Müşterilerimiz <span className="text-[#0099ff]">Ne Diyor?</span>
           </h2>
-          <p className="text-sm text-gray-500 max-w-xl mx-auto">Avrupa'dan Türkiye'ye binlerce mutlu izleyici — hız, kalite ve destek farkıyla.</p>
+          <p className="text-sm text-gray-500 max-w-xl mx-auto">Avrupa'dan Türkiye'ye binlerce mutlu izleyici. Hız, kalite ve destek farkıyla.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {YORUMLAR.map(y => (
@@ -799,7 +799,7 @@ export default function Landing() {
             ))}
           </div>
           <p className="text-[11px] text-gray-500 text-center leading-relaxed">
-            Her player'da izleyebilirsiniz — önerimiz öncelikle <a href="https://play.google.com/store/search?q=ABC%20Player&c=apps" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">ABC Player</a> ve <a href="https://play.google.com/store/apps/details?id=ar.tvplayer.tv" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">TiviMate</a>, ikisini de Google Play'den indirebilirsiniz.
+            Her player'da izleyebilirsiniz. Önerimiz öncelikle <a href="https://play.google.com/store/search?q=ABC%20Player&c=apps" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">ABC Player</a> ve <a href="https://play.google.com/store/apps/details?id=ar.tvplayer.tv" target="_blank" rel="noopener noreferrer" className="text-[#0099ff] font-semibold hover:underline">TiviMate</a>, ikisini de Google Play'den indirebilirsiniz.
           </p>
         </div>
       </div>
@@ -949,7 +949,7 @@ export default function Landing() {
               {seciliTest.id === '7gun' && (
                 <a href="https://shopier.com/platool/51676164" target="_blank" rel="noopener noreferrer"
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-700 text-white font-semibold text-sm text-center hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-all flex items-center justify-center gap-2">
-                  <ShoppingCart className="w-4 h-4" />150₺ — Ödemeye Git
+                  <ShoppingCart className="w-4 h-4" />150₺ | Ödemeye Git
                 </a>
               )}
               <a href={`https://t.me/streamsupport00?text=${encodeURIComponent(seciliTest.govde)}`} target="_blank" rel="noopener noreferrer"
@@ -968,7 +968,7 @@ export default function Landing() {
       <footer className="relative z-10 mt-12 border-t border-white/10 bg-black/40 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-4 pt-5 pb-28 md:pb-10 flex flex-col items-center gap-1.5">
           <span className="text-[13px] font-semibold text-gray-300">Steamix Live IPTV</span>
-          <span className="text-[11px] tracking-wide text-gray-400">© 2027 Steamix Live IPTV — Tüm hakları saklıdır.</span>
+          <span className="text-[11px] tracking-wide text-gray-400">© 2027 Steamix Live IPTV. Tüm hakları saklıdır.</span>
         </div>
       </footer>
       {/* Yüzen Telegram destek butonu */}
