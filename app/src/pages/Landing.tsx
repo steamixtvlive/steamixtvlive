@@ -242,7 +242,6 @@ export default function Landing() {
       simge: '📢',
       tarih: '18 Ekim 2026 • 10:30',
       yeni: true,
-      tvMock: true,
       baslik: 'Panel Altyapımızı Değiştirdik',
       ozet: 'ClanXPortal altyapısına geçtik. Daha kaliteli ve donmasız yayın.',
       metin: 'Panel altyapımızı değiştirdik. Yayınlarımız artık ClanXPortal altyapısı üzerinden geliyor. Bu geçişle birlikte daha yüksek görüntü kalitesi ve donmasız bir izleme keyfi sizi bekliyor.',
@@ -390,7 +389,7 @@ export default function Landing() {
                     {'yeni' in b && (b as { yeni?: boolean }).yeni && (<span className="px-1.5 py-px rounded text-[9px] font-bold bg-[#0099ff] text-white animate-pulse">YENİ</span>)}
                   </span>
                   <span className="block text-[11px] text-gray-400 leading-relaxed">{b.ozet}</span>
-                  <span className="block text-[10px] text-gray-500 mt-1">{b.tarih} • Otomatik</span>
+                  <span className="block text-[10px] text-gray-500 mt-1">{b.tarih}</span>
                 </span>
               </button>
             ))}
