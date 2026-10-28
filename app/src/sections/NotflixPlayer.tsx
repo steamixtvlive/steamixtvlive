@@ -11,6 +11,8 @@ import {
   Play,
   Radio,
   RotateCcw,
+  Volume2,
+  VolumeX,
 } from 'lucide-react'
 import ChannelPanel from '@/sections/ChannelPanel'
 import {
@@ -98,6 +100,79 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
       }).format(new Date(nowTick)),
     [nowTick],
   )
+
+  const togglePlay = useCallback(() => {
+    const video = videoRef.current
+    if (!video) return
+    if (video.paused) {
+      void video.play().catch(() => setError('Yayın oynatılamadı. Yeniden deneyin.'))
+    } else {
+      video.pause()
+    }
+  }, [])
+
+  const toggleMute = useCallback(() => {
+    const video = videoRef.current
+    if (!video) return
+    const nextMuted = !video.muted
+    video.muted = nextMuted
+    setMuted(nextMuted)
+  }, [])
+
+  const handleVolume = useCallback((value: number) => {
+    const video = videoRef.current
+    setVolume(value)
+    setMuted(value === 0)
+    if (video) {
+      video.volume = value / 100
+      video.muted = value === 0
+    }
+  }, [])
+
+  const selectChannel = useCallback((channel: VavooChannel) => {
+    setActiveId(channel.id)
+    if (isSmallScreen()) setDrawerOpen(false)
+  }, [])
+
+  const stepChannel = useCallback((direction: -1 | 1) => {
+    if (channels.length === 0) return
+    const currentIndex = channels.findIndex((channel) => channel.id === active?.id)
+    const safeIndex = currentIndex < 0 ? 0 : currentIndex
+    const nextIndex = (safeIndex + direction + channels.length) % channels.length
+    setActiveId(channels[nextIndex].id)
+  }, [active?.id, channels])
+
+  const retry = useCallback(() => {
+    forceRefreshRef.current = true
+    setError('')
+    setResolving(true)
+    setBuffering(true)
+    setAttempt((value) => value + 1)
+  }, [])
+
+  const toggleFullscreen = useCallback(async () => {
+    const node = wrapperRef.current
+    if (!node) return
+    try {
+      if (document.fullscreenElement === node) await document.exitFullscreen()
+      else await node.requestFullscreen()
+    } catch {
+      setError('Tam ekran modu kullanılamıyor.')
+    }
+  }, [])
+
+  const togglePip = useCallback(async () => {
+    const video = videoRef.current as (HTMLVideoElement & {
+      requestPictureInPicture?: () => Promise<PictureInPictureWindow>
+    }) | null
+    if (!video) return
+    try {
+      if (document.pictureInPictureElement === video) await document.exitPictureInPicture()
+      else if (video.requestPictureInPicture) await video.requestPictureInPicture()
+    } catch {
+      setError('Mini oynatıcı açılamadı.')
+    }
+  }, [])
 
   const wakeUi = useCallback(() => {
     setUiVisible(true)
