@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import NotflixHome from '@/pages/NotflixHome'
 import NotflixTemplatePage from '@/pages/NotflixTemplatePage'
 import NotflixPlayer from '@/sections/NotflixPlayer'
+import NotflixDiscover from '@/pages/NotflixDiscover'
 import NotflixSidebar from '@/sections/NotflixSidebar'
 import NotflixTopbar from '@/sections/NotflixTopbar'
 import { PAGE_TITLES, type PageId } from '@/lib/navigation'
@@ -21,7 +22,7 @@ const PAGE_SUBTITLES: Record<Exclude<PageId, 'live'>, string> = {
 }
 
 export default function NotflixShell({ catalog }: NotflixShellProps) {
-  const [page, setPage] = useState<PageId>('live')
+  const [page, setPage] = useState<PageId>('discover')
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const bodyRef = useRef<HTMLElement | null>(null)
@@ -43,6 +44,8 @@ export default function NotflixShell({ catalog }: NotflixShellProps) {
   const subtitle =
     page === 'live'
       ? `${catalog.total.toLocaleString('tr-TR')} kanal · Vavoo / MediaHubMX`
+      : page === 'discover'
+      ? 'Keşfet sayfası'
       : PAGE_SUBTITLES[page]
 
   return (
@@ -83,6 +86,8 @@ export default function NotflixShell({ catalog }: NotflixShellProps) {
               <NotflixPlayer channels={catalog.channels} />
             ) : page === 'home' ? (
               <NotflixHome />
+            ) : page === 'discover' ? (
+              <NotflixDiscover />
             ) : (
               <NotflixTemplatePage page={page} />
             )}

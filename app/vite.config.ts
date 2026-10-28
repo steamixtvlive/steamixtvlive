@@ -7,15 +7,22 @@ import { inspectAttr } from 'kimi-plugin-inspect-react'
 // dev middleware below. Keeping one implementation avoids API drift.
 // @ts-expect-error - no declaration file for the shared Node ESM module
 import { createVavooApi } from "./vavoo-api.js"
+// @ts-expect-error - no declaration file for the shared Node ESM module
+import { createVodApi } from "./vod-api.js"
 
 function vavooApiPlugin(): Plugin {
   return {
     name: "notflix-vavoo-api",
     configureServer(server) {
       const api = createVavooApi()
+      const vodApi = createVodApi()
       server.middlewares.use((req, res, next) => {
         if (req.url?.startsWith("/api/vavoo/")) {
           void api(req, res)
+          return
+        }
+        if (req.url?.startsWith("/api/vod/")) {
+          void vodApi(req, res)
           return
         }
         next()

@@ -49,17 +49,17 @@ export const CATEGORY_ORDER = [
   'Ulusal',
   'Haber',
   'Spor',
+  'Belgesel',
+  'Müzik',
+  'Yerel',
   'Sinema & Dizi',
   'Çocuk',
-  'Müzik',
-  'Belgesel',
   'Yaşam',
   'Dinî',
   'Eğitim',
-  'Yerel',
 ] as const
 
-const FEATURED_CATEGORY = 'Öne Çıkanlar'
+const FEATURED_CATEGORY = 'Tüm Kanallar'
 
 export { FEATURED_CATEGORY }
 
@@ -161,6 +161,8 @@ export function pickDefaultChannel(channels: VavooChannel[]): VavooChannel | nul
   if (channels.length === 0) return null
   return (
     channels.find((channel) => channel.name === 'TRT 1') ||
+    channels.find((channel) => channel.name.replace(/\s+/g, ' ').startsWith('TRT 1')) ||
+    channels.find((channel) => channel.name === 'TRT') ||
     channels.find((channel) => channel.featured && channel.category === 'Ulusal') ||
     channels.find((channel) => channel.featured) ||
     channels[0]

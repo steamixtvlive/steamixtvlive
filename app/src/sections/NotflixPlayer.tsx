@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Hls from 'hls.js'
 import {
   AlertTriangle,
-  Check,
-  ChevronDown,
   ListVideo,
   Loader2,
   Maximize2,
@@ -13,9 +11,6 @@ import {
   Play,
   Radio,
   RotateCcw,
-  Settings2,
-  Volume2,
-  VolumeX,
 } from 'lucide-react'
 import ChannelPanel from '@/sections/ChannelPanel'
 import {
@@ -29,11 +24,6 @@ import {
 
 interface NotflixPlayerProps {
   channels: VavooChannel[]
-}
-
-interface QualityOption {
-  index: number
-  label: string
 }
 
 const HLS_CONFIG = {
@@ -71,10 +61,6 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
   const [volume, setVolume] = useState(82)
-  const [qualityOptions, setQualityOptions] = useState<QualityOption[]>([])
-  const [selectedLevel, setSelectedLevel] = useState(-1)
-  const [actualLevel, setActualLevel] = useState(-1)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(() => !isSmallScreen())
   const [fullscreen, setFullscreen] = useState(false)
   const [pipSupported, setPipSupported] = useState(false)
@@ -85,7 +71,6 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
   const wrapperRef = useRef<HTMLElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const hlsRef = useRef<Hls | null>(null)
-  const settingsRef = useRef<HTMLDivElement | null>(null)
   const hideTimer = useRef<number | null>(null)
   const retryTimer = useRef<number | null>(null)
   const autoRetryRef = useRef(0)
@@ -119,9 +104,9 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
     if (hideTimer.current !== null) window.clearTimeout(hideTimer.current)
     hideTimer.current = window.setTimeout(() => {
       const video = videoRef.current
-      if (video && !video.paused && !settingsOpen) setUiVisible(false)
+      if (video && !video.paused) setUiVisible(false)
     }, 3800)
-  }, [settingsOpen])
+  }, [])
 
   useEffect(() => {
     wakeUi()
@@ -181,19 +166,6 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
   }, [volume, muted])
 
   useEffect(() => {
-    if (!settingsOpen) return
-
-    const onPointerDown = (event: PointerEvent) => {
-      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
-        setSettingsOpen(false)
-      }
-    }
-
-    document.addEventListener('pointerdown', onPointerDown)
-    return () => document.removeEventListener('pointerdown', onPointerDown)
-  }, [settingsOpen])
-
-  useEffect(() => {
     if (!active) return
 
     let cancelled = false
@@ -208,10 +180,6 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
     setError('')
     setStream('')
     setPlaying(false)
-    setSelectedLevel(-1)
-    setActualLevel(-1)
-    setQualityOptions([])
-    setSettingsOpen(false)
 
     const timeout = window.setTimeout(() => {
       timedOut = true
@@ -258,9 +226,6 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
 
     setBuffering(true)
     setError('')
-    setQualityOptions([])
-    setSelectedLevel(-1)
-    setActualLevel(-1)
 
     const fail = (message: string) => {
       if (cancelled) return
@@ -285,18 +250,6 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
       }
     }
 
-    const syncQuality = (instance: Hls) => {
-      const next: QualityOption[] = instance.levels.map((level, index) => ({
-        index,
-        label: level.height
-          ? `${level.height}p`
-          : level.bitrate
-            ? `${Math.round(level.bitrate / 1000)} kbps`
-            : `Seviye ${index + 1}`,
-      }))
-      setQualityOptions(next)
-    }
-
     if (Hls.isSupported()) {
       const hls = new Hls(HLS_CONFIG)
       hlsInstance = hls
@@ -305,13 +258,7 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (cancelled) return
         setResolving(false)
-        syncQuality(hls)
         startPlayback()
-      })
-
-      hls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
-        if (cancelled) return
-        setActualLevel(data.level)
       })
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -490,13 +437,6 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
     setAttempt((value) => value + 1)
   }, [])
 
-  const chooseQuality = useCallback((level: number) => {
-    setSelectedLevel(level)
-    setSettingsOpen(false)
-    const hls = hlsRef.current
-    if (hls) hls.currentLevel = level
-  }, [])
-
   const stepChannel = useCallback(
     (direction: -1 | 1) => {
       if (channels.length === 0) return
@@ -517,7 +457,6 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
           'input, textarea, select, button, a, [contenteditable="true"], [role="textbox"]',
         )
       ) {
-        if (event.key === 'Escape' && settingsOpen) setSettingsOpen(false)
         return
       }
 
@@ -547,9 +486,7 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
         stepChannel(-1)
         wakeUi()
       } else if (key === 'escape') {
-        if (settingsOpen) {
-          setSettingsOpen(false)
-        } else if (drawerOpen && isSmallScreen()) {
+        if (drawerOpen && isSmallScreen()) {
           setDrawerOpen(false)
         }
       }
@@ -557,12 +494,7 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [drawerOpen, settingsOpen, stepChannel, toggleFullscreen, toggleMute, togglePlay, wakeUi])
-
-  const selectedQualityLabel =
-    selectedLevel === -1
-      ? `Otomatik${actualLevel >= 0 && qualityOptions[actualLevel] ? ` · ${qualityOptions[actualLevel].label}` : ''}`
-      : qualityOptions[selectedLevel]?.label || 'Kalite'
+  }, [drawerOpen, stepChannel, toggleFullscreen, toggleMute, togglePlay, wakeUi])
 
   if (!active) {
     return (
@@ -577,14 +509,15 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
   }
 
   return (
-    <section
-      ref={wrapperRef}
-      className={`nf-player ${uiVisible ? 'is-ui-visible' : 'is-idle'} ${drawerOpen ? 'has-drawer' : ''}`}
-      aria-label={`Canlı TV oynatıcısı: ${active.name}`}
-      onPointerMove={wakeUi}
-      onPointerDown={wakeUi}
-      tabIndex={-1}
-    >
+    <div className="nf-live-stage">
+      <section
+        ref={wrapperRef}
+        className={`nf-player ${uiVisible ? 'is-ui-visible' : 'is-idle'} ${drawerOpen ? 'has-drawer' : ''}`}
+        aria-label={`Canlı TV oynatıcısı: ${active.name}`}
+        onPointerMove={wakeUi}
+        onPointerDown={wakeUi}
+        tabIndex={-1}
+      >
       <video
         ref={videoRef}
         className="nf-player__video"
@@ -709,7 +642,6 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
           <div className="nf-player__channel-copy">
             <div className="nf-player__channel-title">
               <h2>{active.name}</h2>
-              <span className="nf-player__quality">{active.quality}</span>
               <span className="nf-player__category">{active.category}</span>
             </div>
 
@@ -784,56 +716,15 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
           </div>
 
           <div className="nf-player__controls-right">
-            <div className="nf-player__quality-wrap" ref={settingsRef}>
-              {settingsOpen && (
-                <div className="nf-player__quality-menu" role="menu" aria-label="Yayın kalitesi">
-                  <span className="nf-player__quality-heading">
-                    <Settings2 size={14} />
-                    Yayın kalitesi
-                  </span>
-                  <button
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={selectedLevel === -1}
-                    className={selectedLevel === -1 ? 'is-active' : ''}
-                    onClick={() => chooseQuality(-1)}
-                  >
-                    <span>
-                      Otomatik
-                      {actualLevel >= 0 && qualityOptions[actualLevel] && (
-                        <small>{qualityOptions[actualLevel].label}</small>
-                      )}
-                    </span>
-                    {selectedLevel === -1 && <Check size={15} />}
-                  </button>
-                  {qualityOptions.map((option) => (
-                    <button
-                      key={option.index}
-                      type="button"
-                      role="menuitemradio"
-                      aria-checked={selectedLevel === option.index}
-                      className={selectedLevel === option.index ? 'is-active' : ''}
-                      onClick={() => chooseQuality(option.index)}
-                    >
-                      <span>{option.label}</span>
-                      {selectedLevel === option.index && <Check size={15} />}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <button
-                type="button"
-                className={`nf-player__quality-button ${settingsOpen ? 'is-open' : ''}`}
-                onClick={() => setSettingsOpen((value) => !value)}
-                aria-expanded={settingsOpen}
-                aria-haspopup="menu"
-                aria-label={`Yayın kalitesi: ${selectedQualityLabel}`}
-              >
-                <Settings2 size={17} />
-                <span>{selectedQualityLabel}</span>
-                <ChevronDown size={13} />
-              </button>
+            <button
+            type="button"
+            className="nf-player__quality-button"
+            onClick={() => setDrawerOpen((value) => !value)}
+            aria-label={drawerOpen ? 'Kanal panelini kapat' : 'Kanal panelini aç'}
+            aria-pressed={drawerOpen}
+          >
+            <ListVideo size={17} />
+          </button>
             </div>
 
             {pipSupported && (
@@ -892,5 +783,7 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
         />
       </div>
     </section>
+  </div>
   )
 }
+      

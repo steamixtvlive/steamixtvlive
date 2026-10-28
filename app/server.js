@@ -7,8 +7,10 @@ import { gunzipSync } from 'node:zlib'
 import { spawn, execSync } from 'node:child_process'
 import ffmpegPathStatic from 'ffmpeg-static'
 import { createVavooApi } from './vavoo-api.js'
+import { createVodApi } from './vod-api.js'
 
 const vavooApi = createVavooApi()
+const vodApi = createVodApi()
 
 // Try to find ffmpeg: first check static, then system PATH, then common locations
 let ffmpegPath = null
@@ -374,6 +376,12 @@ http.createServer((req, res) => {
   // NOTFLIX live TV API (Vavoo / MediaHubMX catalog, resolve and HLS proxy)
   if ((req.url || '').startsWith('/api/vavoo/')) {
     vavooApi(req, res)
+    return
+  }
+
+  // NOTFLIX VOD library (Xtream catalog, details, posters and playback proxy)
+  if ((req.url || '').startsWith('/api/vod/')) {
+    void vodApi(req, res)
     return
   }
 

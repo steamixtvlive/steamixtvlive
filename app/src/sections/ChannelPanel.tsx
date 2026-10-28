@@ -31,17 +31,15 @@ export default function ChannelPanel({
 
   const categories = useMemo(() => {
     const available = CATEGORY_ORDER.filter((entry) => channels.some((channel) => channel.category === entry))
-    return channels.some((channel) => channel.featured)
-      ? [FEATURED_CATEGORY, ...available]
-      : available
+    return [FEATURED_CATEGORY, ...available]
   }, [channels])
 
   const filtered = useMemo(() => {
     const needle = searchKey(deferredQuery.trim())
-    const base = channels.filter((channel) => {
-      if (category === FEATURED_CATEGORY) return channel.featured
-      return channel.category === category
-    })
+    const base =
+      category === FEATURED_CATEGORY
+        ? channels
+        : channels.filter((channel) => channel.category === category)
 
     if (!needle) return base
     return base.filter((channel) => searchKey(channel.name).includes(needle))

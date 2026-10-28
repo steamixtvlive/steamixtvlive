@@ -198,11 +198,14 @@ function cleanDisplayName(raw) {
   name = name.replace(/^4K\s*TR\s*:\s*/i, '')
   name = name.replace(/\s*\((?:360P|480P|720P|1080P|H\.?265|HEVC|UHD|HD|SD|FEED|TURKEY|\d+\s*FPS)\)\s*/gi, ' ')
   name = name.replace(/\s*\[[^\]]*\]\s*/g, ' ')
-  name = name.replace(/\s+\b(?:FHD|HD|SD|HEVC|H\.?265|RAW|4K|UHD)\b\s*$/gi, '')
+  for (let round = 0; round < 3; round += 1) {
+    name = name.replace(/\s+\b(?:FHD\+?|HD\+?|SD|HEVC|H\.?265|RAW|4K|UHD)\b\s*$/gi, '')
+  }
   name = name.replace(/\s+\d{3,4}P\b/gi, '')
   name = name.replace(/\s+\d+\s*FPS\b/gi, '')
   name = name.replace(/\s+/g, ' ').trim()
   name = fixTurkishName(name)
+  name = name.replace(/\bMUZIK\b/g, 'MÜZİK')
   name = name.replace(/\s+/g, ' ').trim()
 
   return name.toLocaleUpperCase('tr')
@@ -221,6 +224,60 @@ function nameKey(name) {
     .replace(/[^a-z0-9]/g, '')
 }
 
+/**
+ * Dedupe key used to keep exactly one entry per channel. It ignores common
+ * "TV" suffixes and spelling variants so "SHOW", "SHOW TV" and "SHOW HD"
+ * collapse into one channel instead of filling the list with duplicates.
+ */
+function channelKey(value) {
+  let key = nameKey(cleanDisplayName(value))
+  key = key.replace(/europa/g, 'avrupa')
+  key = key.replace(/tv$/, '')
+  return key
+}
+
+const CHANNEL_PRIORITY = [
+  // Ulusal — requested order
+  'trt1', 'atv', 'kanald', 'show', 'star', 'now', 'tv8', 'tv85',
+  'trt2', 'trtturk', 'trtavaz', 'trtkurdi', 'trtworld', 'beyaz',
+  'teve2', '24', '360', 'a2', 'fox', 'tv100',
+  'kanal7', 'kanal23', 'kanal24', 'kanal26', 'kanal32', 'kanal33',
+  'kanal34', 'kanal35', 'kanal42', 'kanal43', 'kanal44', 'kanal47',
+  'kanal48', 'kanal54', 'kanal55', 'kanal56', 'kanal57', 'kanal58',
+  'kanal59', 'kanal60', 'kanal61', 'kanal62', 'kanal63', 'kanal64',
+  'kanal65', 'kanal66', 'kanal67', 'kanal68',
+
+  // Haber
+  'trthaber', 'ahaber', 'haberglobal', 'cnnturk', 'ntv', 'sozcu',
+  'halktv', 'tele1', 'krt', 'tvnet', 'bloomberght', 'haberturk',
+
+  // Spor
+  'beinsports1', 'beinsports2', 'beinsports3', 'beinsports4', 'beinsports5',
+  'beinsportsmax1', 'beinsportsmax2', 'beinsports4kfeedkutu', 'beinsports4kfeeduydu',
+  'ssport', 'ssport2', 'ssportplus', 'tivibuspor1', 'tivibuspor2', 'tivibuspor3',
+  'exxensports1', 'exxensports2', 'exxensports3', 'exxentv',
+  'tabiispor1', 'tabiispor2', 'trtspor', 'trtspor2', 'aspor',
+  'fb', 'gs', 'tjk', 'eurosport1', 'eurosport2', 'sports',
+
+  // Belgesel
+  'trtbelgesel', 'nationalgeographic', 'nationalgeographicwild',
+  'discoverychannel', 'discovery', 'history', 'viasathistory',
+  'dmax', 'tlc', 'animalplanet', 'bbcearth', 'davinci',
+
+  // Müzik
+  'trtmuzik', 'powerturk', 'kral', 'number1', 'nr1damar', 'dreamturk',
+
+  // Sinema & dizi
+  'beinmoviespremiere', 'beinmoviesstars', 'beinmoviesturk',
+  'sinema', 'sinematv2', 'sinematvaksiyon', 'sinemakomed', 'epicdrama',
+
+  // Çocuk
+  'trtcocuk', 'cartoonnetwork', 'disneychannel', 'disneyjunior', 'minika',
+  'minikaocuk', 'minikago', 'nickelodeon', 'boomerang', 'cbeebies',
+]
+const CHANNEL_RANKS = new Map(CHANNEL_PRIORITY.map((key, index) => [key, index]))
+
+
 const FEATURED_NAMES = [
   'TRT 1', 'ATV', 'SHOW TV', 'STAR TV', 'KANAL D', 'NOW TV', 'TV8',
   'TRT HABER', 'TRT SPOR', 'A HABER', 'A SPOR', 'HABER GLOBAL', 'CNN TÜRK',
@@ -232,7 +289,7 @@ const FEATURED_NAMES = [
   'TRT MÜZİK', 'POWER TÜRK TV', 'KRAL TV', 'TRT WORLD', 'TRT AVAZ', 'TRT TÜRK',
   'BEIN GURME', '24 KITCHEN', 'TRT 2', 'TRT KURDİ', 'TRT DİYANET',
 ]
-const FEATURED_KEYS = new Set(FEATURED_NAMES.map(nameKey))
+const FEATURED_KEYS = new Set(FEATURED_NAMES.map(channelKey))
 
 function classifyChannel(name, rawNames) {
   const haystack = `${name} ${rawNames.join(' ')}`.toLocaleUpperCase('tr')
@@ -252,31 +309,68 @@ function classifyChannel(name, rawNames) {
 }
 
 function qualityOf(rawName) {
-  if (/\b4K\b/i.test(rawName)) return '4K'
-  if (/\bFHD\b/i.test(rawName)) return 'FHD'
+  if (/\b4K\b|\bUHD\b/i.test(rawName)) return '4K'
+  if (/\bFHD\b|\b1080P\b/i.test(rawName)) return 'FHD'
+  if (/\bHD\b|\b720P\b|\b1080I\b/i.test(rawName)) return 'HD'
   if (/\bHEVC\b|\bH\.?265\b/i.test(rawName)) return 'HEVC'
-  if (/\bHD\b/i.test(rawName)) return 'HD'
-  if (/\bSD\b/i.test(rawName)) return 'SD'
+  if (/\bSD\b|\b576P\b|\b480P\b|\b360P\b/i.test(rawName)) return 'SD'
   return 'CANLI'
+}
+
+const QUALITY_SCORE = {
+  '4K': 1000,
+  FHD: 820,
+  HD: 680,
+  HEVC: 520,
+  CANLI: 420,
+  SD: 240,
 }
 
 function variantScore(entry) {
   const raw = entry.raw
-  let score = 0
+  let score = QUALITY_SCORE[qualityOf(raw)] || 0
   if (/\s*\.c\s*$/i.test(raw)) score += 40
   else if (/\s*\.s\s*$/i.test(raw)) score += 30
   else if (/\s*\.b\s*$/i.test(raw)) score += 20
   if (entry.item.logo) score += 8
   if (entry.item.epg?.length) score += 4
-  if (/\bFHD\b/i.test(raw)) score += 5
-  else if (/\bHD\b/i.test(raw)) score += 3
-  if (/\b4K\b/i.test(raw)) score += 1
-  if (/\bHEVC\b|\bH\.?265\b/i.test(raw)) score -= 1
+  if (/\bRAW\b/i.test(raw)) score += 2
   return score
 }
 
 function turkishScore(value) {
   return (String(value).match(/[ÇĞİÖŞÜ]/g) || []).length
+}
+
+const CATEGORY_ORDER = [
+  'Ulusal',
+  'Haber',
+  'Spor',
+  'Belgesel',
+  'Müzik',
+  'Yerel',
+  'Sinema & Dizi',
+  'Çocuk',
+  'Yaşam',
+  'Dinî',
+  'Eğitim',
+]
+const CATEGORY_RANK = new Map(CATEGORY_ORDER.map((name, index) => [name, index]))
+
+function channelPriority(channel) {
+  return CHANNEL_RANKS.get(channelKey(channel.name)) ?? 9999
+}
+
+function compareChannels(a, b) {
+  const categoryDiff =
+    (CATEGORY_RANK.get(a.category) ?? 99) - (CATEGORY_RANK.get(b.category) ?? 99)
+  if (categoryDiff !== 0) return categoryDiff
+
+  const priorityDiff = channelPriority(a) - channelPriority(b)
+  if (priorityDiff !== 0) return priorityDiff
+
+  if (a.featured !== b.featured) return a.featured ? -1 : 1
+  return a.name.localeCompare(b.name, 'tr')
 }
 
 function normalizeChannels(rawItems) {
@@ -286,7 +380,7 @@ function normalizeChannels(rawItems) {
     if (!item?.url || !item?.ids?.id) continue
     const display = cleanDisplayName(item.name)
     if (!display) continue
-    const key = nameKey(display)
+    const key = channelKey(display)
     if (!key) continue
     if (!grouped.has(key)) grouped.set(key, [])
     grouped.get(key).push({ item, raw: String(item.name || ''), display })
@@ -325,13 +419,13 @@ function normalizeChannels(rawItems) {
       logo: logoUrl ? `/api/vavoo/logo?u=${encodeBase64Url(logoUrl)}` : '',
       category: classifyChannel(name, rawNames),
       quality: qualityOf(best.raw),
-      featured: FEATURED_KEYS.has(nameKey(name)),
+      featured: FEATURED_KEYS.has(channelKey(name)),
       epg,
     })
     sourceById.set(id, String(best.item.url))
   }
 
-  channels.sort((a, b) => a.name.localeCompare(b.name, 'tr'))
+  channels.sort(compareChannels)
   const byId = new Map(channels.map((channel) => [channel.id, channel]))
 
   return { channels, byId, sourceById, totalRaw: rawItems.length }
