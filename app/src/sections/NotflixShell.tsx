@@ -7,6 +7,8 @@ import NotflixSidebar from '@/sections/NotflixSidebar'
 import NotflixTopbar from '@/sections/NotflixTopbar'
 import { PAGE_TITLES, type PageId } from '@/lib/navigation'
 import type { VavooCatalog } from '@/lib/vavoo'
+import { parseRotationData } from '@/lib/rotation'
+import { useNavigate } from 'react-router-dom'
 
 interface NotflixShellProps {
   catalog: VavooCatalog
@@ -22,12 +24,14 @@ const PAGE_SUBTITLES: Record<Exclude<PageId, 'live'>, string> = {
 }
 
 export default function NotflixShell({ catalog }: NotflixShellProps) {
+  const routerNavigate = useNavigate()
   const [page, setPage] = useState<PageId>('discover')
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const bodyRef = useRef<HTMLElement | null>(null)
+  const rotation = parseRotationData()
 
-  function navigate(nextPage: PageId) {
+  function navigatePage(nextPage: PageId) {
     setPage(nextPage)
     setMobileOpen(false)
     if (bodyRef.current) bodyRef.current.scrollTop = 0
@@ -43,9 +47,9 @@ export default function NotflixShell({ catalog }: NotflixShellProps) {
 
   const subtitle =
     page === 'live'
-      ? `${catalog.total.toLocaleString('tr-TR')} kanal · Vavoo / MediaHubMX`
+      ? `${catalog.total.toLocaleString('tr-TR')} Vavoo kanalı · Canlı yayın`
       : page === 'discover'
-      ? 'Keşfet sayfası'
+      ? `${rotation.channels.length.toLocaleString('tr-TR')} kanal · MXClanX M3U`
       : PAGE_SUBTITLES[page]
 
   return (
@@ -54,7 +58,7 @@ export default function NotflixShell({ catalog }: NotflixShellProps) {
         page={page}
         expanded={!collapsed || mobileOpen}
         mobileOpen={mobileOpen}
-        onNavigate={navigate}
+        onNavigate={navigatePage}
         onCloseMobile={() => setMobileOpen(false)}
       />
 
@@ -74,7 +78,7 @@ export default function NotflixShell({ catalog }: NotflixShellProps) {
           subtitle={subtitle}
           live={page === 'live'}
           onToggleMenu={toggleMenu}
-          onProfile={() => navigate('settings')}
+          onProfile={() => navigatePage('settings')}
         />
 
         <main
@@ -83,11 +87,14 @@ export default function NotflixShell({ catalog }: NotflixShellProps) {
         >
           <div key={page} className={`nf-page-enter ${page === 'live' ? 'nf-page-enter--live' : ''}`}>
             {page === 'live' ? (
-              <NotflixPlayer channels={catalog.channels} />
+              <NotflixPlayer
+                channels={catalog.channels}
+                onSelectChannel={(channel) => routerNavigate(`/watch/vavoo/${encodeURIComponent(channel.id)}`)}
+              />
             ) : page === 'home' ? (
               <NotflixHome />
             ) : page === 'discover' ? (
-              <NotflixDiscover />
+              <NotflixDiscover categories={rotation.categories} />
             ) : (
               <NotflixTemplatePage page={page} />
             )}

@@ -14,7 +14,9 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
 import ChannelPanel from '@/sections/ChannelPanel'
+import { getChannelById } from '@/lib/rotation'
 import {
   channelInitial,
   formatEpgTime,
@@ -26,6 +28,8 @@ import {
 
 interface NotflixPlayerProps {
   channels: VavooChannel[]
+  initialId?: string
+  onSelectChannel?: (channel: VavooChannel) => void
 }
 
 const HLS_CONFIG = {
@@ -47,8 +51,13 @@ function isSmallScreen() {
   return typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches
 }
 
-export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
-  const defaultChannel = useMemo(() => pickDefaultChannel(channels), [channels])
+export default function NotflixPlayer({ channels, initialId, onSelectChannel }: NotflixPlayerProps) {
+  const navigate = useNavigate()
+  const { id: routeChannelId } = useParams<{ id?: string }>()
+  const defaultChannel = useMemo(
+    () => channels.find((channel) => channel.id === initialId) || pickDefaultChannel(channels),
+    [channels, initialId],
+  )
   const [activeId, setActiveId] = useState(() => defaultChannel?.id || '')
   const active = useMemo(
     () => channels.find((channel) => channel.id === activeId) || defaultChannel || null,
@@ -69,12 +78,12 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
   const [pipActive, setPipActive] = useState(false)
   const [uiVisible, setUiVisible] = useState(true)
   const [nowTick, setNowTick] = useState(() => Date.now())
+  const [rotationPlayback, setRotationPlayback] = useState<{ id: string; name: string } | null>(null)
 
   const wrapperRef = useRef<HTMLElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const hlsRef = useRef<Hls | null>(null)
   const hideTimer = useRef<number | null>(null)
-  const retryTimer = useRef<number | null>(null)
   const autoRetryRef = useRef(0)
   const forceRefreshRef = useRef(false)
 
@@ -104,12 +113,20 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
   const togglePlay = useCallback(() => {
     const video = videoRef.current
     if (!video) return
+    if (rotationPlayback && hlsRef.current) {
+      if (video.paused) {
+        void video.play().catch(() => setError('Yayın oynatılamadı. Yeniden deneyin.'))
+      } else {
+        video.pause()
+      }
+      return
+    }
     if (video.paused) {
       void video.play().catch(() => setError('Yayın oynatılamadı. Yeniden deneyin.'))
     } else {
       video.pause()
     }
-  }, [])
+  }, [rotationPlayback])
 
   const toggleMute = useCallback(() => {
     const video = videoRef.current
@@ -130,9 +147,17 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
   }, [])
 
   const selectChannel = useCallback((channel: VavooChannel) => {
+    if (onSelectChannel) {
+      onSelectChannel(channel)
+      return
+    }
+    if (initialId) {
+      navigate(`/watch/vavoo/${encodeURIComponent(channel.id)}`, { replace: true })
+      return
+    }
     setActiveId(channel.id)
     if (isSmallScreen()) setDrawerOpen(false)
-  }, [])
+  }, [initialId, navigate, onSelectChannel])
 
   const stepChannel = useCallback((direction: -1 | 1) => {
     if (channels.length === 0) return
@@ -234,6 +259,81 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
   }, [])
 
   useEffect(() => {
+    if (!initialId || !active) return
+    setStream('')
+    setError('')
+    setResolving(true)
+    setBuffering(true)
+    setPlaying(false)
+
+    let cancelled = false
+    let timedOut = false
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => {
+      timedOut = true
+      controller.abort()
+    }, 25000)
+
+    resolveVavooChannel(active.id, attempt > 0, controller.signal)
+      .then((resolved) => {
+        if (!cancelled) setStream(resolved.stream)
+      })
+      .catch((resolveError: unknown) => {
+        if (cancelled) return
+        setError(timedOut
+          ? 'Kanal yayını zaman aşımına uğradı. Lütfen yeniden deneyin.'
+          : resolveError instanceof Error ? resolveError.message : 'Vavoo yayınına bağlanılamadı')
+        setResolving(false)
+        setBuffering(false)
+      })
+      .finally(() => window.clearTimeout(timeout))
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeout)
+      controller.abort()
+    }
+  }, [active, attempt, initialId])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!initialId || !stream || !video) return
+
+    const hls = new Hls(HLS_CONFIG)
+    hlsRef.current = hls
+    hls.on(Hls.Events.ERROR, (_event, data) => {
+      if (!data.fatal) return
+      if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad()
+      else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError()
+      else {
+        setError('Vavoo yayını başlatılamadı. Yeniden deneyin.')
+        setResolving(false)
+        setBuffering(false)
+      }
+    })
+
+    if (Hls.isSupported()) {
+      hls.loadSource(stream)
+      hls.attachMedia(video)
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = stream
+      video.load()
+    } else {
+      setError('Bu tarayıcı HLS yayınını desteklemiyor.')
+      setResolving(false)
+      setBuffering(false)
+    }
+
+    return () => {
+      hls.destroy()
+      if (hlsRef.current === hls) hlsRef.current = null
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
+    }
+  }, [initialId, stream])
+
+  useEffect(() => {
     const video = videoRef.current
     if (!video) return
     video.volume = volume / 100
@@ -290,6 +390,99 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
   }, [active, attempt])
 
   useEffect(() => {
+    if (!routeChannelId) {
+      setRotationPlayback(null)
+      return
+    }
+
+    let cancelled = false
+    const channel = getChannelById(routeChannelId)
+    if (!channel || channel.urls.length === 0) {
+      setRotationPlayback(null)
+      setError('M3U kanal bulunamadı veya bu kanalın yayın adresi yok.')
+      setResolving(false)
+      setBuffering(false)
+      return
+    }
+
+    const selectedChannel = channel
+    const rotation = { id: channel.id, name: channel.name }
+    setRotationPlayback(rotation)
+    setResolving(true)
+    setBuffering(true)
+    setError('')
+    setStream('')
+    setPlaying(false)
+
+    async function probeUrls() {
+      let lastError: unknown = null
+      for (const url of selectedChannel.urls) {
+        if (cancelled) return
+        try {
+          const response = await fetch(url, { method: 'GET', headers: { Range: 'bytes=0-0' } })
+          if (!response.ok) throw new Error(`Yayın sunucusu HTTP ${response.status} döndürdü`)
+          if (cancelled) return
+          setStream(url)
+          return
+        } catch (probeError) {
+          lastError = probeError
+        }
+      }
+
+      if (cancelled) return
+      setError(lastError instanceof Error ? lastError.message : 'M3U yayın adreslerine ulaşılamadı')
+      setResolving(false)
+      setBuffering(false)
+    }
+
+    void probeUrls()
+    return () => { cancelled = true }
+  }, [routeChannelId])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !stream || !rotationPlayback) return
+
+    let hls: Hls | null = null
+    setResolving(true)
+    setBuffering(true)
+    setError('')
+
+    const fail = (message: string) => {
+      setError(message)
+      setResolving(false)
+      setBuffering(false)
+      setPlaying(false)
+    }
+
+    if (Hls.isSupported()) {
+      hls = new Hls(HLS_CONFIG)
+      hlsRef.current = hls
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (!data.fatal) return
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls?.startLoad()
+        else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls?.recoverMediaError()
+        else fail('Bu M3U yayını oynatılamadı. Başka bir kanal deneyin.')
+      })
+      hls.loadSource(stream)
+      hls.attachMedia(video)
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = stream
+      video.load()
+    } else {
+      fail('Bu tarayıcı HLS/M3U yayını desteklemiyor.')
+    }
+
+    return () => {
+      hls?.destroy()
+      if (hlsRef.current === hls) hlsRef.current = null
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
+    }
+  }, [stream, rotationPlayback])
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
       if (
@@ -308,6 +501,19 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
       }
 
       const key = event.key.toLowerCase()
+
+      if (rotationPlayback) {
+        if (key === 'arrowright') {
+          event.preventDefault()
+          stepChannel(1)
+          wakeUi()
+        } else if (key === 'arrowleft') {
+          event.preventDefault()
+          stepChannel(-1)
+          wakeUi()
+        }
+        return
+      }
 
       if (key === 'm') {
         toggleMute()
@@ -334,9 +540,14 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [drawerOpen, stepChannel, toggleFullscreen, toggleMute, togglePlay, wakeUi])
+  }, [drawerOpen, rotationPlayback, stepChannel, toggleFullscreen, toggleMute, togglePlay, wakeUi])
 
-  if (!active) {
+  const displayChannel = rotationPlayback
+    ? getChannelById(rotationPlayback.id)
+    : null
+  const shownChannel = active || channels.find((channel) => channel.id === initialId) || defaultChannel
+
+  if (!shownChannel) {
     return (
       <section className="nf-player nf-player--empty">
         <div className="nf-player__empty-state">
@@ -352,8 +563,8 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
     <div className="nf-live-stage">
       <section
         ref={wrapperRef}
-        className={`nf-player ${uiVisible ? 'is-ui-visible' : 'is-idle'} ${drawerOpen ? 'has-drawer' : ''}`}
-        aria-label={`Canlı TV oynatıcısı: ${active.name}`}
+        className={`nf-player ${uiVisible ? 'is-ui-visible' : 'is-idle'} ${drawerOpen && !rotationPlayback ? 'has-drawer' : ''}`}
+        aria-label={`Canlı TV oynatıcısı: ${displayChannel?.name || shownChannel.name}`}
         onPointerMove={wakeUi}
         onPointerDown={wakeUi}
         tabIndex={-1}
@@ -427,7 +638,7 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
                 {error ||
                   (resolving ? 'Kanal bağlantısı kuruluyor' : 'Yayın tamponlanıyor')}
               </strong>
-              <small>{active.name} · Vavoo canlı yayın</small>
+            <small>{rotationPlayback?.name || shownChannel.name} · {rotationPlayback ? 'MXClanX M3U' : 'Vavoo canlı yayın'}</small>
             </span>
           </div>
         )}
@@ -440,10 +651,17 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
             <h2>Yayın açılamadı</h2>
             <p>{error}</p>
             <div className="nf-player__error-actions">
-              <button type="button" onClick={retry} className="nf-btn nf-btn--primary">
-                <RotateCcw size={16} />
-                Yeniden Dene
-              </button>
+              {rotationPlayback ? (
+                <button type="button" onClick={() => navigate(-1)} className="nf-btn nf-btn--primary">
+                  <RotateCcw size={16} />
+                  Kanallara Dön
+                </button>
+              ) : (
+                <button type="button" onClick={retry} className="nf-btn nf-btn--primary">
+                  <RotateCcw size={16} />
+                  Yeniden Dene
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
@@ -466,10 +684,10 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
         <div className="nf-player__bottom">
           <div className="nf-player__meta">
             <span className="nf-player__channel-logo">
-              <span>{channelInitial(active.name)}</span>
-              {active.logo && (
+              <span>{channelInitial(displayChannel?.name || shownChannel.name)}</span>
+              {(displayChannel?.tvgLogo || shownChannel.logo) && (
                 <img
-                  src={active.logo}
+                  src={displayChannel?.tvgLogo || shownChannel.logo}
                   alt=""
                   draggable={false}
                   onError={(event) => {
@@ -481,8 +699,8 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
 
             <div className="nf-player__channel-copy">
               <div className="nf-player__channel-title">
-                <h2>{active.name}</h2>
-                <span className="nf-player__category">{active.category}</span>
+                <h2>{displayChannel?.name || shownChannel.name}</h2>
+                <span className="nf-player__category">{displayChannel?.groupTitle || shownChannel.category}</span>
               </div>
 
               {epg.now ? (
@@ -493,7 +711,7 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
               ) : (
                 <p className="nf-player__program">
                   <em>CANLI</em>
-                  Kesintisiz canlı yayın
+                  {rotationPlayback ? 'MXClanX M3U yayını' : 'Kesintisiz canlı yayın'}
                 </p>
               )}
 
@@ -589,7 +807,7 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
           </div>
         </div>
 
-        {drawerOpen && (
+        {drawerOpen && !rotationPlayback && (
           <button
             type="button"
             className="nf-player__drawer-scrim"
@@ -599,18 +817,18 @@ export default function NotflixPlayer({ channels }: NotflixPlayerProps) {
           />
         )}
 
-        <div
+        {!rotationPlayback && <div
           className={`nf-player__drawer ${drawerOpen ? 'is-open' : ''}`}
           aria-hidden={!drawerOpen}
           inert={!drawerOpen}
         >
           <ChannelPanel
             channels={channels}
-            activeId={active.id}
-            onSelect={selectChannel}
+            activeId={initialId ? shownChannel.id : (active?.id || shownChannel.id)}
+            onSelect={onSelectChannel || selectChannel}
             onClose={() => setDrawerOpen(false)}
           />
-        </div>
+        </div>}
       </section>
     </div>
   )
