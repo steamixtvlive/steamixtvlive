@@ -1,16 +1,5 @@
-import NotflixLogo from '@/sections/NotflixLogo'
-import NotflixTagline from '@/sections/NotflixTagline'
-import NotflixFooter from '@/sections/NotflixFooter'
+import NotflixTemplatePage from '@/pages/NotflixTemplatePage'
 
 export default function NotflixHome() {
-  return (
-    <div className="notflix-home">
-      <div className="notflix-home__glow" />
-      <main className="notflix-home__center">
-        <NotflixLogo />
-        <NotflixTagline />
-      </main>
-      <NotflixFooter />
-    </div>
-  )
+  return <NotflixTemplatePage page="home" />
 }

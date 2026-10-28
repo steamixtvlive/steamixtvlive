@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url'
 import { gunzipSync } from 'node:zlib'
 import { spawn, execSync } from 'node:child_process'
 import ffmpegPathStatic from 'ffmpeg-static'
+import { createVavooApi } from './vavoo-api.js'
+
+const vavooApi = createVavooApi()
 
 // Try to find ffmpeg: first check static, then system PATH, then common locations
 let ffmpegPath = null
@@ -367,6 +370,12 @@ http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', '*')
   if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return }
+
+  // NOTFLIX live TV API (Vavoo / MediaHubMX catalog, resolve and HLS proxy)
+  if ((req.url || '').startsWith('/api/vavoo/')) {
+    vavooApi(req, res)
+    return
+  }
 
   // Dynamic proxy for redirect targets: /_p/host:port/path
   if (req.url.startsWith('/_p/')) {

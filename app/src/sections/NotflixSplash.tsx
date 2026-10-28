@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowRight } from 'lucide-react'
 import NotflixLogo from '@/sections/NotflixLogo'
 import NotflixTagline from '@/sections/NotflixTagline'
 import NotflixFooter from '@/sections/NotflixFooter'
@@ -12,20 +13,23 @@ const PARTICLES = [
   [95, 68, 4, 2.4, 5.3],
 ] as const
 
-const LEAVE_AT_MS = 9000
-const TOTAL_MS = 11000
+const LEAVE_ANIMATION_MS = 900
 
 export default function NotflixSplash({ onDone }: { onDone: () => void }) {
   const [leaving, setLeaving] = useState(false)
+  const leaveTimer = useRef<number | null>(null)
 
   useEffect(() => {
-    const leaveTimer = window.setTimeout(() => setLeaving(true), LEAVE_AT_MS)
-    const doneTimer = window.setTimeout(onDone, TOTAL_MS)
     return () => {
-      window.clearTimeout(leaveTimer)
-      window.clearTimeout(doneTimer)
+      if (leaveTimer.current !== null) window.clearTimeout(leaveTimer.current)
     }
-  }, [onDone])
+  }, [])
+
+  function handleSkip() {
+    if (leaving) return
+    setLeaving(true)
+    leaveTimer.current = window.setTimeout(onDone, LEAVE_ANIMATION_MS)
+  }
 
   return (
     <div
@@ -167,11 +171,58 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
           animation-iteration-count: infinite;
           will-change: transform, opacity;
         }
+        .nf-splash__skip {
+          position: absolute;
+          right: clamp(20px, 4vw, 58px);
+          bottom: max(50px, calc(env(safe-area-inset-bottom) + 46px));
+          z-index: 8;
+          display: inline-flex;
+          align-items: center;
+          gap: 9px;
+          padding: 11px 16px 11px 20px;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 999px;
+          background: rgba(12, 12, 14, .5);
+          color: rgba(255,255,255,.78);
+          font-family: 'Inter', sans-serif;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+          cursor: pointer;
+          opacity: 0;
+          backdrop-filter: blur(14px);
+          box-shadow: 0 14px 40px rgba(0,0,0,.35);
+          animation: nfSplashSkipIn .6s cubic-bezier(.2,.8,.2,1) 2.15s both;
+          transition: border-color .25s ease, color .25s ease, background .25s ease, transform .25s ease;
+        }
+        .nf-splash__skip:hover {
+          border-color: rgba(229,9,20,.55);
+          background: rgba(229,9,20,.12);
+          color: #fff;
+          transform: translateY(-1px);
+        }
+        .nf-splash__skip:focus-visible {
+          outline: 2px solid rgba(229,9,20,.8);
+          outline-offset: 3px;
+        }
+        .nf-splash__skip:disabled {
+          pointer-events: none;
+          opacity: .45;
+        }
+        .notflix-splash.is-leaving .nf-splash__skip {
+          opacity: 0;
+          transition: opacity .35s ease;
+        }
         .notflix-splash.is-leaving {
-          animation: notflixFade 2s ease-in both;
+          animation: notflixFade .9s ease-in both;
         }
         .notflix-splash.is-leaving .notflix-stage {
-          animation: notflixStageLeave 2s cubic-bezier(.4,0,.8,.4) both;
+          animation: notflixStageLeave .9s cubic-bezier(.4,0,.8,.4) both;
+        }
+        @keyframes nfSplashSkipIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes notflixSplashIn {
           from { opacity: 0; }
@@ -283,6 +334,17 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
         </div>
         <NotflixTagline />
       </div>
+
+      <button
+        type="button"
+        className="nf-splash__skip"
+        onClick={handleSkip}
+        disabled={leaving}
+        aria-label="Giriş ekranına geç"
+      >
+        <span>Geç</span>
+        <ArrowRight size={15} aria-hidden="true" />
+      </button>
 
       <div className="notflix-vignette" />
       <NotflixFooter animated />

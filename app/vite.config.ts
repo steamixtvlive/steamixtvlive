@@ -1,12 +1,33 @@
 import path from "path"
 import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { defineConfig, type Plugin } from "vite"
 import { inspectAttr } from 'kimi-plugin-inspect-react'
+
+// Plain ESM module shared by the production server (server.js) and the Vite
+// dev middleware below. Keeping one implementation avoids API drift.
+// @ts-expect-error - no declaration file for the shared Node ESM module
+import { createVavooApi } from "./vavoo-api.js"
+
+function vavooApiPlugin(): Plugin {
+  return {
+    name: "notflix-vavoo-api",
+    configureServer(server) {
+      const api = createVavooApi()
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.startsWith("/api/vavoo/")) {
+          void api(req, res)
+          return
+        }
+        next()
+      })
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
   base: './',
-  plugins: [inspectAttr(), react()],
+  plugins: [vavooApiPlugin(), inspectAttr(), react()],
   build: { chunkSizeWarningLimit: 1000 },
   resolve: {
     alias: {
