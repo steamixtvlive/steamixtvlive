@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -38,6 +38,13 @@
     scroll-behavior: smooth;
   }
 
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    background: #000;
+  }
+
   body {
     @apply bg-transparent text-foreground antialiased;
     font-family: 'Inter', sans-serif;
@@ -50,6 +57,15 @@
 
   code, pre, .mono {
     font-family: 'IBM Plex Mono', monospace;
+  }
+
+  @keyframes notflixAppIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .notflix-app-enter {
+    animation: notflixAppIn 650ms ease-out both;
   }
 }
 
@@ -295,5 +311,206 @@
   body {
     padding-left: max(0px, env(safe-area-inset-left));
     padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* NOTFLIX brand mark + minimal landing                                */
+/* ------------------------------------------------------------------ */
+
+.notflix-logo {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin: 0;
+  white-space: nowrap;
+  font-family: 'Bebas Neue', 'Anton', 'Arial Narrow', 'Arial Black', Impact, sans-serif;
+  font-weight: 400;
+  font-size: var(--notflix-logo-size, clamp(76px, 23vw, 350px));
+  line-height: .82;
+  letter-spacing: .012em;
+  color: #e50914;
+  -webkit-text-stroke: .011em #e50914;
+  text-shadow:
+    0 0 24px rgba(229, 9, 20, .42),
+    0 0 86px rgba(229, 9, 20, .28);
+}
+
+.notflix-logo__letter {
+  display: inline-block;
+  position: relative;
+  margin: 0 .028em;
+}
+
+.notflix-logo--animated .notflix-logo__letter {
+  opacity: 0;
+  animation: notflixLetterReveal 2.4s cubic-bezier(.19, .9, .25, 1) both;
+  will-change: transform, opacity, filter;
+}
+
+@keyframes notflixLetterReveal {
+  0% { opacity: 0; transform: translateY(112px) scale(1.62); filter: blur(48px); }
+  45% { opacity: .08; filter: blur(36px); }
+  72% { opacity: .9; filter: blur(4px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+.notflix-home {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+  padding: 6vw 6vw clamp(80px, 12vh, 130px);
+}
+
+.notflix-home__glow {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(229, 9, 20, .26) 0%, rgba(229, 9, 20, .06) 36%, transparent 66%),
+    #000;
+  animation: notflixHomeGlow 9s ease-in-out infinite alternate;
+}
+
+.notflix-home__center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  --notflix-logo-size: clamp(62px, 16vw, 230px);
+}
+
+@keyframes notflixHomeGlow {
+  from { opacity: .55; transform: scale(.98); }
+  to { opacity: 1; transform: scale(1.04); }
+}
+
+.notflix-slogan {
+  margin-top: clamp(18px, 2.6vw, 34px);
+  max-width: min(90vw, 940px);
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 1.3vw, 17px);
+  font-weight: 500;
+  line-height: 1.9;
+  letter-spacing: .26em;
+  color: rgba(255, 255, 255, .64);
+  text-align: center;
+}
+
+.notflix-slogan::before {
+  content: '';
+  display: block;
+  width: 44px;
+  height: 1px;
+  margin: 0 auto clamp(14px, 2vw, 22px);
+  background: linear-gradient(90deg, transparent, rgba(229, 9, 20, .9), transparent);
+}
+
+.notflix-slogan--static {
+  opacity: 1;
+}
+
+.notflix-media-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 2.6vw, 30px);
+  margin-top: clamp(22px, 3vw, 40px);
+}
+
+.notflix-media-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(44px, 4.4vw, 60px);
+  height: clamp(44px, 4.4vw, 60px);
+  border-radius: 50%;
+  border: 1px solid rgba(229, 9, 20, .28);
+  background: radial-gradient(circle, rgba(229, 9, 20, .16), rgba(229, 9, 20, .03) 72%);
+  color: #ff2c37;
+  box-shadow:
+    0 0 26px rgba(229, 9, 20, .14),
+    inset 0 0 20px rgba(229, 9, 20, .08);
+  animation: notflixIconFloat 3.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.notflix-media-icon:nth-child(2) {
+  animation-delay: .7s;
+}
+
+.notflix-media-icon svg {
+  width: 46%;
+  height: 46%;
+  stroke-width: 1.65;
+}
+
+.notflix-media-icon--live::after {
+  content: '';
+  position: absolute;
+  top: 7%;
+  right: 7%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e50914;
+  box-shadow: 0 0 10px rgba(229, 9, 20, .95);
+  animation: notflixLivePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes notflixIconFloat {
+  0%, 100% {
+    transform: translateY(0);
+    border-color: rgba(229, 9, 20, .26);
+    box-shadow: 0 0 24px rgba(229, 9, 20, .12), inset 0 0 18px rgba(229, 9, 20, .07);
+  }
+  50% {
+    transform: translateY(-7px);
+    border-color: rgba(229, 9, 20, .52);
+    box-shadow: 0 0 34px rgba(229, 9, 20, .24), inset 0 0 24px rgba(229, 9, 20, .14);
+  }
+}
+
+@keyframes notflixLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .35; transform: scale(.76); }
+}
+
+.notflix-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 6;
+  padding: 0 18px;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(8px, .82vw, 11px);
+  font-weight: 500;
+  letter-spacing: .16em;
+  color: rgba(255, 255, 255, .34);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.notflix-footer--animated {
+  opacity: 0;
+  animation: notflixFooterIn 1.6s ease-out 7.3s both;
+}
+
+@keyframes notflixFooterIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .notflix-footer {
+    font-size: 8px;
+    letter-spacing: .1em;
+    bottom: max(14px, env(safe-area-inset-bottom));
   }
 }
