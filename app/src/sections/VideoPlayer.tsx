@@ -13,7 +13,6 @@ interface VideoPlayerProps {
   fallbackSrcs?: string[]
   onToggleFullscreen?: () => void
   onRefreshUrl?: () => string | undefined
-  onLoadError?: (message: string) => void
 }
 
 const IS_MOBILE = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -26,7 +25,7 @@ const isDirectFileUrl = (url: string) => {
   return ext.endsWith('.mkv')
 }
 
-export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs, onToggleFullscreen, onRefreshUrl, onLoadError }: VideoPlayerProps) {
+export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs, onToggleFullscreen, onRefreshUrl }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -152,7 +151,7 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
   const tryUrl = useCallback((video: HTMLVideoElement) => {
     const idx = urlIndexRef.current
     const urls = allUrlsRef.current
-    if (idx >= urls.length) { const message = 'Bu kanal bakımdadır veya yayın adreslerine ulaşılamıyor'; setLoadError(message); onLoadError?.(message); setLoading(false); return }
+    if (idx >= urls.length) { setLoadError('Bu kanal bakımdadır'); setLoading(false); return }
     const currentSrc = urls[idx]
     retryCountRef.current = 0
     setLoading(true)
@@ -263,7 +262,7 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
       video.addEventListener('canplay', onReady)
       startWatchdog(video)
     }
-  }, [startWatchdog, onLoadError])
+  }, [startWatchdog])
 
   // Initialize on src change
   useEffect(() => {
