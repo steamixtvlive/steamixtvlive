@@ -1,8 +1,9 @@
 ﻿import { useEffect, useRef, useState, useCallback } from 'react'
 import Hls from 'hls.js'
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Wrench, Download } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Wrench, Download, Captions } from 'lucide-react'
 import MediabunnyPlayer from './MediabunnyPlayer'
 import { STEAMIX_TV_APK_URL } from '@/lib/constants'
+import type { VodSubtitle } from '@/lib/vod'
 
 
 interface VideoPlayerProps {
@@ -13,6 +14,7 @@ interface VideoPlayerProps {
   fallbackSrcs?: string[]
   onToggleFullscreen?: () => void
   onRefreshUrl?: () => string | undefined
+  subtitles?: VodSubtitle[]
 }
 
 const IS_MOBILE = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -25,7 +27,7 @@ const isDirectFileUrl = (url: string) => {
   return ext.endsWith('.mkv')
 }
 
-export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs, onToggleFullscreen, onRefreshUrl }: VideoPlayerProps) {
+export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs, onToggleFullscreen, onRefreshUrl, subtitles = [] }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -47,6 +49,8 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
   const retryCountRef = useRef(0)
   const [loading, setLoading] = useState(false)
   const [useMediabunny, setUseMediabunny] = useState<boolean | null>(null)
+  const [selectedSubtitle, setSelectedSubtitle] = useState(-1)
+  const [browserReady, setBrowserReady] = useState(false)
 
   // Detect if Mediabunny should be used for this source
   useEffect(() => {
@@ -88,11 +92,45 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
     try {
       await video.play()
       setPlaying(true)
+      setBrowserReady(true)
     } catch {
-      // Autoplay blocked — show overlay instead of auto-muting
-      setPlaying(false)
+      // Attempt muted autoplay once so browsers with sound autoplay restrictions still play.
+      try {
+        video.muted = true
+        setMuted(true)
+        await video.play()
+        setPlaying(true)
+        setBrowserReady(true)
+      } catch {
+        setPlaying(false)
+      }
     }
   }, [])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    const tracks = Array.from(video.querySelectorAll('track[data-vod-subtitle]'))
+    tracks.forEach((track) => track.remove())
+    subtitles.forEach((subtitle, index) => {
+      const track = document.createElement('track')
+      track.kind = 'subtitles'
+      track.label = subtitle.label || subtitle.language || `Altyazı ${index + 1}`
+      track.srclang = (subtitle.language || 'und').slice(0, 2).toLowerCase()
+      track.src = subtitle.url
+      track.setAttribute('data-vod-subtitle', 'true')
+      video.appendChild(track)
+    })
+    setSelectedSubtitle(-1)
+  }, [src, subtitles])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    Array.from(video.textTracks).forEach((track, index) => {
+      track.mode = index === selectedSubtitle ? 'showing' : 'disabled'
+    })
+  }, [selectedSubtitle, subtitles, src])
 
   const cleanup = useCallback(() => {
     clearInterval(watchdogRef.current)
@@ -389,7 +427,7 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
 
   return (
     <div ref={containerRef} className="relative bg-black group cursor-pointer" onClick={togglePlay} onMouseMove={startHideTimer} onTouchStart={startHideTimer}>
-      <video ref={videoRef} className={`w-full ${fullscreen ? 'h-screen w-screen object-cover md:object-contain' : 'aspect-video object-contain'}`} poster={poster} playsInline />
+      <video ref={videoRef} className={`w-full ${fullscreen ? 'h-screen w-screen object-cover md:object-contain' : 'aspect-video object-contain'}`} poster={poster} playsInline crossOrigin="anonymous" />
 
       {title && <div className="absolute top-4 left-4 text-white text-sm font-medium drop-shadow-lg bg-black/40 px-3 py-1.5 rounded-lg">{title}</div>}
       {loadError && (
@@ -455,6 +493,8 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
           </div>
           <div className="flex items-center gap-1 sm:gap-3">
             <span className="text-[10px] sm:text-xs text-gray-400 sm:hidden">{formatTime(currentTime)} / {formatTime(duration)}</span>
+            {subtitles.length > 0 && <label className="flex items-center gap-1 text-xs text-white" onClick={(event) => event.stopPropagation()}><Captions className="w-4 h-4" /><select aria-label="Altyazı seç" value={selectedSubtitle} onChange={(event) => setSelectedSubtitle(Number(event.target.value))} className="max-w-28 bg-black/70 text-white text-xs rounded px-1 py-1"><option value={-1}>Altyazı kapalı</option>{subtitles.map((subtitle, index) => <option key={`${subtitle.url}-${index}`} value={index}>{subtitle.label || subtitle.language || `Altyazı ${index + 1}`}</option>)}</select></label>}
+            {browserReady && muted && <button type="button" onClick={(event) => { event.stopPropagation(); const video = videoRef.current; if (video) video.muted = false }} className="text-xs rounded bg-white/10 px-2 py-1">Sesi aç</button>}
             <button onClick={e => { e.stopPropagation(); toggleFullscreen() }} className="p-2 sm:p-0 hover:text-[#0099ff]">{fullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}</button>
           </div>
         </div>

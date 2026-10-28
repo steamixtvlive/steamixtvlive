@@ -120,9 +120,10 @@ export default function ChannelPanel({
           filtered.map((channel) => {
             const active = channel.id === activeId
             const { now } = getNowNext(channel)
+            const variants = (channel.qualityVariants || []).filter((variant) => variant.id !== channel.id)
             return (
+              <div key={channel.id} className={`nf-channel-group ${active ? 'is-active' : ''}`}>
               <button
-                key={channel.id}
                 type="button"
                 className={`nf-channel ${active ? 'is-active' : ''}`}
                 onClick={() => onSelect(channel)}
@@ -171,6 +172,8 @@ export default function ChannelPanel({
                   )}
                 </span>
               </button>
+              {variants.length > 0 && <div className="nf-channel-variants" aria-label={`${channel.name} çözünürlükleri`}>{variants.map((variant) => <button key={variant.id} type="button" className="nf-channel-variant" onClick={() => onSelect({ ...channel, id: variant.id, name: variant.name, quality: variant.quality })}>{variant.quality}</button>)}</div>}
+              </div>
             )
           })
         )}

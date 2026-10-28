@@ -2208,6 +2208,58 @@ export function createVodApi(options = {}) {
         return
       }
 
+      if (pathname === '/api/vod/play' || pathname === '/api/vod/play-episode') {
+        await ensureCatalog()
+        if (pathname.endsWith('play-episode')) {
+          const id = String(reqUrl.searchParams.get('id') || '')
+          const cachedEpisode = state.episodeById.get(id)
+          let episode = cachedEpisode
+
+          if (!episode) {
+            const seriesId = String(reqUrl.searchParams.get('series_id') || '')
+            if (!seriesId || !state.seriesById.has(seriesId)) {
+              sendJson(res, 404, { ok: false, error: 'Bölüm bulunamadı' })
+              return
+            }
+            const detail = await seriesDetail(seriesId)
+            episode = detail.seasons.flatMap((season) => season.episodes).find((entry) => entry.id === id) || null
+          }
+
+          if (!episode?.stream) {
+            sendJson(res, 404, { ok: false, error: 'Bölüm yayını bulunamadı' })
+            return
+          }
+          sendJson(res, 200, {
+            ok: true,
+            title: episode.title,
+            poster: episode.still || '',
+            stream: episode.stream,
+            subtitles: episode.subtitles || [],
+          })
+          return
+        }
+
+        const type = String(reqUrl.searchParams.get('type') || 'movie')
+        const id = String(reqUrl.searchParams.get('id') || '')
+        if (!['movie', 'series'].includes(type) || !id) {
+          sendJson(res, 400, { ok: false, error: 'Film veya dizi kimliği gerekli' })
+          return
+        }
+
+        const detail = await getDetail(type, id, false)
+        const firstEpisode = type === 'series'
+          ? detail.seasons?.flatMap((season) => season.episodes)[0]
+          : null
+        const stream = type === 'series' ? firstEpisode?.stream : detail.stream
+        const subtitles = type === 'series' ? firstEpisode?.subtitles || [] : detail.subtitles || []
+        if (!stream) {
+          sendJson(res, 404, { ok: false, error: 'Yayın adresi bulunamadı' })
+          return
+        }
+        sendJson(res, 200, { ok: true, title: type === 'series' ? firstEpisode?.title || detail.name : detail.name, poster: detail.poster, stream, subtitles })
+        return
+      }
+
       if (pathname === '/api/vod/refresh') {
         if (req.method !== 'POST') {
           sendJson(res, 405, { ok: false, error: 'Sadece POST' })
@@ -2323,7 +2375,6 @@ export function createVodApi(options = {}) {
     }
   }
 }
-
 
 
 

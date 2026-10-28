@@ -2,10 +2,12 @@ import { useRef, useState } from 'react'
 import NotflixHome from '@/pages/NotflixHome'
 import NotflixTemplatePage from '@/pages/NotflixTemplatePage'
 import NotflixPlayer from '@/sections/NotflixPlayer'
+import NotflixDiscover from '@/pages/NotflixDiscover'
 import NotflixSidebar from '@/sections/NotflixSidebar'
 import NotflixTopbar from '@/sections/NotflixTopbar'
 import { PAGE_TITLES, type PageId } from '@/lib/navigation'
 import type { VavooCatalog } from '@/lib/vavoo'
+import { useNavigate } from 'react-router-dom'
 
 interface NotflixShellProps {
   catalog: VavooCatalog
@@ -21,7 +23,8 @@ const PAGE_SUBTITLES: Record<Exclude<PageId, 'live'>, string> = {
 }
 
 export default function NotflixShell({ catalog }: NotflixShellProps) {
-  const [page, setPage] = useState<PageId>('live')
+  const routerNavigate = useNavigate()
+  const [page, setPage] = useState<PageId>('discover')
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const bodyRef = useRef<HTMLElement | null>(null)
@@ -42,7 +45,7 @@ export default function NotflixShell({ catalog }: NotflixShellProps) {
 
   const subtitle =
     page === 'live'
-      ? `${catalog.total.toLocaleString('tr-TR')} kanal · Vavoo / MediaHubMX`
+      ? `${catalog.total.toLocaleString('tr-TR')} kanal · Vavoo / MediaHubMX · 4K dahil`
       : PAGE_SUBTITLES[page]
 
   return (
@@ -76,13 +79,15 @@ export default function NotflixShell({ catalog }: NotflixShellProps) {
 
         <main
           ref={bodyRef}
-          className={`nf-shell__body ${page === 'live' ? 'is-live' : ''}`}
+          className={`nf-shell__body ${page === 'live' ? 'is-live' : ''} ${page === 'discover' ? 'is-discover' : ''}`}
         >
-          <div key={page} className={`nf-page-enter ${page === 'live' ? 'nf-page-enter--live' : ''}`}>
+          <div key={page} className={`nf-page-enter ${page === 'live' ? 'nf-page-enter--live' : ''} ${page === 'discover' ? 'nf-page-enter--discover' : ''}`}>
             {page === 'live' ? (
-              <NotflixPlayer channels={catalog.channels} />
+              <NotflixPlayer channels={catalog.channels} onSelectChannel={(channel) => routerNavigate(`/notflix/vavoo/${encodeURIComponent(channel.id)}`)} />
             ) : page === 'home' ? (
               <NotflixHome />
+            ) : page === 'discover' ? (
+              <NotflixDiscover />
             ) : (
               <NotflixTemplatePage page={page} />
             )}

@@ -358,7 +358,11 @@ const CATEGORY_ORDER = [
 const CATEGORY_RANK = new Map(CATEGORY_ORDER.map((name, index) => [name, index]))
 
 function channelPriority(channel) {
-  return CHANNEL_RANKS.get(channelKey(channel.name)) ?? 9999
+  const key = channelKey(channel.name)
+  const rank = CHANNEL_RANKS.get(key)
+  if (rank !== undefined) return rank
+  const fourK = channel.quality === '4K' || /\b4K\b|\bUHD\b/i.test(channel.name)
+  return fourK ? -1 : 9999
 }
 
 function compareChannels(a, b) {
@@ -388,6 +392,7 @@ function normalizeChannels(rawItems) {
 
   const channels = []
   const sourceById = new Map()
+  const sourceByVariantId = new Map()
 
   for (const variants of grouped.values()) {
     const sorted = [...variants].sort((a, b) => variantScore(b) - variantScore(a))
@@ -413,6 +418,12 @@ function normalizeChannels(rawItems) {
       .slice(0, 8)
 
     const id = String(best.item.ids.id)
+    const qualityVariants = sorted.map((entry) => ({
+      id: String(entry.item.ids.id),
+      name: entry.display,
+      quality: qualityOf(entry.raw),
+      sourceUrl: String(entry.item.url),
+    }))
     channels.push({
       id,
       name,
@@ -421,14 +432,28 @@ function normalizeChannels(rawItems) {
       quality: qualityOf(best.raw),
       featured: FEATURED_KEYS.has(channelKey(name)),
       epg,
+      qualityVariants,
     })
     sourceById.set(id, String(best.item.url))
+    for (const variant of qualityVariants) sourceByVariantId.set(variant.id, variant.sourceUrl)
   }
 
-  channels.sort(compareChannels)
+  const preferredOrder = new Map([
+    ['trt1', 0], ['atv', 1], ['show', 2], ['star', 3], ['kanald', 4], ['now', 5], ['tv8', 6],
+  ])
+  channels.sort((a, b) => {
+    const aPriority = preferredOrder.get(channelKey(a.name))
+    const bPriority = preferredOrder.get(channelKey(b.name))
+    if (aPriority !== undefined || bPriority !== undefined) {
+      if (aPriority === undefined) return 1
+      if (bPriority === undefined) return -1
+      if (aPriority !== bPriority) return aPriority - bPriority
+    }
+    return compareChannels(a, b)
+  })
   const byId = new Map(channels.map((channel) => [channel.id, channel]))
 
-  return { channels, byId, sourceById, totalRaw: rawItems.length }
+  return { channels, byId, sourceById, sourceByVariantId, totalRaw: rawItems.length }
 }
 
 async function buildCatalog() {
@@ -657,6 +682,7 @@ async function handleStatus(res) {
 async function handleResolve(reqUrl, res) {
   const id = reqUrl.searchParams.get('id') || ''
   const refresh = reqUrl.searchParams.get('refresh') === '1'
+  const requestedQuality = reqUrl.searchParams.get('quality') || ''
 
   if (!id) {
     sendJson(res, 400, { ok: false, error: 'Kanal kimliği gerekli' })
@@ -672,13 +698,22 @@ async function handleResolve(reqUrl, res) {
 
   // Channel source URLs are intentionally kept server-side and never exposed
   // in the public /channels payload.
-  const sourceUrl = state.sourceById?.get(id)
+  let sourceUrl = state.sourceById?.get(id)
+  let resolvedId = id
+  if (requestedQuality) {
+    const base = state.channels.find((entry) => entry.id === id || entry.qualityVariants?.some((variant) => variant.id === id))
+    const variant = base?.qualityVariants?.find((entry) => entry.id === id && entry.quality === requestedQuality)
+    if (variant) {
+      resolvedId = variant.id
+      sourceUrl = state.sourceByVariantId?.get(variant.id) || variant.sourceUrl || sourceUrl
+    }
+  }
   if (!sourceUrl) {
     sendJson(res, 409, { ok: false, error: 'Kanal kaynağı hazır değil' })
     return
   }
 
-  const resolved = await resolveChannel({ id: channel.id, name: channel.name, sourceUrl }, refresh)
+  const resolved = await resolveChannel({ id: resolvedId, name: channel.name, sourceUrl }, refresh)
   const streams = resolved.urls.map(proxied)
 
   sendJson(res, 200, {

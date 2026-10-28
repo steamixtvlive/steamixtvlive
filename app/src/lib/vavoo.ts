@@ -12,6 +12,7 @@ export interface VavooChannel {
   quality: string
   featured: boolean
   epg: VavooEpgSlot[]
+  qualityVariants?: Array<{ id: string; name: string; quality: string }>
 }
 
 export interface VavooCatalog {
@@ -111,6 +112,12 @@ export async function resolveVavooChannel(id: string, refresh = false, signal?: 
     cache: 'no-store',
   })
   return readJson<VavooResolve>(response)
+}
+
+export function resolveVavooVariant(baseId: string, quality: string, signal?: AbortSignal): Promise<VavooResolve> {
+  const params = new URLSearchParams({ id: baseId, quality })
+  return fetch(`/api/vavoo/resolve?${params.toString()}`, { signal, headers: { accept: 'application/json' }, cache: 'no-store' })
+    .then(readJson<VavooResolve>)
 }
 
 export function getNowNext(channel: VavooChannel, at = Date.now() / 1000): {
