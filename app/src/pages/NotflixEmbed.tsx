@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
+import NotflixLogo from '@/sections/NotflixLogo'
 
 export default function NotflixEmbed() {
   const [failed, setFailed] = useState(false)
@@ -7,6 +8,7 @@ export default function NotflixEmbed() {
 
   return (
     <section className="nf-embed" aria-label="NOTFLİX içerik kitaplığı">
+      <div className="nf-embed__brand-stamp" aria-label="NOTFLİX"><NotflixLogo /></div>
       {failed ? (
         <div className="nf-embed__error" role="alert">
           <AlertTriangle size={27} />

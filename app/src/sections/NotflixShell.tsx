@@ -134,17 +134,17 @@ export default function NotflixShell({ catalog, activationProfile, onLogout }: N
       : lang === 'en' ? `NOTFLIX · ${localizedPageTitle(page, 'en')}` : PAGE_SUBTITLES[page]
 
   return (
-    <div className={`nf-shell ${collapsed ? 'is-collapsed' : ''}`}>
+    <div className={`nf-shell ${collapsed ? 'is-collapsed' : ''} ${page === 'discover' ? 'is-embed-mode' : ''}`}>
         <NotflixSidebar
-        page={page}
-        expanded={!collapsed || mobileOpen}
-        mobileOpen={mobileOpen}
-        onNavigate={navigate}
-        onCloseMobile={() => setMobileOpen(false)}
-        language={language}
-        onLanguage={setLanguage}
-        onLogout={() => void handleLogout()}
-      />
+          page={page}
+          expanded={!collapsed || mobileOpen}
+          mobileOpen={mobileOpen}
+          onNavigate={navigate}
+          onCloseMobile={() => setMobileOpen(false)}
+          language={language}
+          onLanguage={setLanguage}
+          onLogout={() => void handleLogout()}
+        />
 
       {mobileOpen && (
         <button
@@ -156,7 +156,7 @@ export default function NotflixShell({ catalog, activationProfile, onLogout }: N
         />
       )}
 
-      <div className="nf-shell__frame">
+      <div className={`nf-shell__frame ${page === 'discover' ? 'is-embed' : ''}`}>
         <NotflixTopbar
           title={activationProfile?.username ? `${localizedPageTitle(page, lang)} · ${lang === 'en' ? 'Welcome' : 'Hoş geldiniz'} ${activationProfile.username}` : localizedPageTitle(page, lang)}
           subtitle={subtitle}
