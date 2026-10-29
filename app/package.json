@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build && node -e \"require('fs').copyFileSync('netlify.dist.toml','dist/netlify.toml')\"",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "NODE_OPTIONS=--max-old-space-size=768 node server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

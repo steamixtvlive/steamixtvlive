@@ -8,9 +8,11 @@ import { spawn, execSync } from 'node:child_process'
 import ffmpegPathStatic from 'ffmpeg-static'
 import { createVavooApi } from './vavoo-api.js'
 import { createVodApi } from './vod-api.js'
+import { createMembershipApi } from './membership-api.js'
 
 const vavooApi = createVavooApi()
 const vodApi = createVodApi()
+const membershipApi = createMembershipApi()
 
 // Try to find ffmpeg: first check static, then system PATH, then common locations
 let ffmpegPath = null
@@ -382,6 +384,41 @@ http.createServer((req, res) => {
   // NOTFLIX VOD library (Xtream catalog, details, posters and playback proxy)
   if ((req.url || '').startsWith('/api/vod/')) {
     void vodApi(req, res)
+    return
+  }
+
+  if ((req.url || '').startsWith('/api/membership/')) {
+    void membershipApi(req, res)
+    return
+  }
+
+  if ((req.url || '').startsWith('/api/admin/membership/')) { void membershipApi(req, res); return }
+
+  if ((req.url || '').startsWith('/api/mclanx/search')) {
+    void (async () => {
+      const query = new URL(req.url, 'http://localhost').searchParams.get('q')?.trim()
+      const type = new URL(req.url, 'http://localhost').searchParams.get('type') || 'all'
+      if (!query || query.length < 2 || query.length > 120) { res.writeHead(400, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: 'Search query must be 2-120 characters' })); return }
+      try {
+        const base = process.env.MCLANX_URL || 'http://mclanx.store:8080'
+        const user = process.env.MCLANX_USER || 'Paris123'
+        const pass = process.env.MCLANX_PASS || 'Paris123'
+        const actions = type === 'movie' ? ['get_vod_streams'] : type === 'series' ? ['get_series'] : ['get_vod_streams', 'get_series']
+        const responses = await Promise.all(actions.map(async (action) => {
+          const url = new URL('/player_api.php', base)
+          url.searchParams.set('username', user)
+          url.searchParams.set('password', pass)
+          url.searchParams.set('action', action)
+          url.searchParams.set('search', query)
+          const response = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(12000) })
+          if (!response.ok) throw new Error(`MCLanX search failed (${response.status})`)
+          const items = await response.json()
+          return Array.isArray(items) ? items : []
+        }))
+        const items = responses.flat()
+        res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'private, max-age=30' }); res.end(JSON.stringify({ ok: true, query, items }))
+      } catch (error) { console.error(`[MCLANX-SEARCH] ${error.message}`); res.writeHead(502, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: 'VOD araması şu an kullanılamıyor' })) }
+    })()
     return
   }
 

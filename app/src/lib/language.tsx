@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 
 const data: Record<string, Record<string, string>> = {
   tr: {
+    'page.home': 'Ana Sayfa', 'page.subscribe': 'Abonelik', 'page.discover': 'Keşfet', 'page.continue': 'Kaldığın Yerden Devam Et', 'page.live': 'Canlı TV', 'page.about': 'Hakkında', 'page.settings': 'Ayarlar',
+    'settings.title': 'Ayarlar', 'settings.language': 'Dil',
     'nav.home': 'Ana Sayfa', 'nav.live': 'Canlı TV', 'nav.movies': 'Filmler', 'nav.series': 'Diziler',
     'nav.profile': 'Profil', 'nav.logout': 'Çıkış Yap', 'nav.search': 'Arama',
     'hero.play': 'İzle', 'hero.detail': 'Detay',
@@ -32,6 +34,8 @@ const data: Record<string, Record<string, string>> = {
     'premium.sports': 'Yabancı Yapımlar', 'premium.vod': 'Güncel Arşiv',
   },
   en: {
+    'page.home': 'Home', 'page.subscribe': 'Subscription', 'page.discover': 'Discover', 'page.continue': 'Continue Watching', 'page.live': 'Live TV', 'page.about': 'About', 'page.settings': 'Settings',
+    'settings.title': 'Settings', 'settings.language': 'Language',
     'nav.home': 'Home', 'nav.live': 'Live TV', 'nav.movies': 'Movies', 'nav.series': 'Series',
     'nav.profile': 'Profile', 'nav.logout': 'Logout', 'nav.search': 'Search',
     'hero.play': 'Play', 'hero.detail': 'Details',

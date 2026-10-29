@@ -1,5 +1,6 @@
 import { NAV_ITEMS, type PageId } from '@/lib/navigation'
-import { Languages, Tv } from 'lucide-react'
+import { Languages } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 
 interface NotflixSidebarProps {
   page: PageId
@@ -9,6 +10,7 @@ interface NotflixSidebarProps {
   onCloseMobile: () => void
   onLanguage?: (language: string) => void
   language?: string
+  onLogout?: () => void
 }
 
 export default function NotflixSidebar({
@@ -19,6 +21,7 @@ export default function NotflixSidebar({
   onCloseMobile,
   onLanguage,
   language = 'tr',
+  onLogout,
 }: NotflixSidebarProps) {
   return (
     <aside className={`nf-sidebar ${expanded ? 'is-expanded' : ''} ${mobileOpen ? 'is-mobile-open' : ''}`}>
@@ -73,8 +76,8 @@ export default function NotflixSidebar({
         <select value={language} onChange={(event) => onLanguage?.(event.target.value)} aria-label="Genel dil ayarı">
           <option value="tr">Dil: Türkçe</option><option value="en">Language: English</option>
         </select>
-        <button type="button" onClick={() => onNavigate('live')}><Tv size={15} /> TV Modu</button>
       </div>
+      <button type="button" className="nf-sidebar__logout" onClick={onLogout}><LogOut size={17}/><span>Çıkış Yap</span></button>
       <div className="nf-sidebar__footer">
         <span className="nf-sidebar__status">
           <i />

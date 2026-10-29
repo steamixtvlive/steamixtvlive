@@ -7,6 +7,7 @@ export interface VavooEpgSlot {
 export interface VavooChannel {
   id: string
   name: string
+  sourceName?: string
   logo: string
   category: string
   quality: string
@@ -14,6 +15,7 @@ export interface VavooChannel {
   epg: VavooEpgSlot[]
   qualityVariants?: Array<{ id: string; name: string; quality: string }>
   country?: string
+  originalName?: string
 }
 
 export interface VavooCatalog {
@@ -23,6 +25,7 @@ export interface VavooCatalog {
   total: number
   rawTotal: number
   generatedAt: number
+  countries?: string[]
   channels: VavooChannel[]
 }
 
@@ -168,6 +171,7 @@ export function searchKey(value: string): string {
 export function pickDefaultChannel(channels: VavooChannel[]): VavooChannel | null {
   if (channels.length === 0) return null
   return (
+    channels.find((channel) => /\bTRT\s*1\b.*\b4K\b/i.test(channel.name)) ||
     channels.find((channel) => channel.name === 'TRT 1') ||
     channels.find((channel) => channel.name.replace(/\s+/g, ' ').startsWith('TRT 1')) ||
     channels.find((channel) => channel.name === 'TRT') ||

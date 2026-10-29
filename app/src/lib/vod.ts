@@ -37,6 +37,7 @@ export interface VodEpisode {
   number: number
   title: string
   plot: string
+  still?: string
   stream: string
   subtitles: VodSubtitle[]
 }

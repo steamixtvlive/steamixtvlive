@@ -17,7 +17,6 @@ const CATALOG_PATH = '/mediahubmx-catalog.json'
 const RESOLVE_PATH = '/mediahubmx-resolve.json'
 const CATALOG_UA = 'MediaHubMX/2'
 const STREAM_UA = 'VAVOO/2.6'
-const GROUP = 'Turkey'
 const LANGUAGE = 'tr'
 const REGION = 'US'
 const CLIENT_VERSION = '3.0.2'
@@ -101,7 +100,7 @@ async function getSignature(force = false) {
 async function vavooPost(path, body) {
   let lastError = null
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     const signature = await getSignature(attempt > 0)
     const response = await fetch(`${VAVOO_SITE}${path}`, {
       method: 'POST',
@@ -116,7 +115,7 @@ async function vavooPost(path, body) {
       signal: AbortSignal.timeout(30000),
     })
 
-    if ((response.status === 401 || response.status === 403) && attempt === 0) {
+    if ((response.status === 401 || response.status === 403) && attempt < 2) {
       signatureState = { value: '', expiresAt: 0 }
       lastError = new Error(`Vavoo signature rejected (HTTP ${response.status})`)
       continue
@@ -194,6 +193,8 @@ function fixTurkishName(value) {
 function cleanDisplayName(raw) {
   let name = String(raw || '').trim()
 
+  name = name.replace(/(?:\s|^)(?:CANLI\s*){2,}.*$/i, '')
+  name = name.replace(/(?:4K|UHD|FHD|HD|SD|HEVC|H\.?265|\d{3,4}P|CANLI|LIVE)+$/i, '').trim()
   name = name.replace(/\s*\.(?:c|s|b)\s*$/i, '')
   name = name.replace(/^4K\s*TR\s*:\s*/i, '')
   name = name.replace(/\s*\((?:360P|480P|720P|1080P|H\.?265|HEVC|UHD|HD|SD|FEED|TURKEY|\d+\s*FPS)\)\s*/gi, ' ')
@@ -377,6 +378,24 @@ function compareChannels(a, b) {
   return a.name.localeCompare(b.name, 'tr')
 }
 
+const COUNTRY_ALIASES = new Map([
+  ['tr', 'Turkey'], ['turkey', 'Turkey'], ['türkiye', 'Turkey'],
+  ['de', 'Germany'], ['germany', 'Germany'], ['deutschland', 'Germany'],
+  ['fr', 'France'], ['france', 'France'],
+  ['nl', 'Netherlands'], ['netherlands', 'Netherlands'], ['holland', 'Netherlands'],
+  ['gb', 'United Kingdom'], ['uk', 'United Kingdom'], ['united kingdom', 'United Kingdom'],
+  ['us', 'United States'], ['usa', 'United States'], ['united states', 'United States'],
+  ['it', 'Italy'], ['italy', 'Italy'], ['es', 'Spain'], ['spain', 'Spain'],
+  ['pl', 'Poland'], ['poland', 'Poland'], ['be', 'Belgium'], ['belgium', 'Belgium'],
+  ['at', 'Austria'], ['austria', 'Austria'], ['ch', 'Switzerland'], ['switzerland', 'Switzerland'],
+])
+
+function normalizeCountry(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return 'Turkey'
+  return COUNTRY_ALIASES.get(raw.toLowerCase()) || raw
+}
+
 function normalizeChannels(rawItems) {
   const grouped = new Map()
 
@@ -427,19 +446,21 @@ function normalizeChannels(rawItems) {
     channels.push({
       id,
       name,
+      originalName: String(displayVariant?.raw || best.raw || item?.name || name),
       logo: logoUrl ? `/api/vavoo/logo?u=${encodeBase64Url(logoUrl)}` : '',
       category: classifyChannel(name, rawNames),
       quality: qualityOf(best.raw),
       featured: FEATURED_KEYS.has(channelKey(name)),
       epg,
       qualityVariants,
+      country: normalizeCountry(best.item.group || best.item.country || best.item.countryCode || best.item.category || (String(best.raw).match(/(?:^|\b)([A-Z]{2})\s*:/)?.[1])),
     })
     sourceById.set(id, String(best.item.url))
     for (const variant of qualityVariants) sourceByVariantId.set(variant.id, variant.sourceUrl)
   }
 
   const preferredOrder = new Map([
-    ['trt1', 0], ['atv', 1], ['show', 2], ['star', 3], ['kanald', 4], ['now', 5], ['tv8', 6],
+    ['trt1', 0], ['show', 1], ['atv', 2], ['kanald', 3], ['star', 4], ['now', 5], ['tv8', 6],
   ])
   channels.sort((a, b) => {
     const aPriority = preferredOrder.get(channelKey(a.name))
@@ -475,6 +496,8 @@ async function buildCatalog() {
     let pages = 0
     let rawCount = 0
     const items = []
+    const seenItemKeys = new Set()
+    const catalogGroups = new Set()
 
     do {
       progress.message = `Kanal kataloğu alınıyor · ${pages + 1}. sayfa`
@@ -488,7 +511,7 @@ async function buildCatalog() {
         adult: false,
         search: '',
         sort: '',
-        filter: { group: GROUP },
+        filter: {},
         cursor,
         clientVersion: CLIENT_VERSION,
       })
@@ -498,15 +521,20 @@ async function buildCatalog() {
       pages += 1
 
       for (const item of pageItems) {
-        if (item?.type === 'iptv' && item?.url && item?.ids?.id) items.push(item)
+        const group = item?.group || item?.country || item?.countryCode || item?.category
+        if (group) catalogGroups.add(String(group))
+        if (item?.type === 'iptv' && item?.url && item?.ids?.id) {
+          const key = `${item.ids.id}:${item.url}`
+          if (!seenItemKeys.has(key)) { seenItemKeys.add(key); items.push(item) }
+        }
       }
 
       progress.page = pages
       progress.raw = rawCount
       cursor = page?.nextCursor || null
-    } while (cursor && pages < MAX_CATALOG_PAGES)
+      } while (cursor && pages < MAX_CATALOG_PAGES)
 
-    if (items.length === 0) throw new Error('Vavoo kataloğunda kanal bulunamadı')
+    if (items.length === 0) throw new Error('Vavoo tüm-ülke kataloğu sonuç döndürmedi; doğru ülke kataloğu filtresi doğrulanamadı.')
 
     progress.message = 'Logolar ve EPG bilgileri eşleştiriliyor...'
     progress.percent = 92
@@ -521,6 +549,8 @@ async function buildCatalog() {
 
     return {
       ...normalized,
+      countries: [...new Set(normalized.channels.map((channel) => channel.country))].sort(),
+      groups: [...catalogGroups].sort(),
       generatedAt: Date.now(),
       expiresAt: Date.now() + CATALOG_TTL_MS,
     }
@@ -661,7 +691,7 @@ async function handleChannels(res) {
   sendJson(res, 200, {
     ok: true,
     source: 'Vavoo / MediaHubMX',
-    group: GROUP,
+      group: 'all',
     total: state.channels.length,
     rawTotal: state.totalRaw,
     generatedAt: state.generatedAt,
@@ -907,14 +937,15 @@ export function createVavooApi() {
     const reqUrl = new URL(req.url || '/', 'http://localhost')
 
     try {
-      if (reqUrl.pathname === '/api/vavoo/health') {
+    if (reqUrl.pathname === '/api/vavoo/health') {
         sendJson(res, 200, {
           ok: true,
           service: 'vavoo',
           site: VAVOO_SITE,
-          group: GROUP,
+          group: 'all',
           catalog: {
             channels: catalogState.channels.length,
+            countries: [...new Set(catalogState.channels.map((channel) => channel.country))],
             raw: catalogState.totalRaw,
             generatedAt: catalogState.generatedAt,
             expiresAt: catalogState.expiresAt,

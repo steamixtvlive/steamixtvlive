@@ -6,6 +6,8 @@ interface NotflixTopbarProps {
   live: boolean
   onToggleMenu: () => void
   onBack?: () => void
+  language?: string
+  onLanguage?: (language: string) => void
 }
 
 export default function NotflixTopbar({
@@ -14,6 +16,8 @@ export default function NotflixTopbar({
   live,
   onToggleMenu,
   onBack,
+  language = 'tr',
+  onLanguage,
 }: NotflixTopbarProps) {
   return (
     <header className="nf-topbar">
@@ -29,6 +33,7 @@ export default function NotflixTopbar({
       </div>
 
       <div className="nf-topbar__right">
+        <select className="nf-topbar__language" value={language} onChange={(event) => onLanguage?.(event.target.value)} aria-label="Language / Dil"><option value="tr">TR</option><option value="en">EN</option></select>
         {live && (
           <span className="nf-topbar__live is-talking">
             <i />

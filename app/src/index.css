@@ -1420,6 +1420,41 @@
 .nf-vod-season { margin-top: 22px; }
 .nf-vod-season h2 { font-size: 18px; }
 .nf-vod-season button { display: flex; width: 100%; align-items: center; gap: 10px; margin: 6px 0; padding: 12px; border: 1px solid #ffffff12; border-radius: 8px; background: #ffffff08; color: white; text-align: left; cursor: pointer; }
+.nf-vod-season-picker { margin: 24px 0; }
+.nf-vod-season-picker h2 { margin-bottom: 12px; font-size: 20px; }
+.nf-vod-season-picker>div { display:flex; flex-wrap:wrap; gap:10px; }
+.nf-vod-season-picker button { display:flex; min-width:150px; flex-direction:column; gap:5px; padding:14px 16px; border:1px solid #ffffff20; border-radius:10px; background:linear-gradient(135deg,#1a1b20,#101114); color:#fff; text-align:left; cursor:pointer; }
+.nf-vod-season-picker button:hover,.nf-vod-season-picker button:focus-visible { border-color:#e50914; box-shadow:0 0 20px #e5091433; outline:none; }
+.nf-vod-season-picker button span { color:#aaa; font-size:12px; }
+.nf-vod-episode-overlay { position:fixed; inset:0; z-index:220; display:grid; place-items:center; padding:18px; background:#000c; backdrop-filter:blur(9px); }
+.nf-vod-episode-modal { width:min(900px,100%); max-height:min(85vh,900px); overflow:hidden; border:1px solid #ffffff1c; border-radius:18px; background:#101114; color:#fff; box-shadow:0 30px 100px #000b; }
+.nf-vod-episode-modal>header { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:20px 22px; border-bottom:1px solid #ffffff16; }
+.nf-vod-episode-modal>header span { color:#e50914; font-size:11px; font-weight:800; letter-spacing:.16em; }
+.nf-vod-episode-modal>header h2 { margin:5px 0 0; font-size:20px; }
+.nf-vod-episode-modal>header button { display:grid; width:38px; height:38px; place-items:center; border:1px solid #ffffff20; border-radius:50%; background:#ffffff0c; color:#fff; cursor:pointer; }
+.nf-vod-episode-list { display:grid; max-height:calc(min(85vh,900px) - 90px); overflow:auto; gap:10px; padding:16px; }
+.nf-vod-episode-card { display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:16px; padding:0; overflow:hidden; border:1px solid #ffffff16; border-radius:12px; background:#ffffff08; color:#fff; text-align:left; cursor:pointer; transition:transform .18s,border-color .18s,box-shadow .18s; }
+.nf-vod-episode-card:hover,.nf-vod-episode-card:focus-visible { transform:translateY(-2px); border-color:#e50914aa; box-shadow:0 10px 32px #e5091425; outline:none; }
+.nf-vod-episode-card__image { position:relative; display:grid; aspect-ratio:16/9; place-items:center; overflow:hidden; background:linear-gradient(135deg,#261013,#0b0b0d); color:#e50914; font-weight:900; letter-spacing:.12em; }
+.nf-vod-episode-card__image img { width:100%; height:100%; object-fit:cover; }
+.nf-vod-episode-card__image i { position:absolute; right:12px; bottom:12px; display:grid; width:38px; height:38px; place-items:center; border-radius:50%; background:#e50914; color:white; font-style:normal; }
+.nf-vod-episode-card__copy { display:flex; flex-direction:column; align-self:center; gap:7px; padding:12px 12px 12px 0; }
+.nf-vod-episode-card__copy b { color:#e50914; font-size:12px; }
+.nf-vod-episode-card__copy strong { font-size:16px; }
+.nf-vod-episode-card__copy small { display:-webkit-box; overflow:hidden; color:#aaa; font-size:12px; line-height:1.5; -webkit-box-orient:vertical; -webkit-line-clamp:3; }
+@media(max-width:600px){.nf-vod-episode-card{grid-template-columns:120px 1fr;gap:10px}.nf-vod-episode-card__copy strong{font-size:14px}.nf-vod-episode-card__copy small{font-size:11px}}
+.nf-player__subscription-shade { position:absolute; inset:0; z-index:8; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:linear-gradient(135deg,#08090de8,#171015e8); color:#fff; text-align:center; }
+.nf-player__subscription-shade>svg { color:#e50914; }
+.nf-player__subscription-shade>span { color:#ccc; font-size:13px; }
+.nf-player__subscription-shade>button { margin-top:7px; padding:10px 16px; border:0; border-radius:8px; background:#e50914; color:white; font-weight:700; cursor:pointer; }
+.nf-channels__country { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:10px 12px; color:#ddd; font-size:13px; font-weight:650; }
+.nf-channels__country select { min-width:140px; padding:9px 30px 9px 10px; border:1px solid #ffffff24; border-radius:8px; background:#17181d; color:#fff; font:inherit; }
+.nf-sidebar__logout { display:flex; width:calc(100% - 24px); align-items:center; gap:10px; margin:8px 12px; padding:11px 13px; border:1px solid #e5091450; border-radius:8px; background:#e5091415; color:#ffd8da; cursor:pointer; }
+.nf-shell__logout { display:none; }
+.nf-login__gift { display:grid; gap:10px; width:min(390px,100%); margin:8px auto 16px; padding:14px; border:1px solid #ffffff24; border-radius:12px; background:#ffffff08; color:#fff; }
+.nf-login__gift>label { font-size:13px; }
+.nf-pricing-note ol { margin:9px 0 0; padding-left:22px; line-height:1.7; }
+.nf-pricing-note ol a { color:#ff7279; text-decoration:underline; }
 .nf-vod-watch { position: fixed; inset: 0; z-index: 150; display: flex; flex-direction: column; background: #050506; color: white; }
 .nf-vod-watch__header { display: flex; min-height: 52px; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; border-bottom: 1px solid #ffffff16; background: #111114; }
 .nf-vod-watch__header button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border: 1px solid #ffffff1b; border-radius: 7px; background: #ffffff0d; color: white; cursor: pointer; }

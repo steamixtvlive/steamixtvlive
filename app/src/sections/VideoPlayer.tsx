@@ -1,6 +1,6 @@
 ﻿import { useEffect, useRef, useState, useCallback } from 'react'
 import Hls from 'hls.js'
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Wrench, Download, Captions } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Wrench, Download, Captions, Sparkles } from 'lucide-react'
 import MediabunnyPlayer from './MediabunnyPlayer'
 import { STEAMIX_TV_APK_URL } from '@/lib/constants'
 import type { VodSubtitle } from '@/lib/vod'
@@ -15,6 +15,7 @@ interface VideoPlayerProps {
   onToggleFullscreen?: () => void
   onRefreshUrl?: () => string | undefined
   subtitles?: VodSubtitle[]
+  onProgress?: (current: number, duration: number) => void
 }
 
 const IS_MOBILE = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -27,7 +28,7 @@ const isDirectFileUrl = (url: string) => {
   return ext.endsWith('.mkv')
 }
 
-export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs, onToggleFullscreen, onRefreshUrl, subtitles = [] }: VideoPlayerProps) {
+export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs, onToggleFullscreen, onRefreshUrl, subtitles = [], onProgress }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -51,6 +52,9 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
   const [useMediabunny, setUseMediabunny] = useState<boolean | null>(null)
   const [selectedSubtitle, setSelectedSubtitle] = useState(-1)
   const [browserReady, setBrowserReady] = useState(false)
+  const [introVisible, setIntroVisible] = useState(true)
+  const [introEnded, setIntroEnded] = useState(false)
+  const introTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   // Detect if Mediabunny should be used for this source
   useEffect(() => {
@@ -108,6 +112,19 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
   }, [])
 
   useEffect(() => {
+    setIntroVisible(true)
+    setIntroEnded(false)
+    clearTimeout(introTimerRef.current)
+    introTimerRef.current = setTimeout(() => {
+      setIntroEnded(true)
+      setIntroVisible(false)
+      const video = videoRef.current
+      if (video && video.readyState >= 2) void tryPlay(video)
+    }, 1100)
+    return () => clearTimeout(introTimerRef.current)
+  }, [src, tryPlay])
+
+  useEffect(() => {
     const video = videoRef.current
     if (!video) return
     const tracks = Array.from(video.querySelectorAll('track[data-vod-subtitle]'))
@@ -127,6 +144,7 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
+    if (introVisible) { video.pause(); return }
     Array.from(video.textTracks).forEach((track, index) => {
       track.mode = index === selectedSubtitle ? 'showing' : 'disabled'
     })
@@ -310,10 +328,10 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
     setLoadError('')
     setPlaying(false)
     setLoading(true)
-    tryUrl(video)
+    if (!introVisible) tryUrl(video)
 
     return () => { cleanup() }
-  }, [src, fallbackSrcs, tryUrl, cleanup])
+  }, [src, fallbackSrcs, tryUrl, cleanup, introVisible])
 
   const togglePlay = () => {
     const video = videoRef.current
@@ -373,7 +391,7 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-    const onTime = () => { setCurrentTime(video.currentTime) }
+    const onTime = () => { setCurrentTime(video.currentTime); onProgress?.(video.currentTime, video.duration || 0) }
     const onDur = () => setDuration(video.duration || 0)
     const onPlay = () => setPlaying(true)
     const onPause = () => setPlaying(false)
@@ -393,7 +411,7 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
       video.removeEventListener('progress', onProg)
       video.removeEventListener('ended', onEnd)
     }
-  }, [onEnded, startHideTimer])
+  }, [onEnded, onProgress, startHideTimer])
 
   useEffect(() => {
     const onFs = () => {
@@ -427,7 +445,9 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
 
   return (
     <div ref={containerRef} className="relative bg-black group cursor-pointer" onClick={togglePlay} onMouseMove={startHideTimer} onTouchStart={startHideTimer}>
-      <video ref={videoRef} className={`w-full ${fullscreen ? 'h-screen w-screen object-cover md:object-contain' : 'aspect-video object-contain'}`} poster={poster} playsInline crossOrigin="anonymous" />
+      <video ref={videoRef} className={`w-full ${fullscreen ? 'h-screen w-screen object-cover md:object-contain' : 'aspect-video object-contain'}`} poster={poster} playsInline crossOrigin="anonymous" onCanPlay={() => { if (introEnded) { setIntroVisible(false); const video = videoRef.current; if (video) void tryPlay(video) } }} onEnded={() => onEnded?.()} />
+
+      {introVisible && <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#070708] text-white"><span className="mb-3 grid h-16 w-16 place-items-center rounded-2xl bg-[#e50914] shadow-[0_0_42px_#e5091480]"><Sparkles size={30} /></span><strong className="text-2xl font-black tracking-[.22em]">NOTFLIX</strong><span className="mt-3 text-sm text-white/65">İçerik hazırlanıyor…</span><div className="mt-5 h-1 w-40 overflow-hidden rounded-full bg-white/15"><span className="block h-full w-2/3 animate-pulse rounded-full bg-[#e50914]" /></div></div>}
 
       {title && <div className="absolute top-4 left-4 text-white text-sm font-medium drop-shadow-lg bg-black/40 px-3 py-1.5 rounded-lg">{title}</div>}
       {loadError && (

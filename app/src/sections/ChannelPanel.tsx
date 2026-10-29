@@ -16,6 +16,9 @@ interface ChannelPanelProps {
   onSelect: (channel: VavooChannel) => void
   onClose?: () => void
   className?: string
+  country?: string
+  countries?: string[]
+  onCountryChange?: (country: string) => void
 }
 
 export default function ChannelPanel({
@@ -24,6 +27,9 @@ export default function ChannelPanel({
   onSelect,
   onClose,
   className = '',
+  country,
+  countries = [],
+  onCountryChange,
 }: ChannelPanelProps) {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<string>(FEATURED_CATEGORY)
@@ -65,6 +71,8 @@ export default function ChannelPanel({
           </button>
         )}
       </div>
+
+      {country && countries.length > 0 && onCountryChange && <label className="nf-channels__country">Ülke<select value={country} onChange={(event) => onCountryChange(event.target.value)}>{countries.map((entry) => <option key={entry} value={entry}>{entry === 'Turkey' ? 'Türkiye' : entry}</option>)}</select></label>}
 
       <div className="nf-channels__search">
         <Search size={16} aria-hidden="true" />
