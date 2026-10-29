@@ -1,5 +1,5 @@
 import { NAV_ITEMS, type PageId } from '@/lib/navigation'
-import NotflixLogo from '@/sections/NotflixLogo'
+import { Languages, Tv } from 'lucide-react'
 
 interface NotflixSidebarProps {
   page: PageId
@@ -7,6 +7,8 @@ interface NotflixSidebarProps {
   mobileOpen: boolean
   onNavigate: (page: PageId) => void
   onCloseMobile: () => void
+  onLanguage?: (language: string) => void
+  language?: string
 }
 
 export default function NotflixSidebar({
@@ -15,24 +17,23 @@ export default function NotflixSidebar({
   mobileOpen,
   onNavigate,
   onCloseMobile,
+  onLanguage,
+  language = 'tr',
 }: NotflixSidebarProps) {
   return (
     <aside className={`nf-sidebar ${expanded ? 'is-expanded' : ''} ${mobileOpen ? 'is-mobile-open' : ''}`}>
-      <a
+      <button
         className="nf-sidebar__brand"
-        href="#home"
-        onClick={(event) => {
-          event.preventDefault()
+        type="button"
+        onClick={() => {
           onNavigate('home')
           onCloseMobile()
         }}
         aria-label="NOTFLİX ana sayfa"
       >
         <span className="nf-sidebar__mark" aria-hidden="true">N</span>
-        <span className="nf-sidebar__wordmark">
-          <NotflixLogo />
-        </span>
-      </a>
+        <span className="nf-sidebar__wordmark">NOTFLİX</span>
+      </button>
 
       <div className="nf-sidebar__rule" />
 
@@ -67,6 +68,13 @@ export default function NotflixSidebar({
         })}
       </nav>
 
+      <div className="nf-sidebar__settings">
+        <span><Languages size={15} /> Genel</span>
+        <select value={language} onChange={(event) => onLanguage?.(event.target.value)} aria-label="Genel dil ayarı">
+          <option value="tr">Dil: Türkçe</option><option value="en">Language: English</option>
+        </select>
+        <button type="button" onClick={() => onNavigate('live')}><Tv size={15} /> TV Modu</button>
+      </div>
       <div className="nf-sidebar__footer">
         <span className="nf-sidebar__status">
           <i />

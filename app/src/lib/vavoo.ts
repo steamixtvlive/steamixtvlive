@@ -13,6 +13,7 @@ export interface VavooChannel {
   featured: boolean
   epg: VavooEpgSlot[]
   qualityVariants?: Array<{ id: string; name: string; quality: string }>
+  country?: string
 }
 
 export interface VavooCatalog {

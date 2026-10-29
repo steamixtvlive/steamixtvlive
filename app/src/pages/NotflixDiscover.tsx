@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Loader2, Play, Search, Tv } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ChevronRight, Loader2, Play, Search } from 'lucide-react'
 import { fetchVodDetail, fetchVodList, preloadVodHome, type VodCategory, type VodHome, type VodItem } from '@/lib/vod'
 
 const PAGE_SIZE = 48
@@ -25,7 +25,6 @@ export default function NotflixDiscover() {
   const [error, setError] = useState('')
   const [listError, setListError] = useState('')
   const [detailError, setDetailError] = useState('')
-  const [countryFilter, setCountryFilter] = useState('all')
   const detailCache = useRef(new Map<string, VodItem>())
   const observerRef = useRef<HTMLDivElement | null>(null)
 
@@ -38,12 +37,28 @@ export default function NotflixDiscover() {
   }, [])
 
   useEffect(() => {
+    const now = new Date()
+    const day = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
+    let savedDay = ''
+    try { savedDay = localStorage.getItem('notflix_hero_day') || '' } catch { /* optional seed */ }
+    if (savedDay !== day) { try { localStorage.setItem('notflix_hero_day', day) } catch { /* optional seed */ } }
+    const timer = window.setInterval(() => {
+      setHeroIndex((index) => {
+        const next = index + 1
+        try { localStorage.setItem('notflix_hero_index', String(next)) } catch { /* optional */ }
+        return next
+      })
+    }, 3500)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
     if (category || query.trim().length < 2) return
     const controller = new AbortController()
     const timer = window.setTimeout(() => {
       setSearchLoading(true)
       setListError('')
-      fetchVodList({ type, category: 'all', page: 1, limit: PAGE_SIZE, signal: controller.signal })
+      fetchVodList({ type, category: 'all', query, page: 1, limit: PAGE_SIZE, signal: controller.signal })
         .then((result) => { setSearchItems(result.items); setSearchPage(1); setSearchTotal(result.total) })
         .catch((searchError: unknown) => { if (!controller.signal.aborted) setListError(searchError instanceof Error ? searchError.message : 'Arama başarısız') })
         .finally(() => { if (!controller.signal.aborted) setSearchLoading(false) })
@@ -85,7 +100,7 @@ export default function NotflixDiscover() {
     setSearchLoading(true)
     setListError('')
     try {
-      const result = await fetchVodList({ type: contentType, category: 'all', page, limit: PAGE_SIZE })
+      const result = await fetchVodList({ type: contentType, category: 'all', query: search, page, limit: PAGE_SIZE })
       setSearchItems((items) => page === 1 ? result.items : [...items, ...result.items])
       setSearchPage(result.page)
       setSearchTotal(result.total)
@@ -130,8 +145,9 @@ export default function NotflixDiscover() {
   }
 
   const hero = home?.hero || []
-  const currentHero = hero.length ? hero[heroIndex % hero.length] : null
-  const countries = [...new Set((home?.categories || []).map((entry) => entry.name.split(' · ').at(-1) || '').filter(Boolean))]
+  const preferredLocalSeries = hero.filter((item) => item.type === 'series' && /uzak şehir|mehmed|fetih|kızılcık|şerbet|trt|show|atv|now/i.test(item.name))
+  const heroPool = preferredLocalSeries.length >= 4 ? [...preferredLocalSeries, ...hero.filter((item) => !preferredLocalSeries.includes(item))] : hero
+  const currentHero = heroPool.length ? heroPool[heroIndex % heroPool.length] : null
   const isBrowsing = Boolean(category || query.trim().length >= 2)
   const visibleItems = category ? categoryItems : query.trim().length >= 2 ? searchItems : []
 
@@ -189,10 +205,10 @@ export default function NotflixDiscover() {
               <span className="nf-vod-kicker">{currentHero.type === 'movie' ? 'ÖNE ÇIKAN FİLM' : 'ÖNE ÇIKAN DİZİ'} · {currentHero.year || 'YENİ'}</span>
               <h1>{currentHero.name}</h1>
               <p>{currentHero.plot || `${currentHero.category} kategorisinden seçilmiş içerik.`}</p>
-              <div className="nf-vod-showcase__actions"><button type="button" className="nf-vod-play" onClick={() => void openDetail(currentHero)}><Play size={17} fill="currentColor" /> Ayrıntılar</button><button type="button" className="nf-vod-secondary" onClick={() => setHeroIndex((index) => (index + 1) % hero.length)}>Sonraki içerik</button></div>
+              <div className="nf-vod-showcase__actions"><button type="button" className="nf-vod-play" onClick={() => void openDetail(currentHero)}><Play size={17} fill="currentColor" /> {currentHero.type === 'series' ? 'Son Bölüm İzle' : 'Ayrıntılar'}</button><button type="button" className="nf-vod-secondary" onClick={() => void openDetail(currentHero)}>Daha fazla bilgi</button></div>
             </div>
             <div className="nf-vod-showcase__poster"><img src={currentHero.poster} alt={currentHero.name} /></div>
-            <div className="nf-vod-showcase__nav"><button type="button" aria-label="Önceki vitrin içeriği" onClick={() => setHeroIndex((index) => (index - 1 + hero.length) % hero.length)}><ChevronLeft size={19} /></button><span>{heroIndex + 1} / {hero.length}</span><button type="button" aria-label="Sonraki vitrin içeriği" onClick={() => setHeroIndex((index) => (index + 1) % hero.length)}><ChevronRight size={19} /></button></div>
+            {currentHero.isNew && <span className="nf-vod-showcase__new">YENİ</span>}
           </>}
           {!currentHero && <div className="nf-vod-showcase__fallback"><span className="nf-vod-kicker">NOTFLİX · VOD</span><h1>Filmler ve diziler</h1><p>Kataloğu keşfetmeye başlayın.</p></div>}
         </section>
@@ -203,6 +219,7 @@ export default function NotflixDiscover() {
           </div>
           <label className="nf-vod-search"><Search size={16} /><input value={query} onChange={(event) => { setQuery(event.target.value); setCategory(null); setCategoryItems([]); setCategoryHasMore(true) }} placeholder="Film veya dizi ara…" aria-label="Film veya dizi ara" /><span>{query.trim().length >= 2 ? `${searchTotal.toLocaleString('tr-TR')} sonuç` : ''}</span></label>
         </section>
+        <div className="nf-vod-category-pills" aria-label="VOD kategorileri">{home.categories.slice(0, 36).map((entry) => <button key={`${entry.type}:${entry.id}`} type="button" onClick={() => chooseCategory(entry)}>{entry.label} <span>{entry.count}</span></button>)}</div>
 
         {isBrowsing ? (
           <section className="nf-vod-browse">
@@ -214,12 +231,7 @@ export default function NotflixDiscover() {
             {category && categoryHasMore && <button type="button" className="nf-vod-load-more" disabled={categoryLoading} onClick={() => void loadCategory(category, categoryPage + 1, true)}>Tümünü gör · sonraki {PAGE_SIZE}</button>}
             {!category && query.trim().length >= 2 && searchPage * PAGE_SIZE < searchTotal && <button type="button" className="nf-vod-load-more" disabled={searchLoading} onClick={() => void loadSearchPage(query, type, searchPage + 1)}>Sonuçları yükle</button>}
           </section>
-        ) : <>
-          <section className="nf-vod-countries" aria-label="Ülke seçimi">
-            <label><Tv size={15} /> Ülke <select value={countryFilter} onChange={(event) => setCountryFilter(event.target.value)}><option value="all">Tüm ülkeler</option>{countries.map((country) => <option key={country} value={country}>{country}</option>)}</select></label>
-          </section>
-          <div className="nf-vod-home-rows">{home.rows.filter((row) => (type === 'all' || row.type === type) && (countryFilter === 'all' || row.title.toLocaleLowerCase('tr').includes(countryFilter.toLocaleLowerCase('tr')))).map((row) => <VodShelf key={row.key} title={row.title} count={row.count} items={row.items} onOpen={(item) => void openDetail(item)} onSeeAll={() => { const target: VodCategory = { id: row.categoryId, name: row.title, type: row.type, count: row.count }; chooseCategory(target) }} />)}</div>
-        </>}
+        ) : <div className="nf-vod-home-rows">{home.rows.filter((row) => type === 'all' || row.type === type).map((row) => <VodShelf key={row.key} title={row.title} count={row.count} items={row.items} onOpen={(item) => void openDetail(item)} onSeeAll={() => { const target: VodCategory = { id: row.categoryId, name: row.title, type: row.type, count: row.count }; chooseCategory(target) }} />)}</div>}
       </>}
     </main>
   )
@@ -230,7 +242,7 @@ function PosterGrid({ items, onOpen }: { items: VodItem[]; onOpen: (item: VodIte
 }
 
 function PosterCard({ item, onOpen }: { item: VodItem; onOpen: (item: VodItem) => void }) {
-  return <button type="button" className="nf-vod-card" onClick={() => onOpen(item)} aria-label={`${item.name}${item.year ? ` (${item.year})` : ''}`}><span className="nf-vod-card__image"><img src={item.poster} alt="" loading="lazy" decoding="async" /><span className="nf-vod-card__play"><Play size={18} fill="currentColor" /></span><span className="nf-vod-card__type">{item.type === 'movie' ? 'FİLM' : 'DİZİ'}</span></span><span className="nf-vod-card__name">{item.name}</span><span className="nf-vod-card__year">{item.year || item.category}</span></button>
+  return <button type="button" className="nf-vod-card" onClick={() => onOpen(item)} aria-label={`${item.name}${item.year ? ` (${item.year})` : ''}`}><span className="nf-vod-card__image"><img src={item.poster} alt="" loading="lazy" decoding="async" />{item.isNew && <span className="nf-vod-card__new">YENİ</span>}<span className="nf-vod-card__play"><Play size={18} fill="currentColor" /></span><span className="nf-vod-card__type">{item.type === 'movie' ? 'FİLM' : 'DİZİ'}</span></span><span className="nf-vod-card__name">{item.name}</span><span className="nf-vod-card__year">{item.year || item.category}</span></button>
 }
 
 function VodShelf({ title, count, items, onOpen, onSeeAll }: { title: string; count?: number; items: VodItem[]; onOpen: (item: VodItem) => void; onSeeAll?: () => void }) {

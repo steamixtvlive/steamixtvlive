@@ -24,6 +24,7 @@ export interface VodItem {
   stream?: string
   subtitles?: VodSubtitle[]
   seasons?: VodSeason[]
+  isNew?: boolean
 }
 
 export interface VodSeason {
@@ -43,6 +44,7 @@ export interface VodEpisode {
 export interface VodCategory {
   id: string
   name: string
+  label?: string
   type: 'movie' | 'series'
   count: number
 }
@@ -88,6 +90,7 @@ export function fetchVodList(options: {
   page?: number
   limit?: number
   sort?: 'new' | 'name'
+  query?: string
   signal?: AbortSignal
 } = {}): Promise<VodListPage> {
   const params = new URLSearchParams()
@@ -96,6 +99,7 @@ export function fetchVodList(options: {
   params.set('page', String(options.page || 1))
   params.set('limit', String(options.limit || 48))
   if (options.sort) params.set('sort', options.sort)
+  if (options.query) params.set('q', options.query)
   return request<VodListPage>(`/api/vod/list?${params.toString()}`, options.signal)
 }
 

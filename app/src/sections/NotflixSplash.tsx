@@ -78,7 +78,7 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
         }
         .notflix-wordmark {
           position: relative;
-          filter: url(#notflixSmoke);
+          filter: none;
           animation: notflixBrandZoom 11s cubic-bezier(.22,.61,.36,1) both;
           will-change: filter, transform;
         }
@@ -266,7 +266,7 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
         }
         @keyframes notflixStageLeave {
           0% { opacity: 1; transform: scale(1); filter: blur(0); }
-          100% { opacity: 0; transform: scale(1.1); filter: blur(34px); }
+          100% { opacity: 0; transform: scale(1.04); filter: blur(2px); }
         }
         @keyframes notflixFade {
           from { opacity: 1; }
@@ -291,12 +291,7 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
       `}</style>
 
       <svg width="0" height="0" className="absolute" aria-hidden="true">
-        <filter id="notflixSmoke" x="-25%" y="-35%" width="150%" height="170%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.035" numOctaves="4" seed="9" result="noise" />
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="0">
-            <animate attributeName="scale" values="0;0;86" keyTimes="0;0.84;1" dur="11s" fill="freeze" />
-          </feDisplacementMap>
-        </filter>
+         <filter id="notflixSmoke" x="-25%" y="-35%" width="150%" height="170%"><feDisplacementMap in="SourceGraphic" in2="SourceGraphic" scale="0" /></filter>
       </svg>
 
       <div className="notflix-splash-bg" />

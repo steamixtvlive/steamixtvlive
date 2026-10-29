@@ -19,6 +19,7 @@ export default function App() {
 function AppContent() {
   const [stage, setStage] = useState<Stage>('splash')
   const [catalog, setCatalog] = useState<VavooCatalog | null>(null)
+  const [activationProfile, setActivationProfile] = useState<{ fullName: string; username: string; expiresAt: number } | null>(null)
   const location = useLocation()
   const isVavooWatch = location.pathname.startsWith('/notflix/vavoo/')
   const isVodWatch = location.pathname.startsWith('/notflix/watch/')
@@ -30,6 +31,15 @@ function AppContent() {
 
   useEffect(() => {
     void preloadVodHome().catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const custom = event as CustomEvent<{ fullName: string; username: string; expiresAt: number }>
+      setActivationProfile(custom.detail)
+    }
+    window.addEventListener('notflix-developer-activated', handler)
+    return () => window.removeEventListener('notflix-developer-activated', handler)
   }, [])
 
   return (
@@ -52,7 +62,7 @@ function AppContent() {
 
       {!isVavooWatch && !isVodWatch && stage === 'app' && catalog && (
         <div className="notflix-app-enter nf-shell-enter">
-          <NotflixShell catalog={catalog} />
+          <NotflixShell catalog={catalog} activationProfile={activationProfile} />
         </div>
       )}
     </>
@@ -66,7 +76,7 @@ function VavooWatch({ channels }: { channels: VavooCatalog['channels'] }) {
   const variant = baseChannel?.qualityVariants?.find((entry) => entry.id === id)
   const channel = baseChannel && variant ? { ...baseChannel, ...variant } : baseChannel
   if (!channel) return <main className="nf-vod-watch"><button onClick={() => navigate('/')} type="button">Geri dön</button><p>Vavoo kanalı bulunamadı</p></main>
-  return <main className="nf-vod-watch nf-vod-watch--live"><header className="nf-vod-watch__header"><button type="button" onClick={() => navigate('/')}>← Keşfet</button><strong>{channel.name}</strong><span>Vavoo · Canlı TV</span></header><NotflixLiveChannel channels={channels} channelId={channel.id} sourceId={baseChannel?.id || channel.id} quality={variant?.quality} /></main>
+  return <main className="nf-vod-watch nf-vod-watch--live"><header className="nf-vod-watch__header"><button type="button" onClick={() => navigate('/')}>← Keşfet</button><strong>{channel.name}</strong><span>Canlı TV</span></header><NotflixLiveChannel channels={channels} channelId={channel.id} sourceId={baseChannel?.id || channel.id} quality={variant?.quality} /></main>
 }
 
 function NotflixLiveChannel({ channels, channelId, sourceId, quality }: { channels: VavooCatalog['channels']; channelId: string; sourceId: string; quality?: string }) {

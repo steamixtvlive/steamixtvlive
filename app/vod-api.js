@@ -478,6 +478,17 @@ function normalizeCategoryEntries(raw) {
   }
 }
 
+function inferCatalogCategory(type, id, name, original) {
+  const normalized = normalizeText(name).toLocaleLowerCase('tr')
+  const isTurkishSeries = type === 'series' && /(?:uzak şehir|mehmed|fatih|kızılcık şerbeti|show|atv|now|trt|yerli|turkish)/i.test(normalized)
+  if (isTurkishSeries) return { id: `inferred:tr-series:${id}`, name: 'TR Yerli Diziler' }
+  if (/netflix/i.test(original || '')) return { id: `inferred:netflix:${id}`, name: /\btr\b|turk/i.test(original || '') ? 'TR Netflix' : 'Yabancı Netflix' }
+  if (/(?:amazon|prime video)/i.test(original || '')) return { id: `inferred:prime:${id}`, name: 'Prime Video' }
+  if (/(?:disney\+?|disney plus)/i.test(original || '')) return { id: `inferred:disney:${id}`, name: 'Disney+' }
+  if (/max|hbo/i.test(original || '')) return { id: `inferred:max:${id}`, name: 'Max / HBO' }
+  return null
+}
+
 function normalizeMovieItem(raw, categoryMap) {
   if (!raw || typeof raw !== 'object') return null
   const id = String(raw.stream_id ?? raw.id ?? raw.vod_id ?? '')
@@ -522,7 +533,9 @@ function normalizeSeriesItem(raw, categoryMap) {
   if (!id || !name) return null
   if (isAdultCategory(name) || isAdultCategory(raw.category_name)) return null
 
-  const categoryId = String(raw.category_id ?? raw.categoryId ?? '')
+  const original = normalizeText(raw.o_name || raw.original_name || raw.source || '')
+  const inferredCategory = inferCatalogCategory('series', id, name, original)
+  const categoryId = inferredCategory?.id || String(raw.category_id ?? raw.categoryId ?? '')
   return {
     type: 'series',
     id,
@@ -530,7 +543,7 @@ function normalizeSeriesItem(raw, categoryMap) {
     poster: imageProxyUrl(raw.cover || raw.cover_big || raw.stream_icon || raw.poster),
     backdrop: imageProxyUrl(raw.backdrop_path || raw.backdrop || raw.cover_big || raw.cover),
     categoryId,
-    category: categoryMap.get(categoryId) || cleanCategoryName(raw.category_name) || 'Diğer',
+    category: inferredCategory?.name || categoryMap.get(categoryId) || cleanCategoryName(raw.category_name) || 'Diğer',
     year: parseYear(raw.releaseDate || raw.releasedate || raw.year, name),
     rating: parseRating(raw.rating, raw.rating_5based),
     added: toTimestamp(raw.added),
@@ -881,6 +894,7 @@ function publicItem(item) {
     year: item.year,
     rating: item.rating,
     category: item.category,
+    isNew: Boolean(item.isNew),
   }
 }
 
@@ -913,6 +927,16 @@ function buildPublicCategories(data) {
   for (const item of data.series) seriesCounts.set(item.categoryId, (seriesCounts.get(item.categoryId) || 0) + 1)
 
   const categories = []
+  const inferred = new Map()
+  for (const item of [...data.movies, ...data.series]) {
+    const name = item.category || ''
+    if (/^TR Yerli Diziler$|^TR Netflix$|^Yabancı Netflix$|^Prime Video$|^Disney\+$|^Max \/ HBO$/i.test(name)) {
+      const key = `${item.type}:${item.categoryId}`
+      if (!inferred.has(key)) inferred.set(key, { key, id: item.categoryId, name, label: name, type: item.type, count: 0 })
+      inferred.get(key).count += 1
+    }
+  }
+  categories.push(...inferred.values())
   for (const category of data.movieCategories) {
     const count = movieCounts.get(category.id) || 0
     if (count > 0) {
@@ -957,6 +981,14 @@ function buildPublicCategories(data) {
   }
 
   categories.sort((a, b) => {
+    const curated = ['Yeni Filmler', 'Yeni Diziler', 'TR Yerli Diziler', 'TR Netflix', 'Yabancı Netflix']
+    const aIndex = curated.findIndex((name) => a.name === name)
+    const bIndex = curated.findIndex((name) => b.name === name)
+    if (aIndex >= 0 || bIndex >= 0) {
+      if (aIndex < 0) return 1
+      if (bIndex < 0) return -1
+      if (aIndex !== bIndex) return aIndex - bIndex
+    }
     const priority = categoryPriority(a.name) - categoryPriority(b.name)
     if (priority !== 0) return priority
     if (b.count !== a.count) return b.count - a.count
@@ -979,7 +1011,7 @@ function buildRows(data, categories) {
       count: newMovies.length,
       new: true,
       priority: -2,
-      items: newMovies.slice(0, HOME_ROW_SIZE).map(publicItem),
+      items: newMovies.slice(0, HOME_ROW_SIZE).map((item) => ({ ...publicItem(item), isNew: true })),
     })
   }
 
@@ -993,11 +1025,12 @@ function buildRows(data, categories) {
       count: newSeries.length,
       new: true,
       priority: -1,
-      items: newSeries.slice(0, HOME_ROW_SIZE).map(publicItem),
+      items: newSeries.slice(0, HOME_ROW_SIZE).map((item) => ({ ...publicItem(item), isNew: true })),
     })
   }
 
   for (const category of categories) {
+    if (category.name === 'Yeni Filmler' || category.name === 'Yeni Diziler') continue
     const source = category.type === 'movie' ? data.movies : data.series
     const rowItems = sortForRows(source.filter((item) => item.categoryId === category.id))
     if (rowItems.length === 0) continue
@@ -1254,6 +1287,7 @@ async function listPayload(reqUrl) {
   const type = ['movie', 'series', 'all'].includes(rawType) ? rawType : 'all'
   const category = String(reqUrl.searchParams.get('category') || 'all')
   const query = normalizeText(reqUrl.searchParams.get('q') || '')
+  const providerSearch = query ? await providerSearchItems(query, type) : null
   const sort = String(reqUrl.searchParams.get('sort') || '')
   const page = clampNumber(reqUrl.searchParams.get('page'), 1, 100000, 1)
   const limit = clampNumber(reqUrl.searchParams.get('limit'), 1, 60, PAGE_SIZE)
@@ -1271,7 +1305,7 @@ async function listPayload(reqUrl) {
 
   if (query) {
     const needle = searchKey(query)
-    pool = pool.filter((item) => searchKey(`${item.name} ${item.category}`).includes(needle))
+    pool = providerSearch || pool.filter((item) => searchKey(`${item.name} ${item.category}`).includes(needle))
   }
 
   if (sort === 'new') {
@@ -1297,6 +1331,19 @@ async function listPayload(reqUrl) {
     hasMore: start + items.length < total,
     items,
   }
+}
+
+async function providerSearchItems(query, type) {
+  const tasks = []
+  if (type !== 'series') tasks.push(providerJson('get_vod_streams', { search: query }).then((raw) => normalizeList(raw).map((entry) => normalizeMovieItem(entry, new Map()))).catch(() => []))
+  if (type !== 'movie') tasks.push(providerJson('get_series', { search: query }).then((raw) => normalizeList(raw).map((entry) => normalizeSeriesItem(entry, new Map()))).catch(() => []))
+  const results = (await Promise.all(tasks)).flat().filter(Boolean)
+  if (results.length) {
+    const local = new Map([...state.movies, ...state.series].map((item) => [`${item.type}:${item.id}`, item]))
+    return results.map((item) => local.get(`${item.type}:${item.id}`) || item)
+  }
+  const needle = searchKey(query)
+  return [...state.movies, ...state.series].filter((item) => searchKey(`${item.name} ${item.category}`).includes(needle))
 }
 
 function normalizeSubtitleEntries(raw, indexOffset = 0) {
@@ -2375,6 +2422,3 @@ export function createVodApi(options = {}) {
     }
   }
 }
-
-
-

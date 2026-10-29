@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Hls from 'hls.js'
 import {
   AlertTriangle,
+  ArrowLeft,
   ListVideo,
   Loader2,
   Maximize2,
@@ -53,7 +54,7 @@ function isSmallScreen() {
 
 export default function NotflixPlayer({ channels, initialId, initialStream, onSelectChannel }: NotflixPlayerProps) {
   const defaultChannel = useMemo(() => channels.find((channel) => channel.id === initialId) || pickDefaultChannel(channels), [channels, initialId])
-  const [activeId, setActiveId] = useState(() => defaultChannel?.id || '')
+  const [activeId, setActiveId] = useState(() => initialId || defaultChannel?.id || '')
   const active = useMemo(
     () => channels.find((channel) => channel.id === activeId) || channels.flatMap((channel) => channel.qualityVariants || []).map((variant) => ({ ...defaultChannel, ...variant, epg: defaultChannel?.epg || [], category: defaultChannel?.category || 'Ulusal', featured: defaultChannel?.featured || false, logo: defaultChannel?.logo || '' })).find((channel) => channel.id === activeId) || defaultChannel || null,
     [channels, activeId, defaultChannel],
@@ -81,10 +82,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
   const [pipActive, setPipActive] = useState(false)
   const [uiVisible, setUiVisible] = useState(true)
   const [nowTick, setNowTick] = useState(() => Date.now())
-
-  useEffect(() => {
-    if (initialId) setActiveId(initialId)
-  }, [initialId])
+  const [country, setCountry] = useState(() => { try { return localStorage.getItem('notflix_live_country') || 'Turkey' } catch { return 'Turkey' } })
 
   const wrapperRef = useRef<HTMLElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
@@ -99,6 +97,8 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
     if (!active) return { now: null, next: null }
     return getNowNext(active, nowTick / 1000)
   }, [active, nowTick])
+  const availableCountries = useMemo(() => [...new Set(channels.map((channel) => channel.country || 'Turkey'))].sort((a, b) => a === 'Turkey' ? -1 : b === 'Turkey' ? 1 : a.localeCompare(b)), [channels])
+  const countryChannels = useMemo(() => channels.filter((channel) => (channel.country || 'Turkey') === country), [channels, country])
 
   const epgProgress = useMemo(() => {
     if (!epg.now) return 0
@@ -448,6 +448,8 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
   }, [])
 
   const selectChannel = useCallback((channel: VavooChannel) => {
+    const channelCountry = channel.country || 'Turkey'
+    if (channelCountry !== country) setCountry(channelCountry)
     if (onSelectChannel) {
       onSelectChannel(channel)
       return
@@ -460,7 +462,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
     }
     setActiveId(channel.id)
     if (isSmallScreen()) setDrawerOpen(false)
-  }, [initialId, onSelectChannel])
+  }, [country, initialId, onSelectChannel])
 
   const retry = useCallback(() => {
     forceRefreshRef.current = true
@@ -472,15 +474,30 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
 
   const stepChannel = useCallback(
     (direction: -1 | 1) => {
-      if (channels.length === 0) return
-      const currentIndex = channels.findIndex((channel) => channel.id === active?.id)
+      if (countryChannels.length === 0) return
+      const currentIndex = countryChannels.findIndex((channel) => channel.id === active?.id)
       const safeIndex = currentIndex < 0 ? 0 : currentIndex
-      const nextIndex = (safeIndex + direction + channels.length) % channels.length
-      const next = channels[nextIndex]
+      const nextIndex = (safeIndex + direction + countryChannels.length) % countryChannels.length
+      const next = countryChannels[nextIndex]
       if (next) setActiveId(next.id)
     },
-    [active?.id, channels],
+    [active?.id, countryChannels],
   )
+
+  const goBackToDiscover = useCallback(() => {
+    window.history.back()
+  }, [])
+
+  const registerContinue = useCallback(() => {
+    if (!active) return
+    try {
+      const id = `${active.id}`
+      const list = JSON.parse(localStorage.getItem('notflix_continue') || '[]') as Array<{ id: string; title: string; poster: string; progress: number; href: string }>
+      const previous = list.find((entry) => entry.id === id)
+      const item = { id, title: active.name, poster: active.logo, progress: previous?.progress || 0, href: `/notflix/vavoo/${encodeURIComponent(active.id)}` }
+      localStorage.setItem('notflix_continue', JSON.stringify([item, ...list.filter((entry) => entry.id !== item.id)].slice(0, 40)))
+    } catch { /* continue-watching is optional */ }
+  }, [active])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -555,10 +572,11 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
         className="nf-player__video"
         playsInline
         muted={muted}
-        onPlaying={() => {
+          onPlaying={() => {
           setPlaying(true)
           setBuffering(false)
           setResolving(false)
+          registerContinue()
           wakeUi()
         }}
         onPause={() => {
@@ -572,6 +590,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
           setResolving(false)
         }}
         onLoadedMetadata={() => setResolving(false)}
+        onTimeUpdate={() => registerContinue()}
           onVolumeChange={() => {
           const video = videoRef.current
           if (!video) return
@@ -588,6 +607,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
 
       <header className="nf-player__top">
         <div className="nf-player__brand-group">
+          <button type="button" className="nf-player__brand-back" onClick={goBackToDiscover} aria-label="Keşfet'e dön"><ArrowLeft size={16} /></button>
           <span className="nf-player__brand">NOTFLİX</span>
           <span className="nf-player__brand-rule" aria-hidden="true" />
           <span className="nf-player__top-caption">CANLI TV</span>
@@ -608,6 +628,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
             <ListVideo size={16} />
             <span>Kanallar</span>
           </button>
+          <select className="nf-player__country" value={country} onChange={(event) => { setCountry(event.target.value); try { localStorage.setItem('notflix_live_country', event.target.value) } catch { /* saved for session */ } }} aria-label="Ülke seç"><option value="Turkey">Türkiye</option>{availableCountries.filter((entry) => entry !== 'Turkey').map((entry) => <option key={entry} value={entry}>{entry}</option>)}</select>
         </div>
       </header>
 
@@ -621,7 +642,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
               {error ||
                 (resolving ? 'Kanal bağlantısı kuruluyor' : 'Yayın tamponlanıyor')}
             </strong>
-            <small>{active.name} · Vavoo canlı yayın</small>
+            <small>{active.name} · Canlı yayın</small>
           </span>
         </div>
       )}
@@ -801,7 +822,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
         inert={!drawerOpen}
       >
         <ChannelPanel
-          channels={channels}
+          channels={countryChannels}
           activeId={selectedChannelId}
           onSelect={selectChannel}
           onClose={() => setDrawerOpen(false)}

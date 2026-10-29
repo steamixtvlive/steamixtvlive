@@ -18,7 +18,7 @@ function delay(ms: number) {
 export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProps) {
   const [progress, setProgress] = useState(3)
   const [target, setTarget] = useState(9)
-  const [step, setStep] = useState('Vavoo sunucusuna bağlanılıyor...')
+  const [step, setStep] = useState('İçerikler yükleniyor...')
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
   const [rawCount, setRawCount] = useState(0)
@@ -32,7 +32,7 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
 
     setProgress(3)
     setTarget(9)
-    setStep('Vavoo sunucusuna bağlanılıyor...')
+    setStep('VOD arşivi ve canlı TV hazırlanıyor...')
     setError('')
     setRawCount(0)
     setChannelCount(0)
@@ -51,9 +51,9 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
         if (cancelled) return
         if (typeof status.raw === 'number' && status.raw > 0) setRawCount(status.raw)
         if (typeof status.total === 'number' && status.total > 0) setChannelCount(status.total)
-        if (status.active) {
-          setTarget((current) => Math.max(current, Math.min(94, Math.max(9, status.percent))))
-          if (status.message) setStep(status.message)
+          if (status.active) {
+            setTarget((current) => Math.max(current, Math.min(94, Math.max(9, status.percent))))
+            if (status.message) setStep(status.message.replace(/Vavoo|MediaHubMX/gi, 'Canlı yayın'))
         }
       } catch {
         // Status is a best-effort enhancement; the main request is the source of truth.
@@ -71,7 +71,7 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
 
         setRawCount(catalog.rawTotal)
         setChannelCount(catalog.total)
-        setStep('Player ve kanal paneli hazırlanıyor...')
+          setStep('Posterler, VOD arşivi ve oynatıcı hazırlanıyor...')
         setTarget(100)
         setProgress(100)
 
@@ -110,7 +110,7 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
           <h1>İçerikler yüklenemedi</h1>
           <p className="nf-loading__error-text">{error}</p>
           <p className="nf-loading__error-hint">
-            Vavoo servisine erişilemiyor olabilir. Bağlantınızı kontrol edip yeniden deneyin.
+            Canlı yayın kataloğuna erişilemiyor olabilir. Bağlantınızı kontrol edip yeniden deneyin.
           </p>
           <div className="nf-loading__error-actions">
             <button type="button" className="nf-btn nf-btn--primary" onClick={() => setAttempt((value) => value + 1)}>
@@ -152,7 +152,7 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
         </p>
 
         <h1 className="nf-loading__title">İçerikler yükleniyor, lütfen bekleyiniz...</h1>
-        <p className="nf-loading__step">{step}</p>
+      <p className="nf-loading__step">{step}</p>
 
         <div className="nf-loading__meter" aria-hidden="true">
           <span className="nf-loading__meter-fill" style={{ width: `${rounded}%` }} />
@@ -175,13 +175,13 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
 
         <div className="nf-loading__chips">
           <span>
-            <Server size={13} /> Vavoo / MediaHubMX
+            <Server size={13} /> Canlı TV
           </span>
           <span>
             <Wifi size={13} /> HLS Proxy
           </span>
           <span>
-            <Radio size={13} /> Türkiye
+            <Radio size={13} /> Kanallar
           </span>
         </div>
       </main>
