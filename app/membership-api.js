@@ -95,6 +95,36 @@ async function supa(path, config, options = {}) {
   return result
 }
 
+async function probeSupabaseKey(config) {
+  const response = await fetch(`${config.url}/rest/v1/notflix_kullanicilar?select=id&limit=0`, {
+    headers: { apikey: config.key, authorization: `Bearer ${config.key}`, accept: 'application/json' },
+    signal: AbortSignal.timeout(10000),
+  })
+  if (response.status === 401 || response.status === 403) {
+    const error = new Error('Supabase anahtarı reddedildi. Render SUPABASE_SERVICE_ROLE_KEY değerinin doğru proje secret/service_role anahtarı olduğunu kontrol edin.')
+    error.status = 503
+    error.code = 'SUPABASE_INVALID_API_KEY'
+    throw error
+  }
+  const text = await response.text()
+  if (!response.ok) {
+    let data = null
+    try { data = JSON.parse(text) } catch { /* sanitized generic */ }
+    const message = String(data?.message || '')
+    if (/notflix_kullanicilar|does not exist|schema cache/i.test(message)) {
+      const error = new Error('Supabase anahtarı kabul edildi ancak notflix_kullanicilar tablosu bulunamadı. SQL şemasını doğru projede çalıştırın.')
+      error.status = 503
+      error.code = 'SUPABASE_TABLE_MISSING'
+      throw error
+    }
+    const error = new Error(`Supabase bağlantı kontrolü başarısız (${response.status})`)
+    error.status = 503
+    error.code = 'SUPABASE_PROBE_FAILED'
+    throw error
+  }
+  return true
+}
+
 async function readMemberByUsername(username, config) {
   const rows = await supa(`notflix_kullanicilar?kullanici_adi=eq.${encodeURIComponent(username)}&select=id,kullanici_adi,eposta,hediye_kodu_kullanildi,abonelik_bitis,abonelik_kaynagi,hwid,ip_adresi,son_gorulme,durum`, config)
   return rows?.[0] || null
@@ -219,7 +249,28 @@ export function createMembershipApi() {
           await supa(`notflix_kullanicilar?id=eq.${encodeURIComponent(target.id)}`, config, { method: 'PATCH', body: JSON.stringify({ abonelik_bitis: expiresAt, abonelik_kaynagi: `Shopier ${months} Ay` }) })
           return json(res, 200, { ok: true, kullanici_adi: username, abonelik_bitis: expiresAt })
         }
+        if (req.method === 'POST' && route === '/api/admin/membership/subscription') {
+          const body = await bodyJson(req)
+          const username = String(body.username || '').trim()
+          const months = Number(body.months)
+          const source = String(body.source || '').trim()
+          if (!username || ![1, 3, 12].includes(months) || !['Shopier 1 Ay', 'Shopier 3 Ay', 'Shopier 12 Ay', 'Hediye Kodu'].includes(source)) return json(res, 400, { error: 'Kullanıcı, 1/3/12 ay ve geçerli kaynak gerekli.' })
+          const target = await readMemberByUsername(username, config)
+          if (!target || target.durum !== 'aktif') return json(res, 404, { error: 'Aktif kullanıcı bulunamadı.' })
+          const now = Date.now()
+          const currentEnd = target.abonelik_bitis ? Date.parse(target.abonelik_bitis) : 0
+          const startsAt = Math.max(now, Number.isFinite(currentEnd) ? currentEnd : 0)
+          const expiresAt = new Date(startsAt + months * 30 * 24 * 60 * 60 * 1000).toISOString()
+          const changed = await supa(`notflix_kullanicilar?id=eq.${encodeURIComponent(target.id)}`, config, { method: 'PATCH', body: JSON.stringify({ abonelik_bitis: expiresAt, abonelik_kaynagi: source, son_gorulme: new Date().toISOString() }) })
+          if (!changed?.length) return json(res, 500, { error: 'Abonelik kaydı güncellenemedi.' })
+          return json(res, 200, { ok: true, kullanici_adi: username, abonelik_bitis: expiresAt, abonelik_kaynagi: source })
+        }
         return json(res, 404, { error: 'Admin endpoint bulunamadı.' })
+      }
+
+      if (req.method === 'GET' && route === '/api/membership/health') {
+        await probeSupabaseKey(config)
+        return json(res, 200, { ok: true, database: 'reachable', table: 'notflix_kullanicilar' })
       }
 
       if (req.method === 'POST' && route === '/api/membership/register') {
@@ -236,7 +287,8 @@ export function createMembershipApi() {
         const hwid = deviceHash(req, config.sessionSecret)
         if (!hwid) return json(res, 400, { error: 'Cihaz belirteci alınamadı.' })
         if (user.device_fingerprint_hash && user.device_fingerprint_hash !== hwid) return json(res, 403, { error: 'Bu hesap başka bir cihazla eşleştirilmiş.' })
-        await supa(`notflix_kullanicilar?id=eq.${encodeURIComponent(user.id)}`, config, { method: 'PATCH', body: JSON.stringify({ ip_adresi: ip, hwid: user.device_fingerprint_hash || hwid || null, son_gorulme: new Date().toISOString() }) })
+        const updated = await supa(`notflix_kullanicilar?id=eq.${encodeURIComponent(user.id)}`, config, { method: 'PATCH', body: JSON.stringify({ ip_adresi: ip, hwid: user.device_fingerprint_hash || hwid || null, son_gorulme: new Date().toISOString() }) })
+        if (!updated?.length) return json(res, 404, { error: 'Kullanıcı kaydı güncellenemedi.' })
         const token = sessionToken(user.id, config.sessionSecret)
         return json(res, 200, { username: user.username }, cookieHeaders(token))
       }
@@ -275,7 +327,14 @@ export function createMembershipApi() {
       const status = error.status || (error.message === 'Request body too large' ? 413 : 503)
       const code = error.code || (status === 503 ? 'MEMBERSHIP_UNAVAILABLE' : 'MEMBERSHIP_REQUEST_ERROR')
       console.error(`[MEMBERSHIP] ${req.method} ${req.url}: ${code} ${error.message}`)
-      return json(res, status, { error: status === 503 ? 'Membership service is unavailable or not configured' : error.message, code })
+      const safeMessages = {
+        CONFIG_MISSING: 'Supabase server environment is not configured.',
+        WRONG_KEY_TYPE: 'Use the server-side Supabase secret/service-role key in Render.',
+        SUPABASE_INVALID_API_KEY: 'Supabase rejected the Render API key.',
+        SUPABASE_TABLE_MISSING: 'Supabase key accepted, but notflix_kullanicilar table was not found in this project.',
+        SUPABASE_PROBE_FAILED: 'Supabase connectivity check failed.',
+      }
+      return json(res, status, { error: safeMessages[code] || (status === 503 ? 'Membership service is unavailable or not configured' : error.message), code })
     }
   }
 }
