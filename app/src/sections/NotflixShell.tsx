@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import NotflixHome from '@/pages/NotflixHome'
 import NotflixTemplatePage from '@/pages/NotflixTemplatePage'
 import NotflixPlayer from '@/sections/NotflixPlayer'
-import NotflixDiscover from '@/pages/NotflixDiscover'
 import NotflixSidebar from '@/sections/NotflixSidebar'
 import NotflixTopbar from '@/sections/NotflixTopbar'
 import { NAV_ITEMS, localizedPageTitle, type PageId } from '@/lib/navigation'
@@ -11,6 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { preloadVodHome } from '@/lib/vod'
 import { useLang } from '@/lib/language'
 import { Languages, Database } from 'lucide-react'
+import NotflixEmbed from '@/pages/NotflixEmbed'
 import { logoutMember } from '@/lib/membership'
 
 interface NotflixShellProps {
@@ -173,12 +173,12 @@ export default function NotflixShell({ catalog, activationProfile, onLogout }: N
           className={`nf-shell__body ${page === 'live' ? 'is-live' : ''} ${page === 'discover' ? 'is-discover' : ''}`}
         >
           <div key={page} className={`nf-page-enter ${page === 'live' ? 'nf-page-enter--live' : ''} ${page === 'discover' ? 'nf-page-enter--discover' : ''}`}>
-            {page === 'live' ? (
+            {page === 'discover' ? (
+              <NotflixEmbed />
+            ) : page === 'live' ? (
               <NotflixPlayer channels={catalog.channels} tvMode={tvMode} onSelectChannel={(channel) => routerNavigate(`/notflix/vavoo/${encodeURIComponent(channel.id)}`)} />
             ) : page === 'home' ? (
               <NotflixHome />
-            ) : page === 'discover' ? (
-              <NotflixDiscover />
             ) : page === 'about' ? (
               <section className="nf-about"><h1><span className="notflix-logo">NOTFLİX</span></h1><p>{lang === 'en' ? 'A film, series and live-streaming experience by Nedir Medya.' : 'Nedir Medya tarafından sunulan film, dizi ve canlı yayın deneyimi.'}</p><p>{lang === 'en' ? 'The VOD catalog and live broadcasts load from their configured sources.' : 'VOD kataloğu ve canlı yayınlar sağlayıcıların API’lerinden yüklenir.'}</p></section>
             ) : page === 'continue' ? (
