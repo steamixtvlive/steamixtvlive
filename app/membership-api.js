@@ -54,14 +54,19 @@ function parseSession(token, secret) {
 
 function supabaseConfig() {
   const url = process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SECRET_API_KEY
   const sessionSecret = process.env.NOTFLIX_SESSION_SECRET
   if (!url || !key || !sessionSecret) {
     const error = new Error('Supabase server configuration missing')
     error.code = 'CONFIG_MISSING'
     throw error
   }
-  return { url: url.replace(/\/$/, ''), key, sessionSecret }
+  if (/^sb_publishable_/i.test(key) || /^eyJ[A-Za-z0-9_-]+\./.test(key) && process.env.SUPABASE_SERVICE_ROLE_KEY !== key) {
+    const error = new Error('SUPABASE_SERVICE_ROLE_KEY must be a server-side secret key, not publishable/anon')
+    error.code = 'WRONG_KEY_TYPE'
+    throw error
+  }
+  return { url: url.replace(/\/$/, ''), key: key.trim(), sessionSecret: sessionSecret.trim() }
 }
 
 function validateAdmin(req) {
@@ -79,7 +84,8 @@ async function supa(path, config, options = {}) {
     signal: AbortSignal.timeout(12000),
   })
   const text = await response.text()
-  const result = text ? JSON.parse(text) : null
+  let result = null
+  try { result = text ? JSON.parse(text) : null } catch { result = { message: text.slice(0, 300) } }
   if (!response.ok) {
     const error = new Error(result?.message || result?.hint || `Supabase request failed (${response.status})`)
     error.status = response.status
@@ -96,7 +102,9 @@ async function readMemberByUsername(username, config) {
 
 async function rpc(name, args, config) {
   const response = await fetch(`${config.url}/rest/v1/rpc/${name}`, { method: 'POST', headers: { apikey: config.key, authorization: `Bearer ${config.key}`, 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(args), signal: AbortSignal.timeout(12000) })
-  const value = await response.json().catch(() => null)
+  const text = await response.text()
+  let value = null
+  try { value = text ? JSON.parse(text) : null } catch { value = { message: text.slice(0, 300) } }
   if (!response.ok) { const error = new Error(value?.message || value?.hint || `Supabase RPC failed (${response.status})`); error.status = response.status; error.code = value?.code || 'SUPABASE_RPC_ERROR'; throw error }
   return value
 }

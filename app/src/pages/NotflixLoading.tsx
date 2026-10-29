@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowLeft, Loader2, Radio, RotateCcw, Server, Wifi } fro
 import NotflixLogo from '@/sections/NotflixLogo'
 import NotflixFooter from '@/sections/NotflixFooter'
 import { loadVavooCatalog, loadVavooStatus, type VavooCatalog } from '@/lib/vavoo'
+import { preloadVodHome } from '@/lib/vod'
 
 const MIN_LOADING_MS = 2900
 
@@ -15,6 +16,10 @@ function delay(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms))
 }
 
+function preloadVodHomeForLoading() {
+  return preloadVodHome().catch(() => null)
+}
+
 export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProps) {
   const [progress, setProgress] = useState(3)
   const [target, setTarget] = useState(9)
@@ -23,6 +28,7 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
   const [attempt, setAttempt] = useState(0)
   const [rawCount, setRawCount] = useState(0)
   const [channelCount, setChannelCount] = useState(0)
+  const [loadingMode, setLoadingMode] = useState<'catalog' | 'fallback'>('catalog')
   const startedAt = useRef(Date.now())
 
   useEffect(() => {
@@ -36,6 +42,7 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
     setError('')
     setRawCount(0)
     setChannelCount(0)
+    setLoadingMode('catalog')
 
     const ticker = window.setInterval(() => {
       setProgress((current) => {
@@ -80,9 +87,19 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
         onReady(catalog)
       } catch (loadError) {
         if (cancelled || controller.signal.aborted) return
-        setError(loadError instanceof Error ? loadError.message : 'İçerikler yüklenemedi')
-        setStep('Bağlantı kurulamadı')
-        setTarget(0)
+        setStep('Canlı yayın bağlantısı bekleniyor; Keşfet hazırlanıyor...')
+        setLoadingMode('fallback')
+        void preloadVodHome().then(async () => {
+          if (cancelled) return
+          const elapsed = Date.now() - startedAt.current
+          if (elapsed < MIN_LOADING_MS) await delay(MIN_LOADING_MS - elapsed)
+          if (!cancelled) onReady({ ok: true, source: 'ready-cache', group: 'all', total: 0, rawTotal: 0, generatedAt: Date.now(), countries: [], channels: [] })
+        }).catch((fallbackError: unknown) => {
+          if (cancelled) return
+          setError(fallbackError instanceof Error ? fallbackError.message : (loadError instanceof Error ? loadError.message : 'İçerikler yüklenemedi'))
+          setStep('Bağlantı kurulamadı')
+          setTarget(0)
+        })
       }
     }
 
@@ -110,14 +127,14 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
           <h1>İçerikler yüklenemedi</h1>
           <p className="nf-loading__error-text">{error}</p>
           <p className="nf-loading__error-hint">
-            Canlı yayın kataloğuna erişilemiyor olabilir. Bağlantınızı kontrol edip yeniden deneyin.
+            Canlı yayın kataloğu geçici olarak yüklenemedi. Keşfet’i kullanmayı sürdürmek için geri dönün; Canlı TV kataloğu daha sonra yeniden denenebilir.
           </p>
           <div className="nf-loading__error-actions">
             <button type="button" className="nf-btn nf-btn--primary" onClick={() => setAttempt((value) => value + 1)}>
               <RotateCcw size={17} />
               Yeniden Dene
             </button>
-            <button type="button" className="nf-btn nf-btn--ghost" onClick={onCancel}>
+            <button type="button" className="nf-btn nf-btn--ghost" onClick={() => { void preloadVodHomeForLoading(); onCancel() }}>
               <ArrowLeft size={17} />
               Kod Ekranına Dön
             </button>

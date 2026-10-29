@@ -49,7 +49,7 @@ function AppContent() {
 
   const onRegisteredMember = useCallback((username: string) => {
     setMember({ username, hasSubscription: false, subscriptionExpiresAt: null, banned: false })
-    setStage('app')
+    setStage('loading')
   }, [])
 
   useEffect(() => {
@@ -68,8 +68,8 @@ function AppContent() {
       void checkMembership().then((result) => {
         if (result && result.username === custom.detail.username) setMember(result)
         else setMember({ username: custom.detail.username, hasSubscription: false, subscriptionExpiresAt: null, banned: false })
-        setStage('app')
-      }).catch(() => setMember({ username: custom.detail.username, hasSubscription: false, subscriptionExpiresAt: null, banned: false }))
+        setStage('loading')
+      }).catch(() => { setMember({ username: custom.detail.username, hasSubscription: false, subscriptionExpiresAt: null, banned: false }); setStage('loading') })
     }
     window.addEventListener('notflix-developer-activated', handler)
     return () => window.removeEventListener('notflix-developer-activated', handler)
