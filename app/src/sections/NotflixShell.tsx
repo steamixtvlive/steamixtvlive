@@ -16,6 +16,7 @@ import { logoutMember } from '@/lib/membership'
 interface NotflixShellProps {
   catalog: VavooCatalog
   activationProfile?: { fullName: string; username: string; expiresAt: number } | null
+  onLogout?: () => void
 }
 
 const PAGE_SUBTITLES: Record<Exclude<PageId, 'live'>, string> = {
@@ -56,7 +57,7 @@ function NotflixContinue() {
   return <section className="nf-vod-discover"><div className="nf-vod-section-title"><div><span className="nf-vod-kicker">İZLEME GEÇMİŞİ</span><h2>Kaldığın yerden devam et</h2></div>{selected.length > 0 && <button type="button" onClick={removeSelected}>Seçilenleri kaldır</button>}</div><div className="nf-vod-grid">{mediaItems.map((item) => <div className="nf-continue-card" key={item.id}><label><input type="checkbox" checked={selected.includes(item.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id))}/><img src={item.poster} alt=""/><span>{item.progress}% izlendi</span></label><button type="button" onClick={() => { window.location.href = item.href }}>{item.title} · Devam et</button></div>)}</div>{mediaItems.length === 0 && <p>İzlemeye başladığınız içerikler burada görünür.</p>}</section>
 }
 
-export default function NotflixShell({ catalog, activationProfile }: NotflixShellProps) {
+export default function NotflixShell({ catalog, activationProfile, onLogout }: NotflixShellProps) {
   const { lang, setLang, t } = useLang()
   const routerNavigate = useNavigate()
   const [page, setPage] = useState<PageId>('discover')
@@ -109,6 +110,7 @@ export default function NotflixShell({ catalog, activationProfile }: NotflixShel
 
   async function handleLogout() {
     try { await logoutMember() } catch { /* Storage may be unavailable; leave the current app usable. */ }
+    if (onLogout) { onLogout(); return }
     window.location.href = `${window.location.origin}/`
   }
 

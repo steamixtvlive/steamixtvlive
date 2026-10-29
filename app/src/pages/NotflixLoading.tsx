@@ -6,6 +6,8 @@ import { loadVavooCatalog, loadVavooStatus, type VavooCatalog } from '@/lib/vavo
 import { preloadVodHome } from '@/lib/vod'
 
 const MIN_LOADING_MS = 0
+const VAVOO_TIMEOUT_MS = 12000
+const VOD_FALLBACK_TIMEOUT_MS = 8000
 
 interface NotflixLoadingProps {
   onReady: (catalog: VavooCatalog) => void
@@ -70,7 +72,10 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
 
     async function load() {
       try {
-        const catalog = await loadVavooCatalog(controller.signal)
+        const catalog = await Promise.race([
+          loadVavooCatalog(controller.signal),
+          delay(VAVOO_TIMEOUT_MS).then(() => { throw new Error('Canlı TV şu anda yavaş yanıt veriyor') }),
+        ])
         if (cancelled) return
 
         const elapsed = Date.now() - startedAt.current
@@ -90,17 +95,17 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
         if (cancelled || controller.signal.aborted) return
         setStep('Canlı yayın bağlantısı bekleniyor; Keşfet hazırlanıyor...')
         setLoadingMode('fallback')
-        void preloadVodHome().then(async () => {
-          if (cancelled) return
-          const elapsed = Date.now() - startedAt.current
-          if (elapsed < MIN_LOADING_MS) await delay(MIN_LOADING_MS - elapsed)
-          if (!cancelled) onReady({ ok: true, source: 'ready-cache', group: 'all', total: 0, rawTotal: 0, generatedAt: Date.now(), countries: [], channels: [] })
-        }).catch((fallbackError: unknown) => {
-          if (cancelled) return
-          setError(fallbackError instanceof Error ? fallbackError.message : (loadError instanceof Error ? loadError.message : 'İçerikler yüklenemedi'))
+        const fallback = await Promise.race([
+          preloadVodHome().then(() => true).catch(() => false),
+          delay(VOD_FALLBACK_TIMEOUT_MS).then(() => false),
+        ])
+        if (cancelled) return
+        if (fallback) onReady({ ok: true, source: 'ready-cache', group: 'all', total: 0, rawTotal: 0, generatedAt: Date.now(), countries: [], channels: [] })
+        else {
+          setError(loadError instanceof Error ? loadError.message : 'Canlı TV ve VOD kataloğu şu anda kullanılamıyor.')
           setStep('Bağlantı kurulamadı')
           setTarget(0)
-        })
+        }
       }
     }
 
