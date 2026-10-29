@@ -1,4 +1,4 @@
-import { NAV_ITEMS, type PageId } from '@/lib/navigation'
+import { localizedNavigation, type PageId } from '@/lib/navigation'
 import { Languages } from 'lucide-react'
 import { LogOut } from 'lucide-react'
 
@@ -23,6 +23,7 @@ export default function NotflixSidebar({
   language = 'tr',
   onLogout,
 }: NotflixSidebarProps) {
+  const navItems = localizedNavigation(language)
   return (
     <aside className={`nf-sidebar ${expanded ? 'is-expanded' : ''} ${mobileOpen ? 'is-mobile-open' : ''}`}>
       <button
@@ -41,7 +42,7 @@ export default function NotflixSidebar({
       <div className="nf-sidebar__rule" />
 
       <nav className="nf-nav" aria-label="Ana menü">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon
           const active = page === item.id
           return (
@@ -72,12 +73,12 @@ export default function NotflixSidebar({
       </nav>
 
       <div className="nf-sidebar__settings">
-        <span><Languages size={15} /> Genel</span>
+        <span><Languages size={15} /> {language === 'en' ? 'General' : 'Genel'}</span>
         <select value={language} onChange={(event) => onLanguage?.(event.target.value)} aria-label="Genel dil ayarı">
-          <option value="tr">Dil: Türkçe</option><option value="en">Language: English</option>
+          <option value="tr">Türkçe</option><option value="en">English</option>
         </select>
       </div>
-      <button type="button" className="nf-sidebar__logout" onClick={onLogout}><LogOut size={17}/><span>Çıkış Yap</span></button>
+      <button type="button" className="nf-sidebar__logout" onClick={onLogout}><LogOut size={17}/><span>{language === 'en' ? 'Log out' : 'Çıkış Yap'}</span></button>
       <div className="nf-sidebar__footer">
         <span className="nf-sidebar__status">
           <i />

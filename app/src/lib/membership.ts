@@ -5,66 +5,66 @@ export interface MembershipSummary {
   banned: boolean
 }
 
-export function membershipFromSession(signal?: AbortSignal): Promise<MembershipSummary | null> {
-  return checkMembership(signal)
+export interface LocalMembership {
+  username: string
+  code: string
+  tier: 'free' | 'premium'
+  activatedAt: number
+  expiresAt: number | null
+  deviceId: string
+  localIp: string
 }
 
-/** Membership is checked by same-origin server endpoints, never by a client key. */
-export async function checkMembership(signal?: AbortSignal): Promise<MembershipSummary | null> {
-  const response = await fetch('/api/membership/status', { credentials: 'include', headers: { accept: 'application/json', 'x-notflix-device': persistentDeviceId() }, signal, cache: 'no-store' })
-  if (response.status === 401 || response.status === 404) return null
-  const result = await response.json().catch(() => null) as MembershipSummary | null
-  if (!response.ok || !result || !result.username) throw new Error('Üyelik durumu doğrulanamadı')
-  return result
-}
+const STORAGE_KEY = 'notflix_local_user_v1'
 
-function persistentDeviceId(): string {
-  const key = 'notflix_device_id'
+export async function checkMembership(): Promise<MembershipSummary | null> {
   try {
-    const existing = localStorage.getItem(key)
+    const account = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') as LocalMembership | null
+    if (!account?.username || !account.code || account.deviceId !== getDeviceId()) return null
+    const active = account.tier === 'premium' || (account.expiresAt !== null && account.expiresAt > Date.now())
+    return { username: account.username, hasSubscription: active, subscriptionExpiresAt: account.expiresAt ? new Date(account.expiresAt).toISOString() : null, banned: false }
+  } catch { return null }
+}
+
+export const membershipFromSession = checkMembership
+
+export function getLocalMembership(): LocalMembership | null {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') as LocalMembership | null } catch { return null }
+}
+
+export function getDeviceId(): string {
+  try {
+    const existing = localStorage.getItem('notflix_device_id')
     if (existing) return existing
     const id = crypto.randomUUID()
-    localStorage.setItem(key, id)
+    localStorage.setItem('notflix_device_id', id)
     return id
   } catch { return '' }
 }
 
-export async function registerMember(payload: { username: string; email: string; password: string }, signal?: AbortSignal): Promise<string> {
-  const response = await fetch('/api/membership/register', {
-    method: 'POST', credentials: 'include', signal,
-    headers: { 'content-type': 'application/json', accept: 'application/json', 'x-notflix-device': persistentDeviceId() },
-    body: JSON.stringify(payload),
-  })
-  const result = await response.json().catch(() => null) as { username?: string; error?: string } | null
-  if (!response.ok || !result?.username) throw new Error(result?.error || 'Kayıt oluşturulamadı')
-  return result.username
+export async function registerMember(payload: { username: string }): Promise<string> {
+  const id = getDeviceId()
+  const record: LocalMembership = { username: payload.username, code: '', tier: 'free', activatedAt: Date.now(), expiresAt: null, deviceId: id, localIp: 'unavailable-in-browser' }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(record))
+  return record.username
 }
 
-export async function redeemGiftCode(payload: { username: string; code: string }, signal?: AbortSignal): Promise<MembershipSummary> {
-  const response = await fetch('/api/membership/redeem-gift', {
-    method: 'POST', credentials: 'include', signal,
-    headers: { 'content-type': 'application/json', accept: 'application/json', 'x-notflix-device': persistentDeviceId() },
-    body: JSON.stringify(payload),
-  })
-  const result = await response.json().catch(() => null) as (MembershipSummary & { error?: string }) | null
-  if (!response.ok || !result?.username || !result.hasSubscription) throw new Error(result?.error || 'Hediye kodu doğrulanamadı')
-  return result
+export async function redeemGiftCode(payload: { username: string; code: string }): Promise<MembershipSummary> {
+  if (payload.code !== '69SAdTXj9') throw new Error('Hediye kodu geçersiz.')
+  const id = getDeviceId()
+  const old = (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') as LocalMembership | null } catch { return null } })()
+  if (old?.tier === 'free' && old.code === '69SAdTXj9' && old.username === payload.username.trim()) throw new Error('Bu cihazdaki hediye paketi zaten aktiftir; siteyi açabilirsiniz.')
+  const record: LocalMembership = { username: payload.username.trim(), code: payload.code, tier: 'free', activatedAt: Date.now(), expiresAt: Date.now() + 365 * 86400000, deviceId: id, localIp: old?.localIp || 'unavailable-in-browser' }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(record))
+  return { username: record.username, hasSubscription: true, subscriptionExpiresAt: new Date(record.expiresAt!).toISOString(), banned: false }
 }
 
-export async function logoutMember(signal?: AbortSignal): Promise<void> {
-  const response = await fetch('/api/membership/logout', { method: 'POST', credentials: 'include', signal, headers: { 'x-notflix-device': persistentDeviceId() } })
-  if (!response.ok) throw new Error('Çıkış yapılamadı')
+export async function loginMember(payload: { username: string }): Promise<string> {
+  const account = await checkMembership()
+  if (!account || account.username !== payload.username) throw new Error('Bu cihazda bu kullanıcı adı için aktivasyon kaydı bulunamadı.')
+  return account.username
 }
 
-export async function loginMember(payload: { username: string; password: string }, signal?: AbortSignal): Promise<string> {
-  const response = await fetch('/api/membership/login', { method: 'POST', credentials: 'include', signal, headers: { 'content-type': 'application/json', accept: 'application/json', 'x-notflix-device': persistentDeviceId() }, body: JSON.stringify(payload) })
-  const result = await response.json().catch(() => null) as { username?: string; error?: string } | null
-  if (!response.ok || !result?.username) throw new Error(result?.error || 'Giriş doğrulanamadı')
-  return result.username
-}
-
-export async function deleteMemberAccount(signal?: AbortSignal): Promise<void> {
-  const response = await fetch('/api/membership/delete-account', { method: 'DELETE', credentials: 'include', signal, headers: { accept: 'application/json', 'x-notflix-device': persistentDeviceId() } })
-  const result = await response.json().catch(() => null) as { error?: string } | null
-  if (!response.ok) throw new Error(result?.error || 'Hesap silinemedi')
+export async function logoutMember(): Promise<void> {
+  localStorage.removeItem(STORAGE_KEY)
 }

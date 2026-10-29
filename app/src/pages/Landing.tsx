@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck, Bell, Crown } from 'lucide-react'
+import { ShoppingCart, Check, Mail, CreditCard, PlayCircle, Trophy, Clapperboard, Tv, MonitorPlay, Smartphone, Download, Gamepad2, Wifi, X, Menu, AlertTriangle, Gauge, Star, MessageCircleQuestion, BadgeCheck, Bell, Crown, Gift } from 'lucide-react'
+import { getLocalMembership } from '@/pages/NotflixLogin'
 import AnimatedBackground from '@/sections/AnimatedBackground'
 import RendirBadge from '@/sections/RendirBadge'
 
@@ -461,6 +462,11 @@ export default function Landing() {
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
           <span className="text-xs text-gray-300 tracking-widest uppercase">Canlı • Yüzlerce Kanal • Yüzlerce Film & Dizi</span>
         </div>
+        {getLocalMembership() && (
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 border border-green-500/30 text-xs text-green-400 tracking-wider">
+            <Gift className="w-2.5 h-2.5 shrink-0" /> Free Plan Aktif
+          </div>
+        )}
           <h1 className="text-3xl md:text-6xl font-bold text-white mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
           Steamix <span className="text-[#0099ff]">Live IPTV</span>
         </h1>

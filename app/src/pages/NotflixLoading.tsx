@@ -5,7 +5,7 @@ import NotflixFooter from '@/sections/NotflixFooter'
 import { loadVavooCatalog, loadVavooStatus, type VavooCatalog } from '@/lib/vavoo'
 import { preloadVodHome } from '@/lib/vod'
 
-const MIN_LOADING_MS = 2900
+const MIN_LOADING_MS = 0
 
 interface NotflixLoadingProps {
   onReady: (catalog: VavooCatalog) => void
@@ -48,11 +48,12 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
       setProgress((current) => {
         const ceiling = Math.max(3, target)
         if (current >= ceiling) return current
-        return Math.min(ceiling, current + Math.max(0.32, (ceiling - current) * 0.075))
+        return Math.min(ceiling, current + Math.max(0.5, (ceiling - current) * 0.15))
       })
-    }, 110)
+    }, 70)
 
     const poller = window.setInterval(async () => {
+      // Kısaltıldı: 320ms -> 200ms
       try {
         const status = await loadVavooStatus(controller.signal)
         if (cancelled) return
@@ -60,12 +61,12 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
         if (typeof status.total === 'number' && status.total > 0) setChannelCount(status.total)
           if (status.active) {
             setTarget((current) => Math.max(current, Math.min(94, Math.max(9, status.percent))))
-            if (status.message) setStep(status.message.replace(/Vavoo|MediaHubMX/gi, 'Canlı yayın'))
+            if (status.message) setStep(status.message.replace(/Vavoo|MediaHubMX/gi, '').replace(/\s+/g, ' ').trim())
         }
       } catch {
         // Status is a best-effort enhancement; the main request is the source of truth.
       }
-    }, 320)
+    }, 200)
 
     async function load() {
       try {
@@ -82,7 +83,7 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
         setTarget(100)
         setProgress(100)
 
-        await delay(950)
+        await delay(60)
         if (cancelled) return
         onReady(catalog)
       } catch (loadError) {
@@ -159,17 +160,16 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
           <span className="nf-loading__orb-ring" />
           <span className="nf-loading__orb-ring nf-loading__orb-ring--inner" />
           <span className="nf-loading__orb-core">
-            <Loader2 className="nf-spin" size={25} />
+            <Loader2 className="nf-spin" size={20} />
           </span>
         </div>
 
-        <p className="nf-kicker">
-          <Radio size={13} />
-          MEDIA HUB · CANLI YAYIN
+        <p className="nf-kicker text-sm">
+          <Radio size={13} /> MEDIA HUB · CANLI YAYIN
         </p>
 
-        <h1 className="nf-loading__title">İçerikler yükleniyor, lütfen bekleyiniz...</h1>
-      <p className="nf-loading__step">{step}</p>
+        <h1 className="nf-loading__title text-2xl md:text-3xl font-bold">İçerikler yükleniyor, lütfen bekleyiniz...</h1>
+      <p className="nf-loading__step text-sm font-medium">İçerikler yükleniyor, lütfen bekleyiniz...</p>
 
         <div className="nf-loading__meter" aria-hidden="true">
           <span className="nf-loading__meter-fill" style={{ width: `${rounded}%` }} />

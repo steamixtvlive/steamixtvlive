@@ -8,11 +8,9 @@ import { spawn, execSync } from 'node:child_process'
 import ffmpegPathStatic from 'ffmpeg-static'
 import { createVavooApi } from './vavoo-api.js'
 import { createVodApi } from './vod-api.js'
-import { createMembershipApi } from './membership-api.js'
 
 const vavooApi = createVavooApi()
 const vodApi = createVodApi()
-const membershipApi = createMembershipApi()
 
 // Try to find ffmpeg: first check static, then system PATH, then common locations
 let ffmpegPath = null
@@ -386,13 +384,6 @@ http.createServer((req, res) => {
     void vodApi(req, res)
     return
   }
-
-  if ((req.url || '').startsWith('/api/membership/')) {
-    void membershipApi(req, res)
-    return
-  }
-
-  if ((req.url || '').startsWith('/api/admin/membership/')) { void membershipApi(req, res); return }
 
   if ((req.url || '').startsWith('/api/mclanx/search')) {
     void (async () => {

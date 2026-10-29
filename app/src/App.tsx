@@ -19,7 +19,7 @@ export default function App() {
 
 function AppContent() {
   const navigate = useNavigate()
-  const [stage, setStage] = useState<Stage>(() => { try { return sessionStorage.getItem('notflix_splash_seen') ? 'login' : 'splash' } catch { return 'splash' } })
+  const [stage, setStage] = useState<Stage>(() => { try { return localStorage.getItem('notflix_local_user_v1') ? 'login' : 'splash' } catch { return 'splash' } })
   const [catalog, setCatalog] = useState<VavooCatalog | null>(null)
   const [member, setMember] = useState<MembershipSummary | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
@@ -48,7 +48,8 @@ function AppContent() {
   }, [])
 
   const onRegisteredMember = useCallback((username: string) => {
-    setMember({ username, hasSubscription: false, subscriptionExpiresAt: null, banned: false })
+    const local = (() => { try { return JSON.parse(localStorage.getItem('notflix_local_user_v1') || 'null') as { expiresAt?: number | null; tier?: string } | null } catch { return null } })()
+    setMember({ username, hasSubscription: Boolean(local && (local.tier === 'premium' || (local.expiresAt && local.expiresAt > Date.now()))), subscriptionExpiresAt: local?.expiresAt ? new Date(local.expiresAt).toISOString() : null, banned: false })
     setStage('loading')
   }, [])
 
@@ -58,7 +59,11 @@ function AppContent() {
 
   useEffect(() => {
     const controller = new AbortController()
-    void checkMembership(controller.signal).then((result) => { setMember(result); if (result) setStage('app') }).catch(() => setMember(null)).finally(() => { if (!controller.signal.aborted) setAuthChecked(true) })
+    void checkMembership(controller.signal).then((result) => {
+      setMember(result)
+      if (result) setStage('loading')
+      else setStage('login')
+    }).catch(() => { setMember(null); setStage('login') }).finally(() => { if (!controller.signal.aborted) setAuthChecked(true) })
     return () => controller.abort()
   }, [])
 
@@ -68,8 +73,9 @@ function AppContent() {
       void checkMembership().then((result) => {
         if (result && result.username === custom.detail.username) setMember(result)
         else setMember({ username: custom.detail.username, hasSubscription: false, subscriptionExpiresAt: null, banned: false })
-        setStage('loading')
-      }).catch(() => { setMember({ username: custom.detail.username, hasSubscription: false, subscriptionExpiresAt: null, banned: false }); setStage('loading') })
+        setStage('app')
+        if (!catalog) setStage('loading')
+      }).catch(() => { setMember({ username: custom.detail.username, hasSubscription: false, subscriptionExpiresAt: null, banned: false }); if (catalog) setStage('app'); else setStage('loading') })
     }
     window.addEventListener('notflix-developer-activated', handler)
     return () => window.removeEventListener('notflix-developer-activated', handler)
@@ -84,6 +90,8 @@ function AppContent() {
       ) : <main className="nf-vod-watch__message">İçerikleri izleyebilmek için lütfen geçerli bir abonelik paketi satın alınız.<button type="button" onClick={() => navigate('/')}>Keşfet’e dön</button></main>)
       : stage === 'splash' && <NotflixSplash onDone={finishSplash} />}
 
+      {!isVavooWatch && !isVodWatch && stage === 'splash' && <div className="nf-app-wait" role="status">NOTFLİX hazırlanıyor…</div>}
+      {!isVavooWatch && !isVodWatch && stage === 'login' && !authChecked && <div className="nf-app-wait" role="status">Aktivasyon kaydı yükleniyor…</div>}
       {!isVavooWatch && !isVodWatch && stage === 'login' && authChecked && (
         <div className="notflix-app-enter">
           <NotflixLogin onActivated={() => setStage('loading')} onLoggedIn={onRegisteredMember} />
@@ -91,7 +99,7 @@ function AppContent() {
       )}
 
       {!isVavooWatch && !isVodWatch && stage === 'loading' && (
-        <NotflixLoading onReady={handleReady} onCancel={() => setStage('login')} />
+        <NotflixLoading onReady={handleReady} onCancel={() => { setCatalogError('Canlı TV kataloğu yüklenemedi; Keşfet kullanılabilir.'); setCatalog({ ok: false, source: 'unavailable', group: 'all', total: 0, rawTotal: 0, generatedAt: Date.now(), countries: [], channels: [] }); if (member) setStage('app'); else setStage('login') }} />
       )}
 
       {!isVavooWatch && !isVodWatch && stage === 'app' && member && catalog && (
@@ -99,6 +107,7 @@ function AppContent() {
               <NotflixShell catalog={catalog} activationProfile={member ? { fullName: '', username: member.username, expiresAt: member.subscriptionExpiresAt ? new Date(member.subscriptionExpiresAt).getTime() : 0 } : null} />
         </div>
       )}
+      {!isVavooWatch && !isVodWatch && stage === 'app' && member && !catalog && <NotflixLoading onReady={handleReady} onCancel={() => { setCatalog({ ok: false, source: 'unavailable', group: 'all', total: 0, rawTotal: 0, generatedAt: Date.now(), countries: [], channels: [] }); setStage('app') }} />}
     </>
   )
 }

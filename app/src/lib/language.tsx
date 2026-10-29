@@ -1,8 +1,13 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 
+export type Language = 'tr' | 'en'
+
 const data: Record<string, Record<string, string>> = {
   tr: {
     'page.home': 'Ana Sayfa', 'page.subscribe': 'Abonelik', 'page.discover': 'Keşfet', 'page.continue': 'Kaldığın Yerden Devam Et', 'page.live': 'Canlı TV', 'page.about': 'Hakkında', 'page.settings': 'Ayarlar',
+    'settings.red_zone': 'Kırmızı Bölge', 'settings.delete_account': 'Hesabı Sil', 'settings.delete_warning': 'Bu işlem geri alınamaz; aboneliğiniz iptal olur. Devam etmek istiyor musunuz?',
+    'membership.required': 'İçerikleri izlemek için geçerli bir abonelik paketi alın.', 'membership.view_plans': 'Paketleri gör', 'membership.active': 'Aboneliğiniz aktif', 'membership.inactive': 'Aktif abonelik bulunamadı',
+    'common.back': 'Geri dön', 'common.close': 'Kapat', 'common.retry': 'Yeniden dene', 'common.search': 'Film veya dizi ara…', 'common.searching': 'Aranıyor…',
     'settings.title': 'Ayarlar', 'settings.language': 'Dil',
     'nav.home': 'Ana Sayfa', 'nav.live': 'Canlı TV', 'nav.movies': 'Filmler', 'nav.series': 'Diziler',
     'nav.profile': 'Profil', 'nav.logout': 'Çıkış Yap', 'nav.search': 'Arama',
@@ -36,6 +41,9 @@ const data: Record<string, Record<string, string>> = {
   en: {
     'page.home': 'Home', 'page.subscribe': 'Subscription', 'page.discover': 'Discover', 'page.continue': 'Continue Watching', 'page.live': 'Live TV', 'page.about': 'About', 'page.settings': 'Settings',
     'settings.title': 'Settings', 'settings.language': 'Language',
+    'settings.red_zone': 'Red Zone', 'settings.delete_account': 'Delete account', 'settings.delete_warning': 'This action is permanent and ends your subscription. Do you want to continue?',
+    'membership.required': 'Please choose an active subscription to watch content.', 'membership.view_plans': 'View plans', 'membership.active': 'Your membership is active', 'membership.inactive': 'No active membership found',
+    'common.back': 'Go back', 'common.close': 'Close', 'common.retry': 'Retry', 'common.search': 'Search movies or series…', 'common.searching': 'Searching…',
     'nav.home': 'Home', 'nav.live': 'Live TV', 'nav.movies': 'Movies', 'nav.series': 'Series',
     'nav.profile': 'Profile', 'nav.logout': 'Logout', 'nav.search': 'Search',
     'hero.play': 'Play', 'hero.detail': 'Details',

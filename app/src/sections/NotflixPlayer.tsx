@@ -17,6 +17,7 @@ import {
   VolumeX,
 } from 'lucide-react'
 import ChannelPanel from '@/sections/ChannelPanel'
+import { useLang } from '@/lib/language'
 import {
   channelInitial,
   formatEpgTime,
@@ -57,6 +58,7 @@ function isSmallScreen() {
 }
 
 export default function NotflixPlayer({ channels, initialId, initialStream, onSelectChannel, tvMode = false, canWatch = true, onWatchBlocked }: NotflixPlayerProps) {
+  const { t, lang } = useLang()
   const defaultChannel = useMemo(() => channels.find((channel) => channel.id === initialId) || pickDefaultChannel(channels), [channels, initialId])
   const [activeId, setActiveId] = useState(() => initialId || defaultChannel?.id || '')
   const active = useMemo(
@@ -573,8 +575,8 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
       <section className="nf-player nf-player--empty">
         <div className="nf-player__empty-state">
           <Radio size={28} />
-          <h2>Kanal bulunamadı</h2>
-          <p>Canlı kanal listesi yüklenemedi.</p>
+          <h2>{lang === 'en' ? 'No channels found' : 'Kanal bulunamadı'}</h2>
+          <p>{lang === 'en' ? 'The live channel list could not be loaded.' : 'Canlı kanal listesi yüklenemedi.'}</p>
         </div>
       </section>
     )
@@ -634,7 +636,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
           <button type="button" className="nf-player__brand-back" onClick={goBackToDiscover} aria-label="Keşfet'e dön"><ArrowLeft size={16} /></button>
           <span className="nf-player__brand">NOTFLİX</span>
           <span className="nf-player__brand-rule" aria-hidden="true" />
-          <span className="nf-player__top-caption">CANLI TV</span>
+          <span className="nf-player__top-caption">{lang === 'en' ? 'LIVE TV' : 'CANLI TV'}</span>
         </div>
 
         <div className="nf-player__top-actions">
@@ -650,7 +652,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
             aria-label={drawerOpen ? 'Kanal panelini kapat' : 'Kanal panelini aç'}
           >
             <ListVideo size={16} />
-            <span>Kanallar</span>
+            <span>{lang === 'en' ? 'Channels' : 'Kanallar'}</span>
           </button>
           <select className="nf-player__country" value={country} onChange={(event) => { setCountry(event.target.value); try { localStorage.setItem('notflix_live_country', event.target.value) } catch { /* saved for session */ } }} aria-label="Ülke seç">{availableCountries.map((entry) => <option key={entry} value={entry}>{entry === 'Turkey' ? 'Türkiye' : entry}</option>)}</select>
         </div>
@@ -855,8 +857,8 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
           onCountryChange={(next) => { setCountry(next); try { localStorage.setItem('notflix_live_country', next) } catch { /* session fallback */ } }}
         />
       </div>
-      {showSubscriptionWarning && <div className="nf-vod-episode-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowSubscriptionWarning(false) }}><section className="nf-delete-modal" role="dialog" aria-modal="true"><CreditCard size={24}/><h2>Abonelik gerekli</h2><p>İçerikleri izleyebilmek için lütfen geçerli bir abonelik paketi satın alınız.</p><div><button type="button" onClick={() => setShowSubscriptionWarning(false)}>Kapat</button><button type="button" onClick={() => { setShowSubscriptionWarning(false); onWatchBlocked?.() }}>Paketleri gör</button></div></section></div>}
-      {!canWatch && <div className="nf-player__subscription-shade"><CreditCard size={24}/><strong>Abonelik olmadan yayın açılamaz</strong><span>Kanalları inceleyebilirsiniz; izlemek için paket seçin.</span><button type="button" onClick={onWatchBlocked}>Paketleri gör</button></div>}
+      {showSubscriptionWarning && <div className="nf-vod-episode-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowSubscriptionWarning(false) }}><section className="nf-delete-modal" role="dialog" aria-modal="true"><CreditCard size={24}/><h2>{t('membership.required')}</h2><p>{t('membership.required')}</p><button type="button" onClick={() => setShowSubscriptionWarning(false)}>{t('common.close')}</button></section></div>}
+      {!canWatch && <div className="nf-player__subscription-shade"><CreditCard size={24}/><strong>{t('membership.required')}</strong><span>{t('membership.required')}</span><button type="button" onClick={onWatchBlocked}>{t('membership.view_plans')}</button></div>}
     </section>
   )
 }
