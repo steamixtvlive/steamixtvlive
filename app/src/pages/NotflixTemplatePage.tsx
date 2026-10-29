@@ -1,4 +1,4 @@
-import { Compass, Crown, History, Home, Info, LayoutTemplate, Settings, type LucideIcon } from 'lucide-react'
+import { Compass, History, Home, Info, LayoutTemplate, Settings, type LucideIcon } from 'lucide-react'
 import { PAGE_TITLES, type PageId } from '@/lib/navigation'
 
 type TemplatePageId = Exclude<PageId, 'live'>
@@ -11,11 +11,6 @@ const TEMPLATE_COPY: Record<
     eyebrow: 'ANA SAYFA ŞABLONU',
     description: 'Kişiselleştirilmiş ana sayfa akışı için ayrılmış boş alan.',
     icon: Home,
-  },
-  subscribe: {
-    eyebrow: 'ABONELİK ŞABLONU',
-    description: 'Abonelik planları ve üyelik bilgileri için ayrılmış boş alan.',
-    icon: Crown,
   },
   discover: {
     eyebrow: 'KEŞFET ŞABLONU',

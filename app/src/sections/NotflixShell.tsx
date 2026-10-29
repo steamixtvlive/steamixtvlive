@@ -20,7 +20,6 @@ interface NotflixShellProps {
 
 const PAGE_SUBTITLES: Record<Exclude<PageId, 'live'>, string> = {
   home: 'Notflix',
-  subscribe: 'Paketinizi yönetin',
   discover: 'Film ve dizileri keşfedin',
   continue: 'İzlemeye devam edin',
   about: 'Nedir Medya',

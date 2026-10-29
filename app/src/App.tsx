@@ -58,13 +58,11 @@ function AppContent() {
   }, [])
 
   useEffect(() => {
-    const controller = new AbortController()
-    void checkMembership(controller.signal).then((result) => {
+    void checkMembership().then((result) => {
       setMember(result)
       if (result) setStage('loading')
       else setStage('login')
-    }).catch(() => { setMember(null); setStage('login') }).finally(() => { if (!controller.signal.aborted) setAuthChecked(true) })
-    return () => controller.abort()
+    }).catch(() => { setMember(null); setStage('login') }).finally(() => setAuthChecked(true))
   }, [])
 
   useEffect(() => {
@@ -99,7 +97,7 @@ function AppContent() {
       )}
 
       {!isVavooWatch && !isVodWatch && stage === 'loading' && (
-        <NotflixLoading onReady={handleReady} onCancel={() => { setCatalogError('Canlı TV kataloğu yüklenemedi; Keşfet kullanılabilir.'); setCatalog({ ok: false, source: 'unavailable', group: 'all', total: 0, rawTotal: 0, generatedAt: Date.now(), countries: [], channels: [] }); if (member) setStage('app'); else setStage('login') }} />
+        <NotflixLoading onReady={handleReady} onCancel={() => { setCatalog({ ok: false, source: 'unavailable', group: 'all', total: 0, rawTotal: 0, generatedAt: Date.now(), countries: [], channels: [] }); if (member) setStage('app'); else setStage('login') }} />
       )}
 
       {!isVavooWatch && !isVodWatch && stage === 'app' && member && catalog && (
