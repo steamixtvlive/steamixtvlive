@@ -61,6 +61,10 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
   const { t, lang } = useLang()
   const defaultChannel = useMemo(() => channels.find((channel) => channel.id === initialId) || pickDefaultChannel(channels), [channels, initialId])
   const [activeId, setActiveId] = useState(() => initialId || defaultChannel?.id || '')
+  useEffect(() => {
+    if (initialId) return
+    if (!channels.some((channel) => channel.id === activeId)) setActiveId(defaultChannel?.id || '')
+  }, [activeId, channels, defaultChannel, initialId])
   const active = useMemo(
     () => channels.find((channel) => channel.id === activeId) || channels.flatMap((channel) => channel.qualityVariants || []).map((variant) => ({ ...defaultChannel, ...variant, epg: defaultChannel?.epg || [], category: defaultChannel?.category || 'Ulusal', featured: defaultChannel?.featured || false, logo: defaultChannel?.logo || '' })).find((channel) => channel.id === activeId) || defaultChannel || null,
     [channels, activeId, defaultChannel],
@@ -89,7 +93,9 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
   const [pipActive, setPipActive] = useState(false)
   const [uiVisible, setUiVisible] = useState(true)
   const [nowTick, setNowTick] = useState(() => Date.now())
-  const [country, setCountry] = useState(() => { try { return localStorage.getItem('notflix_live_country') || 'Turkey' } catch { return 'Turkey' } })
+  const [country, setCountry] = useState(() => {
+    try { return sessionStorage.getItem('notflix_live_country') || 'Turkey' } catch { return 'Turkey' }
+  })
   const [showSubscriptionWarning, setShowSubscriptionWarning] = useState(false)
 
   const wrapperRef = useRef<HTMLElement | null>(null)
@@ -105,12 +111,20 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
     if (!active) return { now: null, next: null }
     return getNowNext(active, nowTick / 1000)
   }, [active, nowTick])
-  const availableCountries = useMemo(() => [...new Set(channels.map((channel) => channel.country || 'Turkey'))].sort((a, b) => a === 'Turkey' ? -1 : b === 'Turkey' ? 1 : a.localeCompare(b)), [channels])
+  const availableCountries = useMemo(() => [...new Set(channels.map((channel) => channel.country || 'Turkey'))].sort((a, b) => a.localeCompare(b, 'tr')), [channels])
   const countryChannels = useMemo(() => channels.filter((channel) => (channel.country || 'Turkey') === country), [channels, country])
 
   useEffect(() => {
-    if (availableCountries.length && !availableCountries.includes(country)) setCountry(availableCountries[0])
+    if (availableCountries.length && !availableCountries.includes(country)) {
+      const preferred = availableCountries.find((entry) => entry === 'Turkey') || availableCountries[0]
+      setCountry(preferred)
+    }
   }, [availableCountries, country])
+
+  const chooseCountry = useCallback((next: string) => {
+    setCountry(next)
+    try { sessionStorage.setItem('notflix_live_country', next) } catch { /* session state still updates */ }
+  }, [])
 
   const epgProgress = useMemo(() => {
     if (!epg.now) return 0
@@ -504,17 +518,8 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
   }, [])
 
   const registerContinue = useCallback(() => {
-    if (!active) return
-    try {
-      const id = `${active.id}`
-      const list = JSON.parse(localStorage.getItem('notflix_continue') || '[]') as Array<{ id: string; title: string; poster: string; progress: number; href: string; type?: 'movie' | 'series' }>
-      const previous = list.find((entry) => entry.id === id)
-      const video = videoRef.current
-      const watched = video && video.duration > 0 ? Math.round((video.currentTime / video.duration) * 100) : previous?.progress || 0
-      const item = { id, title: active.name, poster: active.logo, progress: watched, href: `/notflix/vavoo/${encodeURIComponent(active.id)}`, type: 'movie' as const }
-      localStorage.setItem('notflix_continue', JSON.stringify([item, ...list.filter((entry) => entry.id !== item.id)].slice(0, 40)))
-    } catch { /* continue-watching is optional */ }
-  }, [active])
+    return
+  }, [])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -634,7 +639,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
       <header className="nf-player__top">
         <div className="nf-player__brand-group">
           <button type="button" className="nf-player__brand-back" onClick={goBackToDiscover} aria-label="Keşfet'e dön"><ArrowLeft size={16} /></button>
-          <span className="nf-player__brand">NOTFLİX</span>
+                <span className="nf-player__brand"><span className="notflix-logo">NOTFLİX</span></span>
           <span className="nf-player__brand-rule" aria-hidden="true" />
           <span className="nf-player__top-caption">{lang === 'en' ? 'LIVE TV' : 'CANLI TV'}</span>
         </div>
@@ -654,7 +659,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
             <ListVideo size={16} />
             <span>{lang === 'en' ? 'Channels' : 'Kanallar'}</span>
           </button>
-          <select className="nf-player__country" value={country} onChange={(event) => { setCountry(event.target.value); try { localStorage.setItem('notflix_live_country', event.target.value) } catch { /* saved for session */ } }} aria-label="Ülke seç">{availableCountries.map((entry) => <option key={entry} value={entry}>{entry === 'Turkey' ? 'Türkiye' : entry}</option>)}</select>
+          <select className="nf-player__country" value={country} onChange={(event) => chooseCountry(event.target.value)} aria-label="Ülke seç">{availableCountries.map((entry) => <option key={entry} value={entry}>{entry}</option>)}</select>
         </div>
       </header>
 
@@ -854,7 +859,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
           onClose={() => setDrawerOpen(false)}
           country={country}
           countries={availableCountries}
-          onCountryChange={(next) => { setCountry(next); try { localStorage.setItem('notflix_live_country', next) } catch { /* session fallback */ } }}
+          onCountryChange={chooseCountry}
         />
       </div>
       {showSubscriptionWarning && <div className="nf-vod-episode-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowSubscriptionWarning(false) }}><section className="nf-delete-modal" role="dialog" aria-modal="true"><CreditCard size={24}/><h2>{t('membership.required')}</h2><p>{t('membership.required')}</p><button type="button" onClick={() => setShowSubscriptionWarning(false)}>{t('common.close')}</button></section></div>}

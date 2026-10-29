@@ -10,8 +10,8 @@ import type { VavooCatalog } from '@/lib/vavoo'
 import { useNavigate } from 'react-router-dom'
 import { preloadVodHome } from '@/lib/vod'
 import { useLang } from '@/lib/language'
-import { Trash2 } from 'lucide-react'
-import { getLocalMembership, logoutMember } from '@/lib/membership'
+import { Languages, Database } from 'lucide-react'
+import { logoutMember } from '@/lib/membership'
 
 interface NotflixShellProps {
   catalog: VavooCatalog
@@ -45,16 +45,15 @@ function NotflixContinue() {
   }
 
   useEffect(() => {
-    const handler = (event: StorageEvent) => {
-      if (event.key === 'notflix_continue' && event.newValue) {
-        try { setItems(JSON.parse(event.newValue)) } catch { /* ignore malformed saved state */ }
-      }
+    const reloadItems = () => {
+      try { setItems(JSON.parse(localStorage.getItem('notflix_continue') || '[]')) } catch { setItems([]) }
     }
-    window.addEventListener('storage', handler)
-    return () => window.removeEventListener('storage', handler)
+    window.addEventListener('focus', reloadItems)
+    return () => window.removeEventListener('focus', reloadItems)
   }, [])
 
-  return <section className="nf-vod-discover"><div className="nf-vod-section-title"><div><span className="nf-vod-kicker">İZLEME GEÇMİŞİ</span><h2>Kaldığın yerden devam et</h2></div>{selected.length > 0 && <button type="button" onClick={removeSelected}>Seçilenleri kaldır</button>}</div><div className="nf-vod-grid">{items.filter((item) => item.type === 'movie' || item.type === 'series').map((item) => <div className="nf-continue-card" key={item.id}><label><input type="checkbox" checked={selected.includes(item.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id))}/><img src={item.poster} alt=""/><span>{item.progress}% izlendi</span></label><button type="button" onClick={() => { window.location.href = item.href }}>{item.title} · Devam et</button></div>)}</div>{items.filter((item) => item.type === 'movie' || item.type === 'series').length === 0 && <p>İzlemeye başladığınız içerikler burada görünür.</p>}</section>
+  const mediaItems = items.filter((item) => item.type === 'movie' || item.type === 'series')
+  return <section className="nf-vod-discover"><div className="nf-vod-section-title"><div><span className="nf-vod-kicker">İZLEME GEÇMİŞİ</span><h2>Kaldığın yerden devam et</h2></div>{selected.length > 0 && <button type="button" onClick={removeSelected}>Seçilenleri kaldır</button>}</div><div className="nf-vod-grid">{mediaItems.map((item) => <div className="nf-continue-card" key={item.id}><label><input type="checkbox" checked={selected.includes(item.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id))}/><img src={item.poster} alt=""/><span>{item.progress}% izlendi</span></label><button type="button" onClick={() => { window.location.href = item.href }}>{item.title} · Devam et</button></div>)}</div>{mediaItems.length === 0 && <p>İzlemeye başladığınız içerikler burada görünür.</p>}</section>
 }
 
 export default function NotflixShell({ catalog, activationProfile }: NotflixShellProps) {
@@ -65,9 +64,8 @@ export default function NotflixShell({ catalog, activationProfile }: NotflixShel
   const [mobileOpen, setMobileOpen] = useState(false)
   const language = lang
   const setLanguage = setLang
-  const [deleteOpen, setDeleteOpen] = useState(false)
   const [tvMode, setTvMode] = useState(false)
-  const [hasSubscription, setHasSubscription] = useState(true)
+  const [clearDataOpen, setClearDataOpen] = useState(false)
   const bodyRef = useRef<HTMLElement | null>(null)
 
   const navigate = useCallback((nextPage: PageId) => {
@@ -80,8 +78,6 @@ export default function NotflixShell({ catalog, activationProfile }: NotflixShel
   useEffect(() => { if (language !== lang) setLang(language) }, [lang, language, setLang])
 
   useEffect(() => { document.documentElement.lang = language }, [language])
-
-  useEffect(() => { setHasSubscription(true) }, [activationProfile])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -112,22 +108,22 @@ export default function NotflixShell({ catalog, activationProfile }: NotflixShel
   }
 
   async function handleLogout() {
-    try { await logoutMember() } finally { window.location.reload() }
+    try { await logoutMember() } catch { /* Storage may be unavailable; leave the current app usable. */ }
+    window.location.href = `${window.location.origin}/`
   }
 
-  async function handleDeleteAccount() {
+  function handleClearData() {
     try {
-      const local = getLocalMembership()
-      if (local?.tier === 'premium') {
-        try {
-          const old = JSON.parse(localStorage.getItem('notflix_premium_revoked') || '[]') as Array<{ code: string; revokedAt: number }>
-          localStorage.setItem('notflix_premium_revoked', JSON.stringify([...old, { code: local.code, revokedAt: Date.now() }]))
-        } catch { /* best effort device tombstone */ }
-      }
-      await logoutMember()
-      window.location.reload()
+      localStorage.removeItem('notflix_continue')
+      localStorage.removeItem('notflix_hero_index')
+      localStorage.removeItem('notflix_hero_day')
+      sessionStorage.removeItem('notflix_live_country')
+      sessionStorage.removeItem('notflix_splash_seen')
+      setClearDataOpen(false)
+      window.location.href = `${window.location.origin}/`
+    } catch {
+      setClearDataOpen(false)
     }
-    catch { window.location.reload() }
   }
 
   const subtitle =
@@ -163,7 +159,7 @@ export default function NotflixShell({ catalog, activationProfile }: NotflixShel
           title={activationProfile?.username ? `${localizedPageTitle(page, lang)} · ${lang === 'en' ? 'Welcome' : 'Hoş geldiniz'} ${activationProfile.username}` : localizedPageTitle(page, lang)}
           subtitle={subtitle}
           live={page === 'live'}
-          freeActive={hasSubscription}
+          page={page}
           onToggleMenu={toggleMenu}
           onBack={() => navigate('discover')}
           language={language}
@@ -182,11 +178,11 @@ export default function NotflixShell({ catalog, activationProfile }: NotflixShel
             ) : page === 'discover' ? (
               <NotflixDiscover />
             ) : page === 'about' ? (
-              <section className="nf-about"><span className="nf-sidebar__mark">N</span><h1>NOTFLİX</h1><p>{lang === 'en' ? 'A film, series and live-streaming experience by Nedir Medya.' : 'Nedir Medya tarafından sunulan film, dizi ve canlı yayın deneyimi.'}</p><p>{lang === 'en' ? 'The VOD catalog and live broadcasts load from their configured sources.' : 'VOD kataloğu ve canlı yayınlar sağlayıcıların API’lerinden yüklenir.'}</p></section>
+              <section className="nf-about"><h1><span className="notflix-logo">NOTFLİX</span></h1><p>{lang === 'en' ? 'A film, series and live-streaming experience by Nedir Medya.' : 'Nedir Medya tarafından sunulan film, dizi ve canlı yayın deneyimi.'}</p><p>{lang === 'en' ? 'The VOD catalog and live broadcasts load from their configured sources.' : 'VOD kataloğu ve canlı yayınlar sağlayıcıların API’lerinden yüklenir.'}</p></section>
             ) : page === 'continue' ? (
               <NotflixContinue />
               ) : page === 'settings' ? (
-              <section className="nf-settings"><h1>{t('settings.title') || 'Ayarlar'}</h1><label className="nf-settings__row"><span>{t('settings.language') || 'Dil'}</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option value="tr">TR</option><option value="en">EN</option></select></label><label className="nf-settings__row"><span>{lang === 'en' ? 'TV Mode' : 'TV Modu'}</span><input type="checkbox" checked={tvMode} onChange={(event) => setTvMode(event.target.checked)} /></label><p className="nf-settings__hint">{lang === 'en' ? 'Use arrows and Enter to navigate.' : 'TV Modu, yön tuşları ve Enter ile menü/kanal seçimi sağlar.'}</p><section className="nf-settings__danger"><h2>{t('settings.red_zone')}</h2><p>{t('settings.delete_warning')}</p><button type="button" onClick={() => setDeleteOpen(true)}><Trash2 size={15}/> {t('settings.delete_account')}</button></section></section>
+              <section className="nf-settings"><div className="nf-settings__heading"><span className="nf-settings__icon"><Languages size={20}/></span><div><h1>{t('settings.title') || 'Ayarlar'}</h1><p>{lang === 'en' ? 'Playback and app preferences' : 'Oynatıcı ve uygulama tercihleri'}</p></div></div><label className="nf-settings__row"><span><Languages size={17}/>{t('settings.language') || 'Dil'}</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option value="tr">Türkçe</option><option value="en">English</option></select></label><label className="nf-settings__row"><span><span className="nf-settings__tv-icon">TV</span>{lang === 'en' ? 'TV remote navigation' : 'TV kumandasıyla gezinme'}</span><input type="checkbox" checked={tvMode} onChange={(event) => setTvMode(event.target.checked)} /></label><p className="nf-settings__hint">{lang === 'en' ? 'Enable arrow keys and Enter for TV navigation.' : 'TV modunda menü ve kanalları yön tuşlarıyla kullanabilirsiniz.'}</p><section className="nf-settings__data"><span className="nf-settings__data-icon"><Database size={19}/></span><div><h2>{lang === 'en' ? 'Clear app data' : 'Uygulama verilerini temizle'}</h2><p>{lang === 'en' ? 'Remove watch history, continue watching and local preferences. Your activation remains.' : 'İzleme geçmişini, devam listesini ve yerel tercihleri siler. Aktivasyonunuz korunur.'}</p><button type="button" onClick={() => setClearDataOpen(true)}>{lang === 'en' ? 'Clear data' : 'Verileri temizle'}</button></div></section></section>
             ) : (
               <NotflixTemplatePage page={page} />
             )}
@@ -194,7 +190,7 @@ export default function NotflixShell({ catalog, activationProfile }: NotflixShel
         </main>
         <button type="button" className="nf-shell__logout" onClick={() => void handleLogout()}>{lang === 'en' ? 'Log out' : 'Çıkış Yap'}</button>
       </div>
-      {deleteOpen && <div className="nf-pricing-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDeleteOpen(false) }}><section className="nf-delete-modal" role="alertdialog" aria-modal="true" aria-labelledby="nf-delete-title" aria-describedby="nf-delete-warning"><h2 id="nf-delete-title">{t('settings.delete_account')}</h2><p id="nf-delete-warning">{lang === 'en' ? 'The local profile and code will be removed. A premium code is blocked on this device after deletion; the free gift code may be used again.' : 'Bu cihazdaki kayıt ve kod silinir. Premium kodu silme sonrası bu cihazda tekrar kullanılamaz; hediye kodu yeniden kullanılabilir.'}</p><div><button type="button" onClick={() => setDeleteOpen(false)}>{t('common.close')}</button><button type="button" onClick={() => void handleDeleteAccount()}>{t('settings.delete_account')}</button></div></section></div>}
+      {clearDataOpen && <div className="nf-pricing-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setClearDataOpen(false) }}><section className="nf-delete-modal" role="alertdialog" aria-modal="true" aria-labelledby="nf-clear-title"><h2 id="nf-clear-title">{lang === 'en' ? 'Clear app data?' : 'Uygulama verileri temizlensin mi?'}</h2><p>{lang === 'en' ? 'Watch history and local preferences will be removed. Your gift-code activation will stay active.' : 'İzleme geçmişi ve yerel tercihler silinir. Hediye kodu aktivasyonunuz korunur.'}</p><div><button type="button" onClick={() => setClearDataOpen(false)}>{t('common.close')}</button><button type="button" onClick={handleClearData}>{lang === 'en' ? 'Clear data' : 'Verileri temizle'}</button></div></section></div>}
     </div>
   )
 }

@@ -387,7 +387,8 @@ http.createServer((req, res) => {
 
   if ((req.url || '').startsWith('/api/mclanx/search')) {
     void (async () => {
-      const query = new URL(req.url, 'http://localhost').searchParams.get('q')?.trim()
+      const params = new URL(req.url, 'http://localhost').searchParams
+      const query = params.get('q')?.trim()
       const type = new URL(req.url, 'http://localhost').searchParams.get('type') || 'all'
       if (!query || query.length < 2 || query.length > 120) { res.writeHead(400, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: 'Search query must be 2-120 characters' })); return }
       try {
@@ -395,18 +396,45 @@ http.createServer((req, res) => {
         const user = process.env.MCLANX_USER || 'Paris123'
         const pass = process.env.MCLANX_PASS || 'Paris123'
         const actions = type === 'movie' ? ['get_vod_streams'] : type === 'series' ? ['get_series'] : ['get_vod_streams', 'get_series']
+        const nameKey = (value) => String(value || '').toLocaleLowerCase('tr').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/[^a-z0-9]+/g, ' ').trim()
+        const scoreName = (value) => {
+          const name = nameKey(value)
+          const needle = nameKey(query)
+          if (!name || !needle) return 0
+          if (name === needle) return 1000
+          if (name.startsWith(needle)) return 900
+          if (name.includes(needle)) return 800
+          const words = needle.split(/\s+/).filter(Boolean)
+          const titleWords = new Set(name.split(/\s+/).filter(Boolean))
+          const exactMatches = words.filter((word) => titleWords.has(word)).length
+          if (exactMatches === words.length) return 700 + exactMatches
+          if (exactMatches) return 400 + exactMatches * 10
+          return 0
+        }
+        const searchTerms = query.split(/\s+/).filter(Boolean)
         const responses = await Promise.all(actions.map(async (action) => {
           const url = new URL('/player_api.php', base)
           url.searchParams.set('username', user)
           url.searchParams.set('password', pass)
           url.searchParams.set('action', action)
-          url.searchParams.set('search', query)
-          const response = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(12000) })
-          if (!response.ok) throw new Error(`MCLanX search failed (${response.status})`)
-          const items = await response.json()
-          return Array.isArray(items) ? items : []
+          const trySearch = async (term) => {
+            const searchUrl = new URL(url)
+            searchUrl.searchParams.set('search', term)
+            const response = await fetch(searchUrl, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) })
+            if (!response.ok) throw new Error(`MCLanX search failed (${response.status})`)
+            const items = await response.json()
+            return Array.isArray(items) ? items : []
+          }
+          const primary = await trySearch(query)
+          if (primary.length > 0 || searchTerms.length < 2) return primary
+          const partials = await Promise.all(searchTerms.map((term) => trySearch(term).catch(() => [])))
+          const merged = new Map()
+          for (const item of partials.flat()) merged.set(String(item.stream_id || item.series_id || item.id || item.name), item)
+          return [...merged.values()]
         }))
-        const items = responses.flat()
+        const items = [...new Map(responses.flat().map((item) => [String(item.stream_id || item.series_id || item.id || item.name), item])).values()]
+          .filter((item) => scoreName(item.name || item.title) > 0)
+          .sort((a, b) => scoreName(b.name || b.title) - scoreName(a.name || a.title))
         res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'private, max-age=30' }); res.end(JSON.stringify({ ok: true, query, items }))
       } catch (error) { console.error(`[MCLANX-SEARCH] ${error.message}`); res.writeHead(502, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: 'VOD araması şu an kullanılamıyor' })) }
     })()

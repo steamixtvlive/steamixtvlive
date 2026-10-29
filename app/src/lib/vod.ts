@@ -90,7 +90,7 @@ export function fetchVodList(options: {
   category?: string
   page?: number
   limit?: number
-  sort?: 'new' | 'name'
+  sort?: 'new' | 'name' | 'relevance'
   query?: string
   signal?: AbortSignal
 } = {}): Promise<VodListPage> {

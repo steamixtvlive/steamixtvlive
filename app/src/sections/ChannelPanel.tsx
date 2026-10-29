@@ -1,8 +1,6 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { Search, Tv, X } from 'lucide-react'
 import {
-  CATEGORY_ORDER,
-  FEATURED_CATEGORY,
   channelInitial,
   formatEpgTime,
   getNowNext,
@@ -32,24 +30,17 @@ export default function ChannelPanel({
   onCountryChange,
 }: ChannelPanelProps) {
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState<string>(FEATURED_CATEGORY)
   const deferredQuery = useDeferredValue(query)
-
-  const categories = useMemo(() => {
-    const available = CATEGORY_ORDER.filter((entry) => channels.some((channel) => channel.category === entry))
-    return [FEATURED_CATEGORY, ...available]
-  }, [channels])
 
   const filtered = useMemo(() => {
     const needle = searchKey(deferredQuery.trim())
-    const base =
-      category === FEATURED_CATEGORY
-        ? channels
-        : channels.filter((channel) => channel.category === category)
-
-    if (!needle) return base
-    return base.filter((channel) => searchKey(channel.name).includes(needle))
-  }, [channels, category, deferredQuery])
+    const unique = new Map<string, VavooChannel>()
+    for (const channel of channels) {
+      const key = `${channel.id}:${channel.name}`
+      if (!unique.has(key) && (!needle || searchKey(channel.name).includes(needle))) unique.set(key, channel)
+    }
+    return [...unique.values()].sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base', numeric: true }))
+  }, [channels, deferredQuery])
 
   function clearSearch() {
     setQuery('')
@@ -72,7 +63,7 @@ export default function ChannelPanel({
         )}
       </div>
 
-      {country && countries.length > 0 && onCountryChange && <label className="nf-channels__country">Ülke<select value={country} onChange={(event) => onCountryChange(event.target.value)}>{countries.map((entry) => <option key={entry} value={entry}>{entry === 'Turkey' ? 'Türkiye' : entry}</option>)}</select></label>}
+      {country && countries.length > 0 && onCountryChange && <label className="nf-channels__country">Ülke<select value={country} onChange={(event) => onCountryChange(event.target.value)}>{countries.map((entry) => <option key={entry} value={entry}>{entry}</option>)}</select></label>}
 
       <div className="nf-channels__search">
         <Search size={16} aria-hidden="true" />
@@ -91,21 +82,6 @@ export default function ChannelPanel({
         )}
       </div>
 
-      <div className="nf-channels__chips" role="tablist" aria-label="Kanal kategorileri">
-        {categories.map((entry) => (
-          <button
-            key={entry}
-            type="button"
-            role="tab"
-            aria-selected={category === entry}
-            className={`nf-channels__chip ${category === entry ? 'is-active' : ''}`}
-            onClick={() => setCategory(entry)}
-          >
-            {entry}
-          </button>
-        ))}
-      </div>
-
       <div className="nf-channels__list">
         {filtered.length === 0 ? (
           <div className="nf-channels__empty">
@@ -113,12 +89,11 @@ export default function ChannelPanel({
               <Tv size={22} />
             </span>
             <strong>Kanal bulunamadı</strong>
-            <p>Arama veya kategori filtresini değiştirmeyi deneyin.</p>
+            <p>Başka bir kanal adı aramayı deneyin.</p>
             <button
               type="button"
               onClick={() => {
                 setQuery('')
-                setCategory(FEATURED_CATEGORY)
               }}
             >
               Filtreleri temizle
@@ -155,20 +130,10 @@ export default function ChannelPanel({
 
                 <span className="nf-channel__body">
                   <span className="nf-channel__name">{channel.name}</span>
-                  <span className="nf-channel__meta">
-                    {now ? (
-                      <>
-                        <em>{formatEpgTime(now.start)}</em>
-                        {now.title}
-                      </>
-                    ) : (
-                      channel.category
-                    )}
-                  </span>
+                  {now && <span className="nf-channel__meta"><em>{formatEpgTime(now.start)}</em>{now.title}</span>}
                 </span>
 
                 <span className="nf-channel__tail">
-                  <span className="nf-channel__quality">{channel.quality}</span>
                   {active ? (
                     <span className="nf-eq" aria-label="Şu an oynuyor">
                       <i />

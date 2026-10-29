@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, ChevronRight, Loader2, Play, Search, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ChevronRight, Gift, Loader2, Play, Search, X } from 'lucide-react'
 import { fetchVodDetail, fetchVodList, preloadVodHome, type VodCategory, type VodHome, type VodItem } from '@/lib/vod'
 
 const PAGE_SIZE = 48
@@ -29,6 +29,13 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
   const [newcomerNotice, setNewcomerNotice] = useState(false)
   const detailCache = useRef(new Map<string, VodItem>())
   const observerRef = useRef<HTMLDivElement | null>(null)
+  const activeDetailRequest = useRef(0)
+
+  useEffect(() => {
+    setSelectedSeason(null)
+    setDetailError('')
+    setDetailLoading(false)
+  }, [detail?.id])
 
   useEffect(() => {
     let cancelled = false
@@ -62,29 +69,24 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
   }, [selectedSeason])
 
   useEffect(() => {
-    if (category || query.trim().length < 2) return
+    if (category || query.trim().length < 2) {
+      setSearchItems([])
+      setSearchTotal(0)
+      setSearchPage(1)
+      setSearchLoading(false)
+      return
+    }
     const controller = new AbortController()
+    const requestQuery = query.trim()
+    const requestType = type
     const timer = window.setTimeout(() => {
       setSearchLoading(true)
       setListError('')
-      fetch(`/api/mclanx/search?q=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`, { signal: controller.signal, headers: { accept: 'application/json' } })
-        .then(async (response) => { const data = await response.json(); if (!response.ok) throw new Error(data?.error || 'MCLanX araması başarısız'); return data as { items?: Array<Record<string, unknown>> } })
-        .then((data) => data.items || [])
-        .then((items) => items.map((entry, index): VodItem => ({
-          type: type === 'series' || entry.series_id ? 'series' : 'movie',
-          id: String(entry.stream_id || entry.series_id || entry.id || index),
-          name: String(entry.name || entry.title || 'İçerik'),
-          poster: String(entry.stream_icon || entry.cover || entry.poster || ''),
-          categoryId: String(entry.category_id || 'search'), category: String(entry.category_name || 'Arama'),
-          year: Number(String(entry.year || '').slice(0, 4)) || 0,
-          rating: String(entry.rating || ''), plot: String(entry.plot || ''), cast: String(entry.cast || ''), director: String(entry.director || ''),
-          genre: String(entry.genre || '').split(/,\s*/), country: String(entry.country || ''), duration: String(entry.duration || ''),
-          stream: undefined,
-        })))
-        .then((items) => { setSearchItems(items); setSearchPage(1); setSearchTotal(items.length) })
+      fetchVodList({ type: requestType, category: 'all', query: requestQuery, page: 1, limit: PAGE_SIZE, sort: 'relevance', signal: controller.signal })
+        .then((result) => { if (!controller.signal.aborted) { setSearchItems(result.items); setSearchPage(result.page); setSearchTotal(result.total) } })
         .catch((searchError: unknown) => { if (!controller.signal.aborted) setListError(searchError instanceof Error ? searchError.message : 'Arama başarısız') })
         .finally(() => { if (!controller.signal.aborted) setSearchLoading(false) })
-    }, 280)
+    }, 220)
     return () => { window.clearTimeout(timer); controller.abort() }
   }, [query, type, category])
 
@@ -122,7 +124,7 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
     setSearchLoading(true)
     setListError('')
     try {
-      const result = await fetchVodList({ type: contentType, category: 'all', query: search, page, limit: PAGE_SIZE })
+      const result = await fetchVodList({ type: contentType, category: 'all', query: search, page, limit: PAGE_SIZE, sort: 'relevance' })
       setSearchItems((items) => page === 1 ? result.items : [...items, ...result.items])
       setSearchPage(result.page)
       setSearchTotal(result.total)
@@ -134,20 +136,31 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
   }
 
   async function openDetail(item: VodItem) {
+    const requestId = ++activeDetailRequest.current
+    const previous = detailCache.current.get(`${item.type}:${item.id}`)
     setDetail(item)
     setDetailError('')
-    setDetailLoading(true)
+    setDetailLoading(!previous)
     const key = `${item.type}:${item.id}`
     try {
       const cached = detailCache.current.get(key)
-      const loaded = cached || await fetchVodDetail(item.type, item.id)
+      if (cached) { setDetail(cached); return }
+      const loaded = await fetchVodDetail(item.type, item.id)
       detailCache.current.set(key, loaded)
-      setDetail(loaded)
+      if (activeDetailRequest.current === requestId) setDetail(loaded)
     } catch (loadError) {
-      setDetailError(loadError instanceof Error ? loadError.message : 'İçerik ayrıntısı yüklenemedi')
+      if (activeDetailRequest.current === requestId) setDetailError(loadError instanceof Error ? loadError.message : 'İçerik ayrıntısı yüklenemedi')
     } finally {
-      setDetailLoading(false)
+      if (activeDetailRequest.current === requestId) setDetailLoading(false)
     }
+  }
+
+  function closeDetail() {
+    activeDetailRequest.current += 1
+    setDetail(null)
+    setSelectedSeason(null)
+    setDetailLoading(false)
+    setDetailError('')
   }
 
   function chooseCategory(next: VodCategory) {
@@ -181,7 +194,7 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
   function play(item: VodItem) {
     if (!canWatch) { setNewcomerNotice(true); onWatchBlocked?.(); return }
     if (!item.stream) {
-      navigate(`/watch/${item.type}/${item.id}/${encodeURIComponent(item.name.toLowerCase().replace(/\s+/g, '-'))}`)
+      navigate(`/notflix/watch/${item.type}/${item.id}`, { state: { item } })
       return
     }
     navigate(`/notflix/watch/${item.type}/${item.id}`, { state: { item } })
@@ -190,7 +203,7 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
   if (detail) {
     return (
       <main className="nf-vod-detail">
-        <button className="nf-vod-back" type="button" onClick={() => setDetail(null)}><ArrowLeft size={17} /> Keşfet’e dön</button>
+        <button className="nf-vod-back" type="button" onClick={closeDetail}><ArrowLeft size={17} /> Keşfet’e dön</button>
         <section className="nf-vod-detail__hero" style={{ backgroundImage: detail.backdrop ? `linear-gradient(90deg, #08090df2, #08090d55), linear-gradient(0deg, #08090d, transparent), url("${detail.backdrop}")` : undefined }}>
           <div className="nf-vod-detail__poster"><img src={detail.poster} alt={detail.name} /></div>
           <div className="nf-vod-detail__copy">
@@ -204,6 +217,7 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
             </div>
             {detail.genre && detail.genre.length > 0 && <p className="nf-vod-detail__genres">{detail.genre.join(' · ')}</p>}
             {detail.plot && <p className="nf-vod-detail__plot">{detail.plot}</p>}
+            {detailLoading && !detail.plot && <div className="nf-vod-detail__plot-loading"><Loader2 className="nf-spin" size={17}/>Özet ve film bilgileri yükleniyor…</div>}
             {detail.director && <p className="nf-vod-detail__credits"><b>Yönetmen</b> {detail.director}</p>}
             {detail.cast && <p className="nf-vod-detail__credits"><b>Oyuncular</b> {detail.cast}</p>}
             <button type="button" className="nf-vod-play" onClick={() => play(detail)}><Play size={18} fill="currentColor" /> {detail.type === 'series' ? 'İlk bölümü izle' : 'İzle'}</button>
@@ -211,10 +225,11 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
         </section>
         {detailLoading && <div className="nf-vod-inline-status"><Loader2 className="nf-spin" size={18} /> Ayrıntılar ve öneriler alınıyor…</div>}
         {detailError && <p className="nf-vod-error" role="alert">{detailError}</p>}
+        {detail.type === 'series' && !detailLoading && !detail.seasons?.length && <p className="nf-vod-empty">Bu dizi için sağlayıcı henüz bölüm bilgisi vermedi.</p>}
         {detail.type === 'series' && detail.seasons?.length ? <section className="nf-vod-season-picker"><h2>Bölümler</h2><div>{detail.seasons.map((season) => <button type="button" key={season.number} onClick={() => { if (!canWatch) { setNewcomerNotice(true); onWatchBlocked?.(); return } setSelectedSeason(season.number) }}>Sezon {season.number}<span>{season.episodes.length} bölüm</span></button>)}</div></section> : null}
-        {selectedSeason && detail.type === 'series' && <div className="nf-vod-episode-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedSeason(null) }}><section className="nf-vod-episode-modal" role="dialog" aria-modal="true" aria-label={`Sezon ${selectedSeason} bölümleri`}><header><div><span>NOTFLİX · BÖLÜMLER</span><h2>{detail.name} — Sezon {selectedSeason}</h2></div><button type="button" onClick={() => setSelectedSeason(null)} aria-label="Kapat"><X /></button></header><div className="nf-vod-episode-list">{detail.seasons?.find((season) => season.number === selectedSeason)?.episodes.map((episode) => <button type="button" className="nf-vod-episode-card" key={episode.id} onClick={() => { setSelectedSeason(null); play({ ...detail, stream: episode.stream, subtitles: episode.subtitles, name: `${detail.name} · Sezon ${selectedSeason} - Bölüm ${episode.number}` }) }}><span className="nf-vod-episode-card__image">{episode.still ? <img src={episode.still} alt="" loading="lazy" /> : <span>NOTFLİX</span>}<i><Play size={18} fill="currentColor" /></i></span><span className="nf-vod-episode-card__copy"><b>Sezon {selectedSeason} - Bölüm {episode.number}</b><strong>{episode.title || `Bölüm ${episode.number}`}</strong>{episode.plot && <small>{episode.plot}</small>}</span></button>)}</div></section></div>}
+        {selectedSeason && detail.type === 'series' && <div className="nf-vod-episode-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedSeason(null) }}><section className="nf-vod-episode-modal" role="dialog" aria-modal="true" aria-label={`Sezon ${selectedSeason} bölümleri`}><header><div><span>NOTFLİX · BÖLÜMLER</span><h2>{detail.name} — Sezon {selectedSeason}</h2></div><button type="button" onClick={() => setSelectedSeason(null)} aria-label="Kapat"><X /></button></header><div className="nf-vod-episode-list">{detail.seasons?.find((season) => season.number === selectedSeason)?.episodes.map((episode, episodeIndex, episodes) => <button type="button" className="nf-vod-episode-card" key={episode.id} onClick={() => { setSelectedSeason(null); if (!canWatch) { setNewcomerNotice(true); onWatchBlocked?.(); return } navigate(`/notflix/watch/episode/${episode.id}`, { state: { episode: { stream: episode.stream, title: episode.title || `Bölüm ${episode.number}`, still: episode.still || detail.poster, subtitles: episode.subtitles, seriesId: detail.id, seriesTitle: detail.name, seriesPoster: detail.poster, nextEpisodeId: episodes[episodeIndex + 1]?.id } } }) }}><span className="nf-vod-episode-card__image">{episode.still ? <img src={episode.still} alt="" loading="lazy" /> : <span>NOTFLİX</span>}<i><Play size={18} fill="currentColor" /></i></span><span className="nf-vod-episode-card__copy"><b>Sezon {selectedSeason} - Bölüm {episode.number}</b><strong>{episode.title || `Bölüm ${episode.number}`}</strong>{episode.plot && <small>{episode.plot}</small>}</span></button>)}</div></section></div>}
         {(detail as VodItem & { similar?: VodItem[] }).similar?.length ? <VodShelf title="Benzer içerikler" items={(detail as VodItem & { similar?: VodItem[] }).similar || []} onOpen={(item) => void openDetail(item)} /> : null}
-        {newcomerNotice && <div className="nf-vod-episode-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setNewcomerNotice(false) }}><section className="nf-delete-modal" role="dialog" aria-modal="true"><h2>Abonelik gerekli</h2><p>İçerikleri izleyebilmek için lütfen geçerli bir abonelik paketi satın alınız.</p><button type="button" onClick={() => setNewcomerNotice(false)}>Kapat</button></section></div>}
+        {newcomerNotice && <div className="nf-vod-episode-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setNewcomerNotice(false) }}><section className="nf-delete-modal" role="dialog" aria-modal="true"><span className="nf-settings__icon"><Gift size={21}/></span><h2>İçeriği açmak için giriş yapın</h2><p>İzlemek için hediye kodunuzla giriş yapmanız gerekir.</p><button type="button" onClick={() => setNewcomerNotice(false)}>Kapat</button></section></div>}
       </main>
     )
   }
@@ -223,7 +238,7 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
     <main className="nf-vod-discover">
       {error ? <div className="nf-vod-error" role="alert"><AlertTriangle size={20} /> {error}<button type="button" onClick={() => { setError(''); void preloadVodHome().then(setHome).catch((e: unknown) => setError(e instanceof Error ? e.message : 'VOD yüklenemedi')) }}>Yeniden dene</button></div> : !home ? <div className="nf-vod-loading"><Loader2 className="nf-spin" size={28} /> VOD kataloğu hazırlanıyor…</div> : <>
         <section className="nf-vod-showcase" aria-label="Öne çıkan film ve diziler">
-          {currentHero && <>
+         {currentHero && <>
             {currentHero.backdrop && <img className="nf-vod-showcase__backdrop" src={currentHero.backdrop} alt="" />}
             <div className="nf-vod-showcase__shade" />
             <div className="nf-vod-showcase__content">
@@ -233,7 +248,6 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
              <div className="nf-vod-showcase__actions"><button type="button" className="nf-vod-play" onClick={() => openMedia(currentHero)}><Play size={17} fill="currentColor" /> {currentHero.type === 'series' ? 'Son Bölüm İzle' : 'Ayrıntılar'}</button><button type="button" className="nf-vod-secondary" onClick={() => openMedia(currentHero)}>Daha fazla bilgi</button></div>
             </div>
             <div className="nf-vod-showcase__poster"><img src={currentHero.poster} alt={currentHero.name} /></div>
-            {currentHero.isNew && <span className="nf-vod-showcase__new">YENİ</span>}
           </>}
           {!currentHero && <div className="nf-vod-showcase__fallback"><span className="nf-vod-kicker">NOTFLİX · VOD</span><h1>Filmler ve diziler</h1><p>Kataloğu keşfetmeye başlayın.</p></div>}
         </section>
@@ -242,7 +256,7 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
           <div className="nf-vod-tabs" role="tablist" aria-label="İçerik türü">
             {(['all', 'movie', 'series'] as const).map((value) => <button key={value} type="button" role="tab" aria-selected={type === value} className={type === value ? 'is-active' : ''} onClick={() => { setType(value); setCategory(null); setCategoryItems([]); setCategoryHasMore(true); setSearchItems([]); setSearchPage(1); setSearchTotal(0) }}>{value === 'all' ? 'Tümü' : value === 'movie' ? 'Filmler' : 'Diziler'}</button>)}
           </div>
-          <label className="nf-vod-search"><Search size={16} /><input value={query} onChange={(event) => { setQuery(event.target.value); setCategory(null); setCategoryItems([]); setCategoryHasMore(true) }} placeholder="Film veya dizi ara…" aria-label="Film veya dizi ara" /><span>{query.trim().length >= 2 ? searchLoading ? 'Aranıyor…' : `${searchTotal.toLocaleString('tr-TR')} sonuç · API` : 'MCLanX API'}</span></label>
+          <label className="nf-vod-search"><Search size={16} /><input value={query} onChange={(event) => { setQuery(event.target.value); setCategory(null); setCategoryItems([]); setCategoryHasMore(true) }} placeholder="Film veya dizi ara…" aria-label="Film veya dizi ara" /><span>{query.trim().length >= 2 ? searchLoading ? 'Aranıyor…' : `${searchTotal.toLocaleString('tr-TR')} sonuç` : 'Katalogda ara'}</span></label>
         </section>
         <div className="nf-vod-category-pills" aria-label="VOD kategorileri">{home.categories.slice(0, 36).map((entry) => <button key={`${entry.type}:${entry.id}`} type="button" onClick={() => chooseCategory(entry)}>{entry.label} <span>{entry.count}</span></button>)}</div>
 
@@ -251,6 +265,7 @@ export default function NotflixDiscover({ canWatch = true, onWatchBlocked }: { c
             <div className="nf-vod-section-title"><div><span className="nf-vod-kicker">{category ? category.name : 'ARAMA SONUÇLARI'}</span><h2>{category ? `${category.count.toLocaleString('tr-TR')} içerik` : query}</h2></div><button type="button" onClick={clearCategory}>Tüm kategoriler</button></div>
             {listError && <p className="nf-vod-error" role="alert">{listError}</p>}
             <PosterGrid items={visibleItems} onOpen={openMedia} />
+            {!category && !searchLoading && query.trim().length >= 2 && searchItems.length === 0 && <p className="nf-vod-empty">“{query}” için eşleşen film veya dizi bulunamadı.</p>}
             {(categoryLoading || searchLoading) && <div className="nf-vod-inline-status"><Loader2 className="nf-spin" size={18} /> İçerikler yükleniyor…</div>}
             <div ref={observerRef} className="nf-vod-sentinel" aria-hidden="true" />
             {category && categoryHasMore && <button type="button" className="nf-vod-load-more" disabled={categoryLoading} onClick={() => void loadCategory(category, categoryPage + 1, true)}>Tümünü gör · sonraki {PAGE_SIZE}</button>}
@@ -267,7 +282,7 @@ function PosterGrid({ items, onOpen }: { items: VodItem[]; onOpen: (item: VodIte
 }
 
 function PosterCard({ item, onOpen }: { item: VodItem; onOpen: (item: VodItem) => void }) {
-  return <button type="button" className="nf-vod-card" onClick={() => onOpen(item)} aria-label={`${item.name}${item.year ? ` (${item.year})` : ''}`}><span className="nf-vod-card__image"><img src={item.poster} alt="" loading="lazy" decoding="async" />{item.isNew && <span className="nf-vod-card__new">YENİ</span>}<span className="nf-vod-card__play"><Play size={18} fill="currentColor" /></span><span className="nf-vod-card__type">{item.type === 'movie' ? 'FİLM' : 'DİZİ'}</span></span><span className="nf-vod-card__name">{item.name}</span><span className="nf-vod-card__year">{item.year || item.category}</span></button>
+  return <button type="button" className="nf-vod-card" onClick={() => onOpen(item)} aria-label={`${item.name}${item.year ? ` (${item.year})` : ''}`}><span className="nf-vod-card__image"><img src={item.poster} alt="" loading="lazy" decoding="async" /><span className="nf-vod-card__play"><Play size={18} fill="currentColor" /></span><span className="nf-vod-card__type">{item.type === 'movie' ? 'FİLM' : 'DİZİ'}</span></span><span className="nf-vod-card__name">{item.name}</span><span className="nf-vod-card__year">{item.year || item.category}</span></button>
 }
 
 function VodShelf({ title, count, items, onOpen, onSeeAll }: { title: string; count?: number; items: VodItem[]; onOpen: (item: VodItem) => void; onSeeAll?: () => void }) {

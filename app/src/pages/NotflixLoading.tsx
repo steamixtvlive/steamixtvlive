@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, ArrowLeft, Loader2, Radio, RotateCcw, Server, Wifi } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Gift, Loader2, Radio, RotateCcw } from 'lucide-react'
 import NotflixLogo from '@/sections/NotflixLogo'
 import NotflixFooter from '@/sections/NotflixFooter'
 import { loadVavooCatalog, loadVavooStatus, type VavooCatalog } from '@/lib/vavoo'
@@ -164,12 +164,12 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
           </span>
         </div>
 
-        <p className="nf-kicker text-sm">
-          <Radio size={13} /> MEDIA HUB · CANLI YAYIN
+        <p className="nf-kicker nf-loading__live-title">
+          <Gift size={18} /> CANLI YAYIN HAZIRLANIYOR
         </p>
 
-        <h1 className="nf-loading__title text-2xl md:text-3xl font-bold">İçerikler yükleniyor, lütfen bekleyiniz...</h1>
-      <p className="nf-loading__step text-sm font-medium">İçerikler yükleniyor, lütfen bekleyiniz...</p>
+        <h1 className="nf-loading__title">İçerikler yükleniyor, lütfen bekleyiniz...</h1>
+        <p className="nf-loading__step">{step}</p>
 
         <div className="nf-loading__meter" aria-hidden="true">
           <span className="nf-loading__meter-fill" style={{ width: `${rounded}%` }} />
@@ -190,17 +190,6 @@ export default function NotflixLoading({ onReady, onCancel }: NotflixLoadingProp
           </span>
         </div>
 
-        <div className="nf-loading__chips">
-          <span>
-            <Server size={13} /> Canlı TV
-          </span>
-          <span>
-            <Wifi size={13} /> HLS Proxy
-          </span>
-          <span>
-            <Radio size={13} /> Kanallar
-          </span>
-        </div>
       </main>
 
       <NotflixFooter />

@@ -27,7 +27,7 @@ const CATALOG_TTL_MS = 6 * 60 * 60 * 1000
 const DETAIL_TTL_MS = 45 * 60 * 1000
 const TOKEN_TTL_MS = 2 * 60 * 60 * 1000
 const PAGE_SIZE = 42
-const HOME_ROW_SIZE = 12
+const HOME_ROW_SIZE = 48
 const MAX_TOKENS = 5000
 const MAX_DETAILS = 350
 const FETCH_TIMEOUT_MS = 60000
@@ -282,6 +282,68 @@ function searchKey(value) {
     .replace(/[^a-z0-9]/g, '')
 }
 
+function nameSearchTerms(value) {
+  const words = normalizeText(value).toLocaleLowerCase('tr').match(/[\p{L}\p{N}]+/gu) || []
+  return words.filter((word) => word.length > 0)
+}
+
+function nameSearchScore(name, query) {
+  const title = searchKey(name)
+  const needle = searchKey(query)
+  if (!title || !needle) return 0
+  if (title === needle) return 1000
+  if (title.startsWith(needle)) return 900
+  if (title.includes(needle)) return 800
+
+  const words = nameSearchTerms(name)
+  const queryWords = nameSearchTerms(query)
+  if (!queryWords.length) return 0
+  const normalizedWords = words.map(searchKey)
+  const exactWordMatches = queryWords.filter((word) => normalizedWords.some((entry) => entry === searchKey(word))).length
+  const allWords = exactWordMatches === queryWords.length
+  if (allWords) return 700 + exactWordMatches
+  if (exactWordMatches > 0) return 400 + exactWordMatches * 10
+
+  const compactName = words.map(searchKey)
+  const covered = queryWords.filter((word) => compactName.some((entry) => entry.includes(searchKey(word)) || searchKey(word).includes(entry))).length
+  if (covered === queryWords.length) return 300 + covered
+  if (covered) return 100 + covered
+  return 0
+}
+
+function bestMatchSearchScore(name, query) {
+  const exactScore = nameSearchScore(name, query)
+  if (exactScore) return exactScore
+  const queryWords = nameSearchTerms(query).map(searchKey).filter(Boolean)
+  const titleWords = nameSearchTerms(name).map(searchKey).filter(Boolean)
+  if (!queryWords.length || !titleWords.length) return 0
+  let matched = 0
+  let total = 0
+  for (const queryWord of queryWords) {
+    let best = 0
+    for (const titleWord of titleWords) {
+      if (queryWord === titleWord) best = Math.max(best, 1)
+      else if (queryWord.length >= 3 && titleWord.length >= 3 && (queryWord.startsWith(titleWord) || titleWord.startsWith(queryWord))) best = Math.max(best, 0.72)
+      else if (queryWord.length >= 4 && titleWord.length >= 4) {
+        const shared = [...queryWord].filter((character, index) => character === titleWord[index]).length
+        best = Math.max(best, shared / Math.max(queryWord.length, titleWord.length))
+      }
+    }
+    matched += best
+    total += 1
+  }
+  const ratio = matched / total
+  return ratio >= 0.62 ? Math.round(250 + ratio * 100) : 0
+}
+
+function normalizedCategoryLabel(name) {
+  const key = searchKey(name)
+  if (/^(?:tr)?yerlidiziler$/.test(key) || /^(?:tr)?(?:yerli)?diziler?$/.test(key) || /^(?:tr)?tvdizileri$/.test(key)) return 'Yerli Diziler'
+  const weekday = '(?:pazartesi|sali|carsamba|persembe|cuma|cumartesi|pazar)'
+  if (new RegExp(`^(?:tr)?${weekday}(?:dizileri|diziler|dizi|dizigunu)?$`).test(key)) return 'Yerli Diziler'
+  return cleanCategoryName(name)
+}
+
 function toNumber(value) {
   const number = Number(value)
   return Number.isFinite(number) ? number : 0
@@ -465,7 +527,7 @@ function normalizeCategoryEntries(raw) {
   const list = []
   for (const [index, entry] of normalizeList(raw).entries()) {
     const id = String(entry?.category_id ?? entry?.id ?? index)
-    const name = cleanCategoryName(entry?.category_name ?? entry?.name ?? entry?.title)
+    const name = normalizedCategoryLabel(entry?.category_name ?? entry?.name ?? entry?.title)
     if (!id || !name || isAdultCategory(name)) continue
     const key = `${id}:${name}`
     if (seen.has(key)) continue
@@ -481,7 +543,7 @@ function normalizeCategoryEntries(raw) {
 function inferCatalogCategory(type, id, name, original) {
   const normalized = normalizeText(name).toLocaleLowerCase('tr')
   const isTurkishSeries = type === 'series' && /(?:uzak şehir|mehmed|fatih|kızılcık şerbeti|show|atv|now|trt|yerli|turkish)/i.test(normalized)
-  if (isTurkishSeries) return { id: `inferred:tr-series:${id}`, name: 'TR Yerli Diziler' }
+  if (isTurkishSeries) return { id: 'inferred:tr-series', name: 'Yerli Diziler' }
   if (/netflix/i.test(original || '')) return { id: `inferred:netflix:${id}`, name: /\btr\b|turk/i.test(original || '') ? 'TR Netflix' : 'Yabancı Netflix' }
   if (/(?:amazon|prime video)/i.test(original || '')) return { id: `inferred:prime:${id}`, name: 'Prime Video' }
   if (/(?:disney\+?|disney plus)/i.test(original || '')) return { id: `inferred:disney:${id}`, name: 'Disney+' }
@@ -534,7 +596,7 @@ function normalizeSeriesItem(raw, categoryMap) {
   if (isAdultCategory(name) || isAdultCategory(raw.category_name)) return null
 
   const original = normalizeText(raw.o_name || raw.original_name || raw.source || '')
-  const inferredCategory = inferCatalogCategory('series', id, name, original)
+  const inferredCategory = inferCatalogCategory('series', id, name, original) || (/^(?:TR\s*)?(?:PAZARTESI|SALI|CARSAMBA|PERSEMBE|CUMA|CUMARTESI|PAZAR)\s+DIZILERI$/i.test(categoryMap.get(String(raw.category_id ?? raw.categoryId ?? '')) || '') ? { id: 'inferred:tr-series', name: 'Yerli Diziler' } : null)
   const categoryId = inferredCategory?.id || String(raw.category_id ?? raw.categoryId ?? '')
   return {
     type: 'series',
@@ -937,6 +999,17 @@ function buildPublicCategories(data) {
     }
   }
   categories.push(...inferred.values())
+  const localSeriesCount = seriesCounts.get('inferred:tr-series') || 0
+  if (localSeriesCount > 0) {
+    categories.push({
+      key: 'series:inferred:tr-series',
+      id: 'inferred:tr-series',
+      name: 'Yerli Diziler',
+      label: 'Yerli Diziler',
+      type: 'series',
+      count: localSeriesCount,
+    })
+  }
   for (const category of data.movieCategories) {
     const count = movieCounts.get(category.id) || 0
     if (count > 0) {
@@ -981,7 +1054,7 @@ function buildPublicCategories(data) {
   }
 
   categories.sort((a, b) => {
-    const curated = ['Yeni Filmler', 'Yeni Diziler', 'TR Yerli Diziler', 'TR Netflix', 'Yabancı Netflix']
+  const curated = ['Yeni Filmler', 'Yeni Diziler', 'Yerli Diziler', 'TR Netflix', 'Yabancı Netflix']
     const aIndex = curated.findIndex((name) => a.name === name)
     const bIndex = curated.findIndex((name) => b.name === name)
     if (aIndex >= 0 || bIndex >= 0) {
@@ -1032,7 +1105,7 @@ function buildRows(data, categories) {
   for (const category of categories) {
     if (category.name === 'Yeni Filmler' || category.name === 'Yeni Diziler') continue
     const source = category.type === 'movie' ? data.movies : data.series
-    const rowItems = sortForRows(source.filter((item) => item.categoryId === category.id))
+    const rowItems = sortForRows(source.filter((item) => item.categoryId === category.id || (category.id === 'inferred:tr-series' && item.type === 'series' && item.category === 'Yerli Diziler')))
     if (rowItems.length === 0) continue
     rows.push({
       key: category.key,
@@ -1263,10 +1336,6 @@ async function homePayload() {
     void ensureCatalog(true).catch(() => {})
   }
 
-  if (state.hero.some((item) => !item.plot)) {
-    await waitForHero()
-  }
-
   return {
     ok: true,
     ready: true,
@@ -1305,10 +1374,25 @@ async function listPayload(reqUrl) {
 
   if (query) {
     const needle = searchKey(query)
-    pool = providerSearch || pool.filter((item) => searchKey(`${item.name} ${item.category}`).includes(needle))
+    const localResults = pool
+      .map((item) => ({ item, score: bestMatchSearchScore(item.name, query) }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score || a.item.name.localeCompare(b.item.name, 'tr', { sensitivity: 'base' }))
+      .map((entry) => entry.item)
+    const source = providerSearch?.length ? providerSearch : pool
+    const providerResults = source
+      .map((item) => ({ item, score: bestMatchSearchScore(item.name, query) || (needle && searchKey(item.name).includes(needle) ? 50 : 0) }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score || a.item.name.localeCompare(b.item.name, 'tr', { sensitivity: 'base' }))
+      .map((entry) => entry.item)
+    const combined = new Map()
+    for (const item of [...localResults, ...providerResults]) combined.set(`${item.type}:${item.id}`, item)
+    pool = [...combined.values()]
   }
 
-  if (sort === 'new') {
+  if (sort === 'relevance' && query) {
+    pool = [...pool].sort((a, b) => bestMatchSearchScore(b.name, query) - bestMatchSearchScore(a.name, query) || a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }))
+  } else if (sort === 'new') {
     pool = sortForNew(pool)
   } else if (sort === 'name') {
     pool = [...pool].sort((a, b) => a.name.localeCompare(b.name, 'tr'))
@@ -1340,10 +1424,13 @@ async function providerSearchItems(query, type) {
   const results = (await Promise.all(tasks)).flat().filter(Boolean)
   if (results.length) {
     const local = new Map([...state.movies, ...state.series].map((item) => [`${item.type}:${item.id}`, item]))
-    return results.map((item) => local.get(`${item.type}:${item.id}`) || item)
+    const needle = searchKey(query)
+    const normalized = results.map((item) => local.get(`${item.type}:${item.id}`) || item)
+    const exact = normalized.filter((item) => bestMatchSearchScore(item.name, query) > 0 || searchKey(item.name).includes(needle))
+    if (exact.length) return exact
   }
   const needle = searchKey(query)
-  return [...state.movies, ...state.series].filter((item) => searchKey(`${item.name} ${item.category}`).includes(needle))
+  return [...state.movies, ...state.series].filter((item) => (type === 'all' || item.type === type) && (bestMatchSearchScore(item.name, query) > 0 || searchKey(item.name).includes(needle)))
 }
 
 function normalizeSubtitleEntries(raw, indexOffset = 0) {
@@ -1569,6 +1656,22 @@ async function getDetail(type, id, includeSimilar = true) {
 
   if (type === 'series') {
     const result = await seriesDetail(id)
+    const partial = { ...result }
+    void providerJson('get_series_info', { series_id: id }).then((raw) => {
+      if (raw?.info && typeof raw.info === 'object') {
+        const info = raw.info
+        const full = { ...partial,
+          plot: normalizeText(info.plot || info.description || info.overview || partial.plot),
+          cast: normalizeText(info.cast || info.actors || partial.cast),
+          director: normalizeText(info.director || partial.director),
+          country: normalizeText(info.country || partial.country),
+          genre: normalizeGenres(info.genre || info.genres || partial.genre),
+          backdrop: resolveImage(info.backdrop_path, info.backdrop, info.cover_big, partial.backdrop, partial.poster),
+          year: parseYear(info.releaseDate || info.releasedate || info.release_date || info.year, partial.name) || partial.year,
+        }
+        detailCacheSet(key, full)
+      }
+    }).catch(() => {})
     if (includeSimilar) result.similar = similarFor(result, 'series', result.categoryId)
     return detailCacheSet(key, result)
   }
@@ -1608,7 +1711,10 @@ async function movieDetail(id) {
   let detailError = ''
 
   try {
-    raw = await providerJson('get_vod_info', { vod_id: id })
+    raw = await Promise.race([
+      providerJson('get_vod_info', { vod_id: id }),
+      delay(3500).then(() => { throw new Error('Film bilgileri kaynakta yavaş; katalog bilgileri gösteriliyor') }),
+    ])
   } catch (error) {
     detailError = error?.message || 'Film bilgileri alınamadı'
   }
@@ -1626,7 +1732,7 @@ async function movieDetail(id) {
     info.subtitles || movieData.subtitles || raw?.subtitles || info.sub_titles || movieData.sub_titles || []
   const categoryId = categoryIdOf(base || { categoryId: movieData.category_id || info.category_id })
 
-  return {
+  const result = {
     ok: true,
     type: 'movie',
     id: String(base?.id || id),
@@ -1654,6 +1760,21 @@ async function movieDetail(id) {
     ext,
     detailError,
   }
+  void providerJson('get_vod_info', { vod_id: id }).then((laterRaw) => {
+    const laterInfo = laterRaw?.info && typeof laterRaw.info === 'object' ? laterRaw.info : {}
+    if (!Object.keys(laterInfo).length) return
+    const updated = {
+      ...result,
+      plot: normalizeText(laterInfo.plot || laterInfo.description || laterInfo.overview || result.plot),
+      cast: normalizeText(laterInfo.cast || laterInfo.actors || result.cast),
+      director: normalizeText(laterInfo.director || result.director),
+      genre: normalizeGenres(laterInfo.genre || laterInfo.genres || result.genre),
+      backdrop: resolveImage(laterInfo.backdrop_path, laterInfo.backdrop, laterInfo.movie_image, result.backdrop, result.poster),
+      year: parseYear(laterInfo.releasedate || laterInfo.release_date || laterInfo.releaseDate || laterInfo.year, result.name) || result.year,
+    }
+    detailCacheSet(`movie:${id}`, updated)
+  }).catch(() => {})
+  return result
 }
 
 async function seriesDetail(id) {
@@ -1664,7 +1785,10 @@ async function seriesDetail(id) {
 
   if (localEpisodes.length === 0) {
     try {
-      raw = await providerJson('get_series_info', { series_id: id })
+      raw = await Promise.race([
+        providerJson('get_series_info', { series_id: id }),
+        delay(4500).then(() => { throw new Error('Dizi bilgileri kaynakta yavaş; bulunan bölümler gösteriliyor') }),
+      ])
     } catch (error) {
       detailError = error?.message || 'Dizi bilgileri alınamadı'
     }
@@ -1695,7 +1819,7 @@ async function seriesDetail(id) {
   } else {
     for (const [index, entry] of rawEpisodes.entries()) {
       const episodeInfo = entry.info && typeof entry.info === 'object' ? entry.info : {}
-      const season = toNumber(entry.__season || entry.season || entry.season_number) || 1
+      const season = toNumber(entry.__season || entry.season || entry.season_number || episodeInfo.season || episodeInfo.season_number) || 1
       const number = episodeNumber({ ...entry, ...episodeInfo }, index + 1)
       const ext = sourceExt(entry.container_extension, episodeInfo.container_extension, base?.ext)
       const streamId =
@@ -1709,6 +1833,8 @@ async function seriesDetail(id) {
         title: episodeLabel({ ...entry, ...episodeInfo }, number),
         season,
         episode: number,
+        episodeNumber: number,
+        seasonNumber: season,
         plot: normalizeText(episodeInfo.plot || entry.plot || ''),
         duration: normalizeDuration(episodeInfo.duration || entry.duration),
         still: resolveImage(episodeInfo.movie_image, episodeInfo.cover_big, entry.movie_image, entry.cover, base?.poster),
@@ -1721,7 +1847,14 @@ async function seriesDetail(id) {
     }
   }
 
-  episodes.sort((a, b) => a.season - b.season || a.episode - b.episode || a.title.localeCompare(b.title, 'tr'))
+  const getNumericEpisodePart = (episode, key) => {
+    const value = String(episode.title || '').match(new RegExp(`(?:^|\\b)S?\\d{0,2}\\s*E(\\d{1,3})\\b`, 'i'))
+    if (key === 'episode' && value) return Number(value[1]) || episode.episode || 0
+    const part = String(episode.title || '').match(/S(\d{1,2})\s*E(\d{1,3})/i)
+    if (key === 'season' && part) return Number(part[1]) || episode.season || 1
+    return episode[key] || 0
+  }
+  episodes.sort((a, b) => getNumericEpisodePart(a, 'season') - getNumericEpisodePart(b, 'season') || getNumericEpisodePart(a, 'episode') - getNumericEpisodePart(b, 'episode') || a.title.localeCompare(b.title, 'tr', { numeric: true, sensitivity: 'base' }))
 
   const seasonsMap = new Map()
   for (const episode of episodes) {
@@ -1734,7 +1867,7 @@ async function seriesDetail(id) {
       season,
       title: `${season}. Sezon`,
       episodeCount: list.length,
-      episodes: list,
+      episodes: list.map((episode) => ({ ...episode, seasonNumber: season, episodeNumber: getNumericEpisodePart(episode, 'episode') })),
     }))
 
   return {

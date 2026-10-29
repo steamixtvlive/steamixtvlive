@@ -1,6 +1,7 @@
 import { localizedNavigation, type PageId } from '@/lib/navigation'
-import { Languages } from 'lucide-react'
-import { LogOut } from 'lucide-react'
+import { Languages, LogOut } from 'lucide-react'
+import NotflixLogo from '@/sections/NotflixLogo'
+import { useLang } from '@/lib/language'
 
 interface NotflixSidebarProps {
   page: PageId
@@ -23,6 +24,7 @@ export default function NotflixSidebar({
   language = 'tr',
   onLogout,
 }: NotflixSidebarProps) {
+  const { t } = useLang()
   const navItems = localizedNavigation(language)
   return (
     <aside className={`nf-sidebar ${expanded ? 'is-expanded' : ''} ${mobileOpen ? 'is-mobile-open' : ''}`}>
@@ -35,8 +37,7 @@ export default function NotflixSidebar({
         }}
         aria-label="NOTFLİX ana sayfa"
       >
-        <span className="nf-sidebar__mark" aria-hidden="true">N</span>
-        <span className="nf-sidebar__wordmark">NOTFLİX</span>
+        <NotflixLogo className="nf-sidebar__wordmark" />
       </button>
 
       <div className="nf-sidebar__rule" />
@@ -73,12 +74,12 @@ export default function NotflixSidebar({
       </nav>
 
       <div className="nf-sidebar__settings">
-        <span><Languages size={15} /> {language === 'en' ? 'General' : 'Genel'}</span>
-        <select value={language} onChange={(event) => onLanguage?.(event.target.value)} aria-label="Genel dil ayarı">
+        <span><Languages size={15} /> {language === 'en' ? 'Language' : 'Dil'}</span>
+        <select value={language} onChange={(event) => onLanguage?.(event.target.value)} aria-label="Dil">
           <option value="tr">Türkçe</option><option value="en">English</option>
         </select>
       </div>
-      <button type="button" className="nf-sidebar__logout" onClick={onLogout}><LogOut size={17}/><span>{language === 'en' ? 'Log out' : 'Çıkış Yap'}</span></button>
+      <button type="button" className="nf-sidebar__logout" onClick={onLogout}><LogOut size={17}/><span>{t('nav.logout')}</span></button>
       <div className="nf-sidebar__footer">
         <span className="nf-sidebar__status">
           <i />

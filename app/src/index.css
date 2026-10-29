@@ -523,15 +523,21 @@
   --nf-red: #e50914;
   --nf-red-bright: #ff2935;
   --nf-black: #000;
-  --nf-ink: #050506;
-  --nf-surface: #0a0a0c;
-  --nf-surface-raised: #101013;
+  --nf-ink: #1a1f26;
+  --nf-surface: #242b34;
+  --nf-surface-raised: #2c343e;
   --nf-line: rgba(255, 255, 255, .08);
   --nf-line-strong: rgba(255, 255, 255, .14);
   --nf-text: rgba(255, 255, 255, .94);
   --nf-muted: rgba(255, 255, 255, .5);
   --nf-dim: rgba(255, 255, 255, .32);
   --nf-ease: cubic-bezier(.22, .61, .36, 1);
+  --geil-bg: #1a1f26;
+  --geil-surface: #242b34;
+  --geil-surface-2: #2c343e;
+  --geil-border: rgba(255,255,255,.09);
+  --geil-radius: 14px;
+  --geil-radius-card: 12px;
 }
 
 .nf-spin {
@@ -878,6 +884,22 @@
   opacity: .42;
   box-shadow: none;
 }
+
+.nf-login__heading p,.nf-login__ornament,.nf-login__label,.nf-login__secure,.nf-login__demo,.nf-login__badge { display:none; }
+.nf-login { padding-block:32px 76px; }
+.nf-login__brand { display:none; }
+.nf-login__card { width:min(100%,560px); padding:clamp(30px,5vw,48px); }
+.nf-login__heading h1 { font-size:clamp(28px,4vw,38px); text-align:center; }
+.nf-login__form { margin-top:24px; }
+.nf-login__input-wrap { height:68px; border-radius:15px; }
+.nf-login__input-icon { left:19px; color:#ff5360; }
+.nf-login__input { padding:0 18px 0 56px; font-family:'Inter',sans-serif; font-size:17px; letter-spacing:.01em; }
+.nf-login__input::placeholder { color:rgba(255,255,255,.48); letter-spacing:0; }
+.nf-login__submit { height:58px; font-size:16px; }
+.nf-login__welcome-logo .notflix-logo { --notflix-logo-size:clamp(34px,5vw,46px); }
+.nf-login__heading p { display:block; margin-top:12px; color:rgba(255,255,255,.58); text-align:center; font-size:14px; }
+.nf-login__form { max-width:300px; margin-inline:auto; }
+.nf-login > .notflix-footer { display:none; }
 
 .nf-login__demo {
   display: flex;
@@ -1304,17 +1326,37 @@
 .nf-pricing-grid ul { min-height: 178px; padding-left: 18px; color: #dedee1; font-size: 11px; line-height: 1.9; }
 .nf-pricing-grid a { display: block; padding: 11px; border-radius: 8px; background: #e50914; color: white; font-size: 11px; font-weight: 700; text-align: center; text-decoration: none; }
 .nf-pricing-note { margin: 18px 0 0; color: #c9c9cc; font-size: 11px; line-height: 1.6; }
-.nf-login__input { display: block; width: 100%; min-height: 43px; margin: 7px 0 12px; padding: 0 13px; border: 1px solid rgba(255,255,255,.12); border-radius: 9px; background: rgba(255,255,255,.045); color: white; outline: none; }
+.nf-login__input { display: block; width: 100%; min-height: 43px; margin: 0; padding: 0 13px; border: 0; border-radius: 9px; background: transparent; color: white; outline: none; }
 .nf-login__input:focus { border-color: #e50914a3; }
-.nf-topbar__menu { gap: 7px; width: auto; min-width: 70px; padding: 0 8px; }
-.nf-topbar__menu-mark { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 7px; background: #08080a; color: #e50914; font-size: 18px; font-weight: 900; }
+.nf-login { padding-block: 30px 68px; }
+.nf-login__brand { display: none; }
+.nf-login__card { width: min(100%, 560px); padding: clamp(30px,5vw,48px); }
+.nf-login__card::before { display:none; }
+.nf-login__badge,.nf-login__ornament,.nf-login__label,.nf-login__secure,.nf-login__demo { display: none; }
+.nf-login__heading h1 { font-size: clamp(27px,4vw,38px); text-align: center; }
+.nf-login__form { margin-top: 26px; }
+.nf-login__input-wrap { height: 68px; border-radius: 15px; }
+.nf-login__input-icon { left: 19px; color: #ff5360; }
+.nf-login__input { padding: 0 18px 0 56px; font-family: 'Inter',sans-serif; font-size: 17px; letter-spacing: .01em; }
+.nf-login__input::placeholder { color: rgba(255,255,255,.48); letter-spacing: 0; }
+.nf-login__submit { height: 58px; font-size: 16px; }
+.nf-login__welcome-logo .notflix-logo { --notflix-logo-size:clamp(34px,5vw,46px); }
+.nf-login__heading p { display:block; margin-top:12px; color:rgba(255,255,255,.58); text-align:center; font-size:14px; }
+.nf-login__form { max-width:300px; margin:26px auto 0; }
+.nf-login > .notflix-footer { display: none; }
+.nf-topbar__menu { gap: 0; width: 42px; min-width: 42px; padding: 0; }
+.nf-topbar__menu-mark { display: none; }
 .nf-sidebar__brand { min-height: 55px; justify-content: flex-start; padding: 0 15px; border: 0; background: transparent; color: white; cursor: pointer; }
-.nf-sidebar__mark { display: grid; width: 33px; height: 33px; place-items: center; border-radius: 8px; background: #070709; color: #ed111b; font-size: 25px; font-weight: 900; }
-.nf-sidebar__wordmark { color: #fff; font-size: 16px; font-weight: 900; letter-spacing: .07em; }
+.nf-sidebar__mark { display: none; }
+.nf-sidebar__wordmark { width:auto !important; height:38px; overflow:visible; opacity:1 !important; color:#ed111b; font-size:26px; font-weight:900; letter-spacing:.07em; }
+.nf-sidebar.is-expanded .nf-sidebar__wordmark { width:auto; opacity:1; }
+.nf-sidebar__wordmark .notflix-logo__letter { color: #ed111b; }
+.nf-sidebar__logout { order: 4; margin-top: auto; }
 .nf-sidebar__settings { display: grid; gap: 8px; padding: 12px; border-top: 1px solid rgba(255,255,255,.08); color: #bbb; font-size: 10px; }
 .nf-sidebar__settings span,.nf-sidebar__settings button { display: flex; align-items: center; gap: 7px; }
 .nf-sidebar__settings select,.nf-sidebar__settings button { width: 100%; padding: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 7px; background: #111114; color: #eee; font-size: 10px; }
-.nf-sidebar__footer { margin-top: auto; }
+.nf-sidebar__footer { margin-top: 0; }
+.nf-topbar__mobile-brand { color: #ed111b; font-family: 'Bebas Neue','Arial Narrow',sans-serif; font-size: 27px; font-weight: 900; letter-spacing: .08em; -webkit-text-stroke: .35px #ff7076; }
 .nf-vod-section-title button { border-radius: 7px; }
 .nf-vod-showcase__content { max-width: 720px; }
 .nf-vod-showcase__poster { transform: scale(1.035) rotate(2deg); transition: transform .6s ease; }
@@ -1326,6 +1368,7 @@
 .nf-vod-countries select { padding: 8px 10px; border: 1px solid #ffffff20; border-radius: 7px; background: #141418; color: #eee; }
 .nf-about { max-width: 850px; margin: 8vh auto; padding: 40px; border: 1px solid #ffffff16; border-radius: 18px; background: radial-gradient(ellipse at 50% 0,#e5091420,transparent 55%),#111114; color: #eee; text-align: center; }
 .nf-about h1 { font-size: 36px; }
+.nf-about .notflix-logo { color:#ed111b; font-size:46px; }
 .nf-about p { color: #bbb; line-height: 1.7; }
 .nf-continue-card label { position: relative; display: block; }
 .nf-continue-card img { width: 100%; aspect-ratio: 2/3; border-radius: 9px; object-fit: cover; }
@@ -1344,6 +1387,29 @@
 .nf-player__brand-back { margin-right: 8px; }
 .nf-player__country { min-width: 90px; max-width: 145px; }
 .nf-vod-card__new { top: 7px; right: 7px; left: auto; }
+.nf-vod-showcase { border:0; border-radius:var(--geil-radius); background-color:var(--geil-surface); box-shadow:0 14px 36px #0004; }
+.nf-vod-showcase__backdrop { opacity:.46; }
+.nf-vod-showcase__shade { background:linear-gradient(90deg,#1a1f26f2 0%,#1a1f26cc 48%,#1a1f2635 100%),linear-gradient(0deg,#1a1f26 0%,transparent 48%); }
+.nf-vod-showcase__poster { border-radius:var(--geil-radius-card); }
+.nf-vod-showcase__content { width:min(68%,760px); }
+.nf-vod-toolbar { margin-top:18px; }
+.nf-vod-tabs button { border-radius:8px; padding:9px 14px; }
+.nf-vod-tabs button.is-active { border-color:transparent; background:var(--nf-red); color:#fff; }
+.nf-vod-search { min-height:42px; border-radius:10px; background:var(--geil-surface); }
+.nf-vod-category-pills button { border-radius:8px; background:var(--geil-surface); }
+.nf-vod-shelf__track { gap:14px; scrollbar-width:none; }
+.nf-vod-shelf__track::-webkit-scrollbar { display:none; }
+.nf-vod-card { flex:0 0 clamp(146px,15.5vw,205px); }
+.nf-vod-card__image { border:0; border-radius:var(--geil-radius-card); background:var(--geil-surface-2); box-shadow:0 4px 14px #0004; }
+.nf-vod-card:hover .nf-vod-card__image { border-color:transparent; box-shadow:0 10px 28px #0006; }
+.nf-vod-card__name { margin-top:9px; font-size:13px; font-weight:650; }
+.nf-vod-card__year { font-size:11px; }
+.nf-vod-section-title { align-items:center; margin-bottom:14px; }
+.nf-vod-section-title h2 { font-size:clamp(18px,2vw,23px); }
+.nf-vod-section-title button { width:34px; height:34px; border-radius:9px; background:var(--geil-surface); }
+.nf-vod-detail { background:var(--geil-bg); }
+.nf-vod-detail__hero { border:0; border-radius:var(--geil-radius); background-color:var(--geil-surface); }
+.nf-vod-detail__poster { border-radius:var(--geil-radius-card); }
 .nf-vod-showcase__actions .nf-vod-play { background: #e50914; color: #fff; }
 .nf-vod-detail__copy h1 { font-size: clamp(30px,5vw,56px); }
 .nf-vod-detail__meta { flex-wrap: wrap; }
@@ -1383,6 +1449,74 @@
 .nf-vod-search:focus-within { border-color:#e5091480; box-shadow:0 0 0 3px #e5091417; background:#ffffff0a; }
 .nf-vod-search input { width: 100%; border: 0; outline: 0; background: transparent; color: white; font-size: 11px; }
 .nf-vod-search span { white-space: nowrap; font-size: 9px; }
+.nf-vod-discover { background:var(--geil-bg); padding:clamp(16px,2vw,28px); }
+.nf-vod-showcase { border:0; border-radius:var(--geil-radius); background-color:var(--geil-surface); box-shadow:0 14px 36px #0004; }
+.nf-vod-showcase__backdrop { opacity:.46; }
+.nf-vod-showcase__shade { background:linear-gradient(90deg,#1a1f26f2 0%,#1a1f26cc 48%,#1a1f2635 100%),linear-gradient(0deg,#1a1f26 0%,transparent 48%); }
+.nf-vod-showcase__poster { border-radius:var(--geil-radius-card); }
+.nf-vod-showcase__content { width:min(68%,760px); }
+.nf-vod-showcase__actions button { border-radius:8px; }
+.nf-vod-toolbar { margin-top:18px; }
+.nf-vod-tabs button { border-radius:8px; padding:9px 14px; }
+.nf-vod-tabs button.is-active { border-color:transparent; background:var(--nf-red); color:#fff; }
+.nf-vod-search { min-height:42px; border-radius:10px; background:var(--geil-surface); }
+.nf-vod-category-pills button { border-radius:8px; background:var(--geil-surface); }
+.nf-vod-shelf__track { gap:14px; scrollbar-width:none; }
+.nf-vod-shelf__track::-webkit-scrollbar { display:none; }
+.nf-vod-card { flex:0 0 clamp(146px,15.5vw,205px); }
+.nf-vod-card__image { border:0; border-radius:var(--geil-radius-card); background:var(--geil-surface-2); box-shadow:0 4px 14px #0004; }
+.nf-vod-card:hover .nf-vod-card__image { border-color:transparent; box-shadow:0 10px 28px #0006; }
+.nf-vod-card__play { background:var(--nf-red); }
+.nf-vod-card__name { margin-top:9px; font-size:13px; font-weight:650; }
+.nf-vod-card__year { font-size:11px; }
+.nf-vod-section-title { align-items:center; margin-bottom:14px; }
+.nf-vod-section-title h2 { font-size:clamp(18px,2vw,23px); }
+.nf-vod-section-title button { width:34px; height:34px; border-radius:9px; background:var(--geil-surface); }
+.nf-vod-detail { background:var(--geil-bg); }
+.nf-vod-detail__hero { border:0; border-radius:var(--geil-radius); background-color:var(--geil-surface); }
+.nf-vod-detail__poster { border-radius:var(--geil-radius-card); }
+.nf-vod-episode-modal { border:1px solid var(--geil-border); border-radius:var(--geil-radius); background:var(--geil-bg); }
+.nf-vod-episode-card { border:1px solid var(--geil-border); border-radius:var(--geil-radius-card); background:var(--geil-surface); }
+.nf-vod-episode-card__image { background:var(--geil-surface-2); color:var(--nf-red); }
+.nf-login__heading h1 { color:#fff; }
+.nf-login__card { border:1px solid var(--geil-border); border-radius:14px; background:#242b34ef; }
+.nf-login__input-wrap { background:var(--geil-bg); }
+.nf-loading { background:var(--geil-bg); }
+.nf-player { border:0; border-radius:var(--geil-radius); background:#11151a; box-shadow:0 16px 45px #0005; }
+.nf-player__video { background:#000; }
+.nf-player__top { padding:18px 22px; }
+.nf-player__brand { color:var(--nf-red); text-shadow:none; }
+.nf-player__brand-rule { display:none; }
+.nf-player__brand .notflix-logo { color:var(--nf-red); font-size:28px; text-shadow:none; }
+.nf-player__brand .notflix-logo__letter { color:var(--nf-red); }
+.nf-player__top-caption { display:none; }
+.nf-player__pill,.nf-player__country { border-radius:8px; background:rgba(26,31,38,.86); }
+.nf-player__live-tag { border-radius:8px; background:rgba(229,9,20,.18); }
+.nf-player__bottom { padding:20px 22px; }
+.nf-player__channel-logo { border:0; border-radius:10px; background:var(--geil-surface-2); }
+.nf-player__status { border-radius:12px; background:rgba(26,31,38,.92); }
+.nf-player__error { border-radius:14px; background:rgba(26,31,38,.94); }
+.nf-player__drawer { background:var(--geil-bg); box-shadow:-14px 0 36px #0005; }
+.nf-channels { background:var(--geil-bg); }
+.nf-channels__head { padding:18px 18px 12px; }
+.nf-channels__head h2 { font-size:20px; }
+.nf-channels__search { margin:8px 14px 14px; border-radius:9px; background:var(--geil-surface); }
+.nf-channels__list { padding:0 10px; }
+.nf-channels__chips { display:flex; overflow-x:auto; gap:6px; padding:0 14px 12px; }
+.nf-channels__chip { height:30px; padding:0 10px; border-radius:8px; background:var(--geil-surface); font-size:9px; }
+.nf-channels__chip.is-active { border-color:transparent; background:var(--nf-red); color:#fff; }
+.nf-channels__foot { display:flex; }
+.nf-channel { min-height:58px; border-radius:9px; }
+.nf-channel__logo { width:36px; height:36px; border-radius:8px; background:var(--geil-surface-2); }
+.nf-channel.is-active { border-color:rgba(229,9,20,.35); background:rgba(229,9,20,.12); }
+.nf-vod-watch { background:var(--geil-bg); }
+.nf-vod-watch__header { background:var(--geil-bg); border-bottom:1px solid var(--geil-border); }
+.nf-vod-watch__header { min-height:58px; }
+.nf-vod-watch__header strong { overflow:hidden; font-size:14px; text-overflow:ellipsis; white-space:nowrap; }
+.nf-vod-watch__header button { border-radius:8px; background:var(--geil-surface); }
+.nf-vod-watch > .relative { max-width:none; }
+.nf-vod-watch .nf-player { border-radius:0; }
+.nf-vod-discover { background:var(--geil-bg); padding:clamp(16px,2vw,28px); }
 .nf-vod-shelf,.nf-vod-browse { margin-top: clamp(22px,3vw,34px); }
 .nf-vod-section-title { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .nf-vod-section-title h2 { margin: 4px 0 0; color: #fff; font-size: clamp(17px,2vw,22px); letter-spacing: -.025em; }
@@ -1436,6 +1570,9 @@
 .nf-vod-episode-card { display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:16px; padding:0; overflow:hidden; border:1px solid #ffffff16; border-radius:12px; background:#ffffff08; color:#fff; text-align:left; cursor:pointer; transition:transform .18s,border-color .18s,box-shadow .18s; }
 .nf-vod-episode-card:hover,.nf-vod-episode-card:focus-visible { transform:translateY(-2px); border-color:#e50914aa; box-shadow:0 10px 32px #e5091425; outline:none; }
 .nf-vod-episode-card__image { position:relative; display:grid; aspect-ratio:16/9; place-items:center; overflow:hidden; background:linear-gradient(135deg,#261013,#0b0b0d); color:#e50914; font-weight:900; letter-spacing:.12em; }
+.nf-vod-episode-modal { border:1px solid var(--geil-border); border-radius:var(--geil-radius); background:var(--geil-bg); }
+.nf-vod-episode-card { border:1px solid var(--geil-border); border-radius:var(--geil-radius-card); background:var(--geil-surface); }
+.nf-vod-episode-card__image { background:var(--geil-surface-2); color:var(--nf-red); }
 .nf-vod-episode-card__image img { width:100%; height:100%; object-fit:cover; }
 .nf-vod-episode-card__image i { position:absolute; right:12px; bottom:12px; display:grid; width:38px; height:38px; place-items:center; border-radius:50%; background:#e50914; color:white; font-style:normal; }
 .nf-vod-episode-card__copy { display:flex; flex-direction:column; align-self:center; gap:7px; padding:12px 12px 12px 0; }
@@ -1465,16 +1602,18 @@
 .nf-shell__body:has(.nf-vod-discover) { padding: 0; overflow-y: auto; }
 .nf-vod-showcase__shade { background: linear-gradient(90deg,#08090df7 0%,#08090dce 48%,#08090d35 100%),linear-gradient(0deg,#08090d 0%,transparent 48%); }
 .nf-player__shade { background: linear-gradient(180deg,rgba(0,0,0,.14),transparent 22%,transparent 60%,rgba(0,0,0,.28)); }
-.nf-player__drawer { width: min(340px, 36%); box-shadow: none; }
-.nf-player.has-drawer .nf-player__video { right: min(340px,36%); width: calc(100% - min(340px,36%)); transition: width .32s ease,right .32s ease; }
+.nf-player__drawer { width: min(300px, 30%); box-shadow: none; }
+.nf-player.has-drawer .nf-player__video { right: min(300px,30%); width: calc(100% - min(300px,30%)); transition: width .32s ease,right .32s ease; }
 .nf-player:not(.has-drawer) .nf-player__video { width: 100%; right: 0; transition: width .32s ease,right .32s ease; }
-.nf-player.has-drawer .nf-player__shade,.nf-player.has-drawer .nf-player__bottom { right: min(340px,36%); }
+.nf-player.has-drawer .nf-player__shade,.nf-player.has-drawer .nf-player__bottom { right: min(300px,30%); }
 .nf-player__drawer-scrim { display: none !important; }
 .nf-live-layout { width: 100%; max-width: 1260px; height: min(100%, calc(100vh - 150px)); min-height: 390px; margin: 0 auto; }
 .nf-live-layout>.nf-player { height: 100%; }
-.nf-player__drawer.is-open { position: absolute; left: min(62%, 780px); right: 0; width: auto; border-left: 1px solid rgba(255,255,255,.09); }
-.nf-player.has-drawer .nf-player__video { width: min(62%, 780px); right: auto; }
-.nf-player.has-drawer .nf-player__shade,.nf-player.has-drawer .nf-player__bottom { right: 38%; }
+.nf-player__drawer.is-open { position:absolute; left:auto; right:0; width:min(300px,30%); border-left:1px solid rgba(255,255,255,.09); }
+.nf-player.has-drawer .nf-player__video { width:70%; right:30%; }
+.nf-player.has-drawer .nf-player__shade,.nf-player.has-drawer .nf-player__bottom { right:30%; }
+.nf-player.has-drawer .nf-player__video { width: 70%; right: 30%; }
+.nf-player.has-drawer .nf-player__shade,.nf-player.has-drawer .nf-player__bottom { right: 30%; }
 .nf-vod-watch .nf-player { position: relative; width: 100%; height: auto; min-height: 0; aspect-ratio: 16/9; max-height: calc(100vh - 58px); border-radius: 0; }
 .nf-vod-watch .nf-player__shade,.nf-vod-watch .nf-player__bottom { right: 0; }
 .nf-vod-watch .nf-player__video { right: 0; width: 100%; }
@@ -1554,16 +1693,14 @@ video::cue { color: white; background: rgba(0,0,0,.76); font-size: 1.05em; }
   position: relative;
   z-index: 50;
   display: flex;
-  width: 84px;
-  flex: 0 0 84px;
+  width: 92px;
+  flex: 0 0 92px;
   flex-direction: column;
   overflow: hidden;
   padding: 20px 12px 16px;
   border-right: 1px solid rgba(255, 255, 255, .065);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, .025), transparent 23%),
-    linear-gradient(180deg, #0a0a0c, #060607 58%, #040405);
-  box-shadow: 14px 0 40px rgba(0, 0, 0, .2);
+  background: var(--geil-bg);
+  box-shadow: none;
   transition: width .38s var(--nf-ease), flex-basis .38s var(--nf-ease), padding .38s var(--nf-ease);
 }
 
@@ -1586,7 +1723,7 @@ video::cue { color: white; background: rgba(0,0,0,.76); font-size: 1.05em; }
 
 .nf-sidebar__brand {
   display: flex;
-  min-height: 44px;
+  min-height: 52px;
   align-items: center;
   gap: 11px;
   padding: 0 9px;
@@ -1615,9 +1752,9 @@ video::cue { color: white; background: rgba(0,0,0,.76); font-size: 1.05em; }
 }
 
 .nf-sidebar__wordmark {
-  width: 0;
-  overflow: hidden;
-  opacity: 0;
+  width: auto;
+  overflow: visible;
+  opacity: 1;
   white-space: nowrap;
   transition: width .3s var(--nf-ease), opacity .2s ease;
 }
@@ -1655,13 +1792,13 @@ video::cue { color: white; background: rgba(0,0,0,.76); font-size: 1.05em; }
   position: relative;
   display: flex;
   width: 100%;
-  min-height: 47px;
+  min-height: 52px;
   align-items: center;
   justify-content: center;
   gap: 12px;
   padding: 0 13px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 10px;
   background: transparent;
   color: rgba(255, 255, 255, .45);
   font-family: 'Inter', sans-serif;
@@ -1823,14 +1960,14 @@ video::cue { color: white; background: rgba(0,0,0,.76); font-size: 1.05em; }
   position: relative;
   z-index: 30;
   display: flex;
-  height: 70px;
-  flex: 0 0 70px;
+  height: 62px;
+  flex: 0 0 62px;
   align-items: center;
   gap: 13px;
   padding: 0 clamp(15px, 2vw, 28px);
-  border-bottom: 1px solid rgba(255, 255, 255, .06);
-  background: rgba(6, 6, 7, .78);
-  backdrop-filter: blur(22px);
+  border-bottom: 1px solid var(--geil-border);
+  background: var(--geil-bg);
+  backdrop-filter: blur(16px);
 }
 
 .nf-topbar__menu {
@@ -1852,6 +1989,46 @@ video::cue { color: white; background: rgba(0,0,0,.76); font-size: 1.05em; }
   background: rgba(229, 9, 20, .07);
   color: #fff;
 }
+
+.nf-nav__item.is-active {
+  border-color:transparent;
+  background:rgba(229,9,20,.14);
+  color:#fff;
+}
+.nf-nav__item:hover { background:var(--geil-surface); color:#fff; }
+.nf-sidebar__settings { margin-top:auto; }
+.nf-sidebar__settings select { min-height:42px; border-radius:9px; background:var(--geil-surface); }
+.nf-sidebar__logout { border-radius:9px; background:rgba(229,9,20,.12); }
+.nf-sidebar__footer { margin-top:10px !important; }
+.nf-sidebar__wordmark .notflix-logo { --notflix-logo-size:25px; }
+.nf-topbar__menu { border:0; border-radius:10px; background:var(--geil-surface); color:#d6d9de; }
+.nf-topbar__menu:hover { background:#333d48; }
+.nf-topbar__title strong { font-size:16px; font-weight:700; }
+.nf-topbar__title span { font-size:10px; color:rgba(255,255,255,.5); }
+.nf-topbar__language { min-height:38px; border:1px solid var(--geil-border); border-radius:8px; background:var(--geil-surface); }
+.nf-topbar__live { padding:7px 10px; border-radius:8px; background:rgba(229,9,20,.16); }
+.nf-topbar__mobile-brand { color:var(--nf-red); }
+.nf-shell__body { background:var(--geil-bg); }
+.nf-shell__body.is-live { padding:10px; }
+.nf-about,.nf-settings { border-radius:var(--geil-radius); background:var(--geil-surface); }
+.nf-settings__row { border-radius:10px; background:var(--geil-surface-2); }
+.nf-settings__data { border-radius:12px; background:var(--geil-surface-2); }
+
+.nf-topbar__menu { width:42px; min-width:42px; }
+.nf-topbar__menu-mark { display:none; }
+.nf-sidebar__mark { display:none; }
+.nf-sidebar__brand { overflow:visible; }
+.nf-sidebar__wordmark { width:auto; height:38px; opacity:1; color:#ed111b; font-size:26px; font-weight:900; letter-spacing:.07em; }
+.nf-sidebar__wordmark .notflix-logo__letter { color:#ed111b; }
+.nf-sidebar__logout { order:4; margin-top:auto; }
+.nf-sidebar__footer { margin-top:0; }
+.nf-topbar__mobile-brand { color:#ed111b; font-size:27px; font-weight:900; letter-spacing:.08em; -webkit-text-stroke:.35px #ff7076; }
+.nf-about .notflix-logo { color:#ed111b; font-size:46px; }
+.nf-vod-detail__plot-loading { display:flex; align-items:center; gap:9px; min-height:30px; color:#bbb; font-size:13px; }
+.nf-vod-empty { padding:24px 12px; color:#ccc; text-align:center; }
+.nf-loading__live-title { display:flex; align-items:center; gap:9px; margin:0; color:#ff6a72; font-size:clamp(17px,2.5vw,23px); font-weight:800; letter-spacing:.06em; }
+.nf-loading__title { font-size:clamp(22px,3.2vw,34px); }
+.nf-loading__step { min-height:30px; font-size:clamp(15px,2vw,19px); color:rgba(255,255,255,.72); }
 
 .nf-topbar__mobile-brand {
   display: none;
@@ -2978,7 +3155,34 @@ video::cue { color: white; background: rgba(0,0,0,.76); font-size: 1.05em; }
     visibility 0s linear .4s;
 }
 
+.nf-player__drawer { width:min(300px,30%); }
+.nf-player__drawer { background:var(--geil-bg); box-shadow:-14px 0 36px #0005; }
+.nf-player { border:0; border-radius:var(--geil-radius); background:#11151a; box-shadow:0 16px 45px #0005; }
+.nf-player__top { padding:18px 22px; }
+.nf-player__brand { color:var(--nf-red); text-shadow:none; }
+.nf-player__brand .notflix-logo { --notflix-logo-size:28px; color:var(--nf-red); }
+.nf-player__brand .notflix-logo__letter { color:var(--nf-red); }
+.nf-player__brand-rule,.nf-player__top-caption { display:none; }
+.nf-player__pill,.nf-player__country { border-radius:8px; background:rgba(26,31,38,.86); }
+.nf-player__live-tag { border-radius:8px; background:rgba(229,9,20,.18); }
+.nf-player__bottom { padding:20px 22px; }
+.nf-player__channel-logo { border:0; border-radius:10px; background:var(--geil-surface-2); }
+.nf-player__status { border-radius:12px; background:rgba(26,31,38,.92); }
+.nf-channels { background:var(--geil-bg); }
+.nf-channels__head { padding:18px 18px 12px; }
+.nf-channels__head h2 { font-size:20px; }
+.nf-channels__search { margin:8px 14px 14px; border-radius:9px; background:var(--geil-surface); }
+.nf-channels__list { padding:0 10px; }
+.nf-channel { min-height:58px; border-radius:9px; }
+.nf-channel__logo { width:36px; height:36px; border-radius:8px; background:var(--geil-surface-2); }
+.nf-channel.is-active { border-color:rgba(229,9,20,.35); background:rgba(229,9,20,.12); }
+.nf-vod-watch { background:var(--geil-bg); }
+.nf-vod-watch__header { background:var(--geil-bg); border-bottom:1px solid var(--geil-border); }
+.nf-player.has-drawer .nf-player__video { right:min(300px,30%); width:calc(100% - min(300px,30%)); }
+.nf-player.has-drawer .nf-player__shade,.nf-player.has-drawer .nf-player__bottom { right:min(300px,30%); }
+
 .nf-player__drawer.is-open {
+  width:min(300px,30%);
   visibility: visible;
   transform: translateX(0);
   transition:
@@ -2988,6 +3192,12 @@ video::cue { color: white; background: rgba(0,0,0,.76); font-size: 1.05em; }
 
 .nf-player__drawer-scrim {
   display: none;
+}
+
+@media (min-width:1024px) {
+  .nf-player__drawer.is-open { left:auto; right:0; }
+  .nf-player.has-drawer .nf-player__video { width:70%; right:30%; }
+  .nf-player.has-drawer .nf-player__shade,.nf-player.has-drawer .nf-player__bottom { right:30%; }
 }
 
 .nf-player__empty-state {
@@ -3468,6 +3678,12 @@ video::cue { color: white; background: rgba(0,0,0,.76); font-size: 1.05em; }
   border-radius: 50%;
   background: rgba(229, 9, 20, .68);
 }
+
+.nf-channels__chips { display:none; }
+.nf-channels__foot { display:none; }
+.nf-channels__country { margin:8px 14px; }
+.nf-channel__tail .nf-channel__quality { display:none; }
+.nf-channel-variants { display:none; }
 
 @media (max-width: 1023px) {
   .nf-player__drawer-scrim {
