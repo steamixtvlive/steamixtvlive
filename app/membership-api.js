@@ -56,8 +56,12 @@ function supabaseConfig() {
   const url = process.env.SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   const sessionSecret = process.env.NOTFLIX_SESSION_SECRET
-  if (!url || !key || !sessionSecret) throw new Error('Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and NOTFLIX_SESSION_SECRET in the server environment')
-    return { url: url.replace(/\/$/, ''), key, sessionSecret }
+  if (!url || !key || !sessionSecret) {
+    const error = new Error('Supabase server configuration missing')
+    error.code = 'CONFIG_MISSING'
+    throw error
+  }
+  return { url: url.replace(/\/$/, ''), key, sessionSecret }
 }
 
 function validateAdmin(req) {
@@ -77,8 +81,9 @@ async function supa(path, config, options = {}) {
   const text = await response.text()
   const result = text ? JSON.parse(text) : null
   if (!response.ok) {
-    const error = new Error(result?.message || `Supabase request failed (${response.status})`)
+    const error = new Error(result?.message || result?.hint || `Supabase request failed (${response.status})`)
     error.status = response.status
+    error.code = result?.code || 'SUPABASE_REST_ERROR'
     throw error
   }
   return result
@@ -92,7 +97,7 @@ async function readMemberByUsername(username, config) {
 async function rpc(name, args, config) {
   const response = await fetch(`${config.url}/rest/v1/rpc/${name}`, { method: 'POST', headers: { apikey: config.key, authorization: `Bearer ${config.key}`, 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(args), signal: AbortSignal.timeout(12000) })
   const value = await response.json().catch(() => null)
-  if (!response.ok) { const error = new Error(value?.message || `Supabase RPC failed (${response.status})`); error.status = response.status; throw error }
+  if (!response.ok) { const error = new Error(value?.message || value?.hint || `Supabase RPC failed (${response.status})`); error.status = response.status; error.code = value?.code || 'SUPABASE_RPC_ERROR'; throw error }
   return value
 }
 
@@ -163,6 +168,25 @@ export function createMembershipApi() {
       config = supabaseConfig()
       const url = new URL(req.url || '/', 'http://localhost')
       const route = url.pathname
+
+      if (req.method === 'GET' && route === '/api/membership/health') {
+        try {
+          const response = await fetch(`${config.url}/rest/v1/notflix_kullanicilar?select=id&limit=0`, {
+            headers: { apikey: config.key, authorization: `Bearer ${config.key}`, accept: 'application/json' },
+            signal: AbortSignal.timeout(10000),
+          })
+          const text = await response.text()
+          let details = null
+          try { details = text ? JSON.parse(text) : null } catch { details = { message: 'Non-JSON response from Supabase REST' } }
+          if (!response.ok) {
+            console.error(`[MEMBERSHIP-HEALTH] Supabase ${response.status} ${details?.code || ''} ${details?.message || ''}`)
+            return json(res, 503, { ok: false, supabaseStatus: response.status, supabaseCode: details?.code || 'UNKNOWN', supabaseMessage: safeDiagnostic(details?.message) })
+          }
+          return json(res, 200, { ok: true, database: 'reachable', table: 'notflix_kullanicilar' })
+        } catch (error) {
+          return json(res, 503, { ok: false, code: 'SUPABASE_NETWORK_ERROR', message: safeDiagnostic(error.message) })
+        }
+      }
 
       if (route.startsWith('/api/admin/membership/')) {
         if (!validateAdmin(req)) return json(res, 403, { error: 'Admin yetkisi yok.' })
@@ -241,8 +265,13 @@ export function createMembershipApi() {
       return json(res, 404, { error: 'Membership endpoint not found' })
     } catch (error) {
       const status = error.status || (error.message === 'Request body too large' ? 413 : 503)
-      console.error(`[MEMBERSHIP] ${req.method} ${req.url}: ${error.message}`)
-      return json(res, status, { error: status === 503 ? 'Membership service is unavailable or not configured' : error.message })
+      const code = error.code || (status === 503 ? 'MEMBERSHIP_UNAVAILABLE' : 'MEMBERSHIP_REQUEST_ERROR')
+      console.error(`[MEMBERSHIP] ${req.method} ${req.url}: ${code} ${error.message}`)
+      return json(res, status, { error: status === 503 ? 'Membership service is unavailable or not configured' : error.message, code })
     }
   }
+}
+
+function safeDiagnostic(message) {
+  return String(message || 'Supabase request failed').replace(/(?:sbp_|eyJ)[A-Za-z0-9._-]+/g, '[REDACTED]').slice(0, 180)
 }
