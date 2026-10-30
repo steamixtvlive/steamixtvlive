@@ -72,7 +72,9 @@ export default function GeilApp() {
     <div className="app-root">
       <Sidebar route={route} />
       <main className="main" role="main">
-        <div className="main-inner">{renderView()}</div>
+        <div className="main-inner">
+          <div className="cached-view view-active view-enter">{renderView()}</div>
+        </div>
       </main>
 
       {player.open ? (

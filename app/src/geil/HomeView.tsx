@@ -174,7 +174,7 @@ export default function HomeView() {
                 aria-current={index === heroIndex % selectedHeroItems.length ? 'true' : undefined}
                 onClick={() => setHeroIndex(index)}
               >
-                <img src={item.images?.poster || ''} alt="" />
+                <img src={item.images?.poster || ''} alt="" className="loaded" />
                 {index === heroIndex % selectedHeroItems.length ? <span className="hero-thumb-fill" style={{ animationDuration: '8000ms' }} /> : null}
               </span>
             ))}
