@@ -107,6 +107,7 @@ export function SkeletonCard({ index = 0, shape = 'portrait' }: { index?: number
 }
 
 export function SectionRow({
+  sectionRef,
   title,
   items,
   loading = false,
@@ -117,6 +118,7 @@ export function SectionRow({
   captionOf,
   seeAllHref,
 }: {
+  sectionRef?: (element: HTMLElement | null) => void
   title: string
   items: GeilItem[]
   loading?: boolean
@@ -128,7 +130,7 @@ export function SectionRow({
   seeAllHref?: string
 }) {
   return (
-    <section className="section reveal is-in">
+    <section ref={sectionRef} className="section reveal is-in">
       <div className="section-head">
         <h2 className="section-title section-title-static">
           <span className="section-title-text">{title}</span>

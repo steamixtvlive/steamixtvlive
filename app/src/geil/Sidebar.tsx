@@ -47,8 +47,8 @@ export function BrandMark() {
 function NotflixSidebarMark() {
   return (
     <svg className="nf-sidebar-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <rect x="4" y="4" width="40" height="40" rx="13" fill="#D90007" />
-      <path d="M16 33V15l16 18V15" stroke="#fff" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="4" y="4" width="40" height="40" rx="9" fill="#050505" />
+      <path d="M17 32V16h5l7 9v-9h5v16h-5l-7-9v9z" fill="#E50914" />
     </svg>
   )
 }

@@ -8,6 +8,7 @@ export default function LibraryView() {
   const [tab, setTab] = useState<'favorites' | 'history'>('favorites')
   const [favorites, setFavorites] = useState(getFavorites())
   const [history, setHistory] = useState(getHistory())
+  const [confirmClear, setConfirmClear] = useState(false)
 
   useEffect(() => {
     const update = () => {
@@ -24,6 +25,7 @@ export default function LibraryView() {
 
   const items = tab === 'favorites' ? favorites : history
 
+
   return (
     <div className="catalog-view">
       <div className="catalog-head">
@@ -31,10 +33,10 @@ export default function LibraryView() {
       </div>
       <div className="tab-bar" data-zone="h">
         <div className="ep-pills">
-          <button className={`ep-pill ${tab === 'favorites' ? 'active' : ''}`} onClick={() => setTab('favorites')}>
+          <button className={`ep-pill ${tab === 'favorites' ? 'active' : ''}`} onClick={() => { setConfirmClear(false); setTab('favorites') }}>
             Favoriler {favorites.length ? <span className="ep-pill-count">{favorites.length}</span> : null}
           </button>
-          <button className={`ep-pill ${tab === 'history' ? 'active' : ''}`} onClick={() => setTab('history')}>
+          <button className={`ep-pill ${tab === 'history' ? 'active' : ''}`} onClick={() => { setConfirmClear(false); setTab('history') }}>
             Geçmiş {history.length ? <span className="ep-pill-count">{history.length}</span> : null}
           </button>
         </div>
@@ -68,9 +70,15 @@ export default function LibraryView() {
 
       {tab === 'history' && history.length ? (
         <div style={{ padding: '20px 0' }}>
-          <button className="btn btn-primary" onClick={() => { clearHistory(); setHistory([]) }}>
-            <TrashIcon size={16} /> Geçmişi temizle
-          </button>
+          {!confirmClear ? (
+            <button className="btn btn-primary" onClick={() => setConfirmClear(true)}><TrashIcon size={16} /> Geçmişi temizle</button>
+          ) : (
+            <div className="history-clear-confirm" role="alertdialog" aria-label="Geçmişi temizleme onayı">
+              <span>İzleme geçmişinin tamamı silinsin mi?</span>
+              <button className="btn btn-primary" onClick={() => { clearHistory(); setHistory([]); setConfirmClear(false) }}>Evet, temizle</button>
+              <button className="btn" onClick={() => setConfirmClear(false)}>Vazgeç</button>
+            </div>
+          )}
         </div>
       ) : null}
     </div>

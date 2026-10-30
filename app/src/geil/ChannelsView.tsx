@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GeilItem } from './types'
 import { fetchLiveCatalog, channelColor, channelQuality, initialOf, currentEpg, remainingLabel, formatClock } from './api'
-import { HeartIcon, SearchIcon } from './icons'
+import { HeartIcon } from './icons'
 
 const FAV_KEY = 'notflix_geil_live_favorites'
 
@@ -26,6 +26,16 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
   const listRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const update = () => setFavIds(readFavs())
+    window.addEventListener('notflix-geil-live-favorites', update)
+    window.addEventListener('storage', update)
+    return () => {
+      window.removeEventListener('notflix-geil-live-favorites', update)
+      window.removeEventListener('storage', update)
+    }
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -104,19 +114,6 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
 
   return (
     <div className="catalog-view channels-view">
-      <div className="tab-bar" data-zone="h">
-        <div className="row-wrap row-wrap-tight row-wrap-slim row-at-start row-at-end">
-          <div className="ep-pills" data-scroll="x">
-            <button className={`ep-pill ${tab === 'favorites' ? 'active' : ''}`} onClick={() => setTab('favorites')}>
-              Favoriler {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
-            </button>
-            <button className={`ep-pill ${tab === 'live' ? 'active' : ''}`} onClick={() => setTab('live')}>
-              Live TV
-            </button>
-          </div>
-        </div>
-      </div>
-
       {selected ? (
         <section className="live-stage" style={{ '--stage-tint': channelColor(selected.name) } as React.CSSProperties}>
           <div className="live-stage-bg" aria-hidden="true">
@@ -147,6 +144,11 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
 
       <div className="feature-bar controls-flow">
         <div className="controls ch-controls" data-zone="grid">
+          <div className="ep-pills channel-favorite-tabs">
+          <button className={`ep-pill ${tab === 'favorites' ? 'active' : ''}`} onClick={() => setTab(tab === 'favorites' ? 'live' : 'favorites')}>
+            <HeartIcon size={14} /> Favoriler {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
+          </button>
+          </div>
           <div className="search-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <circle cx="11" cy="11" r="8" />

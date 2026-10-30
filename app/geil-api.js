@@ -24,6 +24,8 @@ const TMDB_TTL = 5 * 60 * 1000
 const ITEM_TTL = 10 * 60 * 1000
 const SOURCES_TTL = 10 * 60 * 1000
 const VOD_RESOLVE_TTL = 2 * 60 * 1000
+const UPSTREAM_TIMEOUT_MS = 12000
+const MAX_CLIENT_FETCH_BYTES = 8 * 1024 * 1024
 
 const liveCatalogCache = new Map()
 const liveResolveCache = new Map()
@@ -94,6 +96,47 @@ async function fetchJson(url, options = {}) {
     throw new Error(`Upstream ${response.status}${detail ? `: ${detail.slice(0, 140)}` : ''}`)
   }
   return response.json()
+}
+
+async function fetchVodJson(url, options = {}) {
+  const response = await fetch(url, {
+    headers: {
+      'user-agent': UA,
+      accept: 'application/json,text/plain,*/*',
+      'accept-language': 'tr-TR,tr;q=0.9,en;q=0.7',
+      origin: GEIL,
+      referer: `${GEIL}/`,
+      ...(options.headers || {}),
+    },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(options.timeout || UPSTREAM_TIMEOUT_MS),
+  })
+  const body = await response.text().catch(() => '')
+  if (!response.ok) throw new Error(`Upstream ${response.status}${body ? `: ${body.slice(0, 140)}` : ''}`)
+  if (!body.trim()) throw new Error(`Upstream ${response.status}: boş yanıt`)
+  try { return JSON.parse(body) } catch {
+    throw new Error('Kaynak servisi JSON dışı yanıt verdi')
+  }
+}
+
+async function fetchVodJsonFirstWorking(urls, options = {}) {
+  let lastError
+  for (const url of [...new Set(urls)]) {
+    try { return { data: await fetchVodJson(url, options), url } }
+    catch (error) {
+      lastError = error
+      if (!/^Upstream 404\b/.test(error.message || '')) throw error
+    }
+  }
+  throw lastError || new Error('VOD kaynak yolu bulunamadı')
+}
+
+function subtitleProxyUrl(subtitle) {
+  if (!subtitle || typeof subtitle !== 'object' || !/^https?:\/\//i.test(String(subtitle.url || ''))) return null
+  return {
+    ...subtitle,
+    url: proxyUrl(subtitle.url, allowedSourceHeaders(subtitle.headers)),
+  }
 }
 
 function encodeBase64Url(value) {
@@ -328,10 +371,23 @@ async function getSources(type, id) {
   const key = `${type}:${id}`
   const cached = cacheGet(sourcesCache, key)
   if (cached) return cached
-  const url = `${GEIL}/vod/source/${type}/${encodeURIComponent(id)}.json`
-  const data = await fetchJson(url, {
+  const idPart = encodeURIComponent(id)
+  const candidates = type === 'video'
+    ? [
+        `${GEIL}/vod/source/video/${idPart}.json`,
+        `${GEIL}/vod/source/movie/${idPart}.json`,
+        `${GEIL}/vod/source/${idPart}/video.json`,
+        `${GEIL}/vod/source/${idPart}.json`,
+      ]
+    : [
+        `${GEIL}/vod/source/series/${idPart}.json`,
+        `${GEIL}/vod/source/series/${idPart}/episodes.json`,
+        `${GEIL}/vod/source/${idPart}/series.json`,
+        `${GEIL}/vod/source/${idPart}.json`,
+      ]
+  const { data } = await fetchVodJsonFirstWorking(candidates, {
     headers: { origin: GEIL, referer: `${GEIL}/` },
-    timeout: 22000,
+    timeout: Math.min(UPSTREAM_TIMEOUT_MS, 8000),
   })
   const sources = (Array.isArray(data?.sources) ? data.sources : [])
     .filter((source) => source && typeof source.url === 'string' && /^https?:\/\//i.test(source.url))
@@ -340,6 +396,7 @@ async function getSources(type, id) {
       name: source.name || 'Server',
       quality: source.quality || '',
       languages: Array.isArray(source.languages) ? source.languages : [],
+      subtitles: Array.isArray(source.subtitles) ? source.subtitles.map(subtitleProxyUrl).filter(Boolean) : [],
       size: source.size || null,
     }))
   return cacheSet(sourcesCache, key, sources, SOURCES_TTL)
@@ -357,9 +414,9 @@ async function handleVodSources(reqUrl, res) {
 }
 
 async function clientFetchChain(sourceUrl) {
-  let data = await fetchJson(`${GEIL}/vod/resolve?url=${encodeURIComponent(sourceUrl)}`, {
+  let data = await fetchVodJson(`${GEIL}/vod/resolve?url=${encodeURIComponent(sourceUrl)}`, {
     headers: { origin: GEIL, referer: `${GEIL}/` },
-    timeout: 25000,
+    timeout: UPSTREAM_TIMEOUT_MS,
   })
 
   let hops = 0
@@ -375,18 +432,24 @@ async function clientFetchChain(sourceUrl) {
       headers,
       body: cf.body || undefined,
       redirect: cf.redirect || 'follow',
-      signal: AbortSignal.timeout(22000),
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     })
 
     const contentType = target.headers.get('content-type') || ''
-    const isText = /text\/|json|xml|javascript|xhtml|mpegurl/i.test(contentType)
+    if (target.status >= 400) throw new Error(`Kaynak ara isteği ${target.status} döndürdü`)
+    const declaredLength = Number(target.headers.get('content-length') || 0)
+    if (declaredLength > MAX_CLIENT_FETCH_BYTES) throw new Error('Kaynak çözümleme yanıtı izin verilen boyutu aşıyor')
+    const isText = /text\/|json|xml|javascript|xhtml|mpegurl|vtt|srt/i.test(contentType)
     let body
     let encoding
     if (isText) {
       body = await target.text()
+      if (Buffer.byteLength(body) > MAX_CLIENT_FETCH_BYTES) throw new Error('Kaynak çözümleme yanıtı izin verilen boyutu aşıyor')
       encoding = 'utf-8'
     } else {
-      body = Buffer.from(await target.arrayBuffer()).toString('base64')
+      const bytes = Buffer.from(await target.arrayBuffer())
+      if (bytes.byteLength > MAX_CLIENT_FETCH_BYTES) throw new Error('Kaynak çözümleme yanıtı izin verilen boyutu aşıyor')
+      body = bytes.toString('base64')
       encoding = 'base64'
     }
 
@@ -412,9 +475,12 @@ async function clientFetchChain(sourceUrl) {
         body,
         encoding,
       }),
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     })
-    if (!posted.ok) throw new Error(`Kaynak çözümleme başarısız (${posted.status})`)
+    if (!posted.ok) {
+      const detail = await posted.text().catch(() => '')
+      throw new Error(`Kaynak çözümleme başarısız (${posted.status})${detail ? `: ${detail.slice(0, 120)}` : ''}`)
+    }
     data = await posted.json()
   }
 
@@ -425,7 +491,7 @@ async function clientFetchChain(sourceUrl) {
     format: data.format || null,
     live: data.live === true,
     quality: data.quality || null,
-    subtitles: Array.isArray(data.subtitles) ? data.subtitles : [],
+    subtitles: Array.isArray(data.subtitles) ? data.subtitles.map(subtitleProxyUrl).filter(Boolean) : [],
   }
 }
 
@@ -439,7 +505,8 @@ async function handleVodResolve(reqUrl, res) {
   }
 
   const sources = await getSources(type, id)
-  if (!sources.some((source) => source.url === sourceUrl)) {
+  const source = sources.find((entry) => entry.url === sourceUrl)
+  if (!source) {
     sendJson(res, 403, { ok: false, error: 'Kaynak bu içeriğe ait değil' })
     return
   }
@@ -451,6 +518,9 @@ async function handleVodResolve(reqUrl, res) {
   }
 
   const resolved = await clientFetchChain(sourceUrl)
+  if ((!resolved.subtitles || resolved.subtitles.length === 0) && source.subtitles?.length) {
+    resolved.subtitles = source.subtitles
+  }
   cacheSet(vodResolveCache, sourceUrl, resolved, VOD_RESOLVE_TTL)
   sendJson(res, 200, {
     ok: true,
@@ -483,12 +553,19 @@ async function handleStream(req, res, reqUrl) {
   }
   if (req.headers.range) headers.range = req.headers.range
 
+  const proxyTo = new URL(target)
+  const requestHeaders = new Set(['range', 'if-range', 'if-none-match', 'if-modified-since'])
+  for (const [key, value] of Object.entries(req.headers || {})) {
+    const lower = key.toLowerCase()
+    if (requestHeaders.has(lower) && typeof value === 'string') headers[lower] = value
+  }
+
   let upstream
   try {
     upstream = await fetch(target, {
       headers,
       redirect: 'follow',
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     })
   } catch (error) {
     sendText(res, 502, `Akış bağlantısı kurulamadı: ${error.message}`)
@@ -501,7 +578,7 @@ async function handleStream(req, res, reqUrl) {
   }
 
   const pathname = (() => {
-    try { return new URL(upstream.url || target).pathname.toLowerCase() } catch { return '' }
+    try { return new URL(upstream.url || target).pathname.toLowerCase() } catch { return proxyTo.pathname.toLowerCase() }
   })()
   const contentType = upstream.headers.get('content-type') || ''
   const isPlaylist = /mpegurl|x-mpegurl/i.test(contentType)
@@ -509,7 +586,11 @@ async function handleStream(req, res, reqUrl) {
     || pathname.endsWith('.m3u')
 
   if (isPlaylist) {
-    const playlist = await upstream.text()
+    let playlist
+    try { playlist = await upstream.text() } catch (error) {
+      sendText(res, 502, `Oynatma listesi okunamadı: ${error.message}`)
+      return
+    }
     if (!playlist.trim()) {
       sendText(res, 502, 'Boş oynatma listesi')
       return
@@ -530,6 +611,9 @@ async function handleStream(req, res, reqUrl) {
   if (contentLength) responseHeaders['content-length'] = contentLength
   if (contentRange) responseHeaders['content-range'] = contentRange
   if (acceptRanges) responseHeaders['accept-ranges'] = acceptRanges
+  const contentDisposition = upstream.headers.get('content-disposition')
+  if (contentDisposition) responseHeaders['content-disposition'] = contentDisposition
+  if (upstream.status === 206 && contentRange) responseHeaders['content-range'] = contentRange
 
   res.writeHead(upstream.status, responseHeaders)
   if (!upstream.body) {

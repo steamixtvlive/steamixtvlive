@@ -202,6 +202,17 @@ body,
 
 .ch-panel-tabs { margin: 0 12px 6px; }
 
+.ch-overlay .ch-panel-head { flex: 0 0 auto; }
+.ch-overlay > .ch-panel { min-height: 0; overflow: hidden; }
+.ch-overlay .ch-now { flex: 0 0 auto; margin-bottom: 6px; }
+.ch-overlay .search-wrap { flex: 0 0 auto; min-height: 44px; }
+.ch-overlay .search-wrap .glass-input { min-width: 0; }
+.ch-overlay .ch-controls { display: grid !important; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; align-items: center; flex: 0 0 auto; }
+.ch-overlay .ch-controls > * { min-width: 0; }
+.panel-favorites-filter { white-space: nowrap; padding-inline: 9px; }
+.ch-overlay .ch-list { min-height: 0; flex: 1 1 auto; }
+.player-root:has(.ch-overlay) .player-panel-toggle { display:none; }
+
 @media (max-width: 760px) {
   .player-panel-toggle { top: 10px; right: 10px; }
   .player-subtitle-select select { max-width: 105px; }

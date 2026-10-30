@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { GeilItem } from './types'
 import { fetchTmdbCatalog } from './api'
 import { SectionRow } from './Cards'
-import { useHashRoute, itemHref } from './router'
+import { itemHref } from './router'
+import { toggleFavorite, isFavorite } from './storage'
+import { HeartIcon } from './icons'
 
 const HERO_TABS = [
   { key: 'series-trending', title: 'Trend Olan Diziler', type: 'series' as const, sort: 'trendingDay' },
@@ -12,12 +14,14 @@ const HERO_TABS = [
 ]
 
 export default function HomeView() {
-  const route = useHashRoute()
   const [data, setData] = useState<Record<string, GeilItem[]>>({})
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(0)
   const [heroIndex, setHeroIndex] = useState(0)
   const [heroDetail, setHeroDetail] = useState<GeilItem | null>(null)
+  const [heroIsFavorite, setHeroIsFavorite] = useState(false)
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
+  const previousTab = useRef(activeTab)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -43,6 +47,10 @@ export default function HomeView() {
   const activeHero = selectedHeroItems[heroIndex % Math.max(1, selectedHeroItems.length)] || selectedHeroItems[0]
 
   useEffect(() => {
+    if (previousTab.current !== activeTab) {
+      previousTab.current = activeTab
+      return
+    }
     if (selectedHeroItems.length <= 1) return
     const timer = window.setInterval(() => setHeroIndex((value) => (value + 1) % selectedHeroItems.length), 8000)
     return () => window.clearInterval(timer)
@@ -59,7 +67,31 @@ export default function HomeView() {
     return () => { cancelled = true }
   }, [activeHero?.id])
 
+  function jumpToSection(key: string) {
+    window.setTimeout(() => {
+      const section = sectionRefs.current[key]
+      if (!section) return
+      const mainScroller = document.querySelector<HTMLElement>('.main-inner')
+      const rect = section.getBoundingClientRect()
+      if (mainScroller) {
+        const parent = mainScroller.getBoundingClientRect()
+        mainScroller.scrollTo({ top: mainScroller.scrollTop + rect.top - parent.top - 18, behavior: 'smooth' })
+      } else section.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 0)
+  }
+
   const hero = heroDetail || activeHero
+
+  useEffect(() => {
+    const update = () => setHeroIsFavorite(hero ? isFavorite(hero.id) : false)
+    update()
+    window.addEventListener('notflix-geil-storage', update)
+    window.addEventListener('storage', update)
+    return () => {
+      window.removeEventListener('notflix-geil-storage', update)
+      window.removeEventListener('storage', update)
+    }
+  }, [hero?.id])
 
   return (
     <div className="home-view">
@@ -76,7 +108,7 @@ export default function HomeView() {
             <button
               key={tab.key}
               className={`hero-tab ${index === activeTab ? 'active' : ''}`}
-              onClick={() => { setActiveTab(index); setHeroIndex(0) }}
+              onClick={() => { setActiveTab(index); setHeroIndex(0); jumpToSection(tab.key) }}
             >
               {tab.title}
             </button>
@@ -119,13 +151,12 @@ export default function HomeView() {
                 ) : null}
                 {hero ? (
                   <button
-                    className="btn-hero-fav"
-                    aria-label="Favori"
-                    onClick={() => {
-                      import('./storage').then(({ toggleFavorite }) => toggleFavorite(hero, 'tmdb'))
-                    }}
+                    className={`btn-hero-fav ${heroIsFavorite ? 'on' : ''}`}
+                    aria-label={heroIsFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                    aria-pressed={heroIsFavorite}
+                    onClick={() => setHeroIsFavorite(toggleFavorite(hero, 'tmdb'))}
                   >
-                    ♡
+                    <HeartIcon size={19} />
                   </button>
                 ) : null}
                 {selectedHeroItems.length > 1 ? (
@@ -182,6 +213,7 @@ export default function HomeView() {
         : HERO_TABS.map((tab) => (
             <SectionRow
               key={tab.key}
+              sectionRef={(element) => { sectionRefs.current[tab.key] = element }}
               title={tab.title}
               items={data[tab.key] || []}
               loading={false}

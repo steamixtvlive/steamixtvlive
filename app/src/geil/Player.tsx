@@ -34,27 +34,46 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const [subtitleIndex, setSubtitleIndex] = useState(-1)
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelSearch, setPanelSearch] = useState('')
-  const [panelFavoritesOnly, setPanelFavoritesOnly] = useState(false)
   const [panelSort, setPanelSort] = useState('trending')
   const [panelGroup, setPanelGroup] = useState('')
   const [panelFeatures, setPanelFeatures] = useState<GeilFeatures | null>(null)
   const [panelLoading, setPanelLoading] = useState(false)
   const [panelChannels, setPanelChannels] = useState<GeilItem[]>(channels)
+  const [catalogChannels, setCatalogChannels] = useState<GeilItem[]>(channels)
   const [favIds, setFavIds] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('notflix_geil_live_favorites') || '[]')) } catch { return new Set() }
   })
   const hideTimer = useRef<number | null>(null)
+  const userInteracted = useRef(false)
+  const currentVideos = useRef(state.item?.videos)
+  currentVideos.current = state.item?.videos
+
+  useEffect(() => {
+    if (!state.isLive) return
+    if (panelOpen) {
+      if (hideTimer.current) window.clearTimeout(hideTimer.current)
+      hideTimer.current = null
+      return
+    }
+    if (hideTimer.current) window.clearTimeout(hideTimer.current)
+    hideTimer.current = window.setTimeout(() => setShowControls(false), 2500)
+    return () => { if (hideTimer.current) window.clearTimeout(hideTimer.current) }
+  }, [panelOpen, state.isLive])
 
   useEffect(() => {
     if (!panelOpen || !state.isLive) return
     const controller = new AbortController()
     const timer = window.setTimeout(async () => {
+      if (!userInteracted.current) { setPanelLoading(false); return }
       setPanelLoading(true)
       try {
         const params = new URLSearchParams()
         if (panelSearch.trim().length >= 2) params.set('search', panelSearch.trim())
         if (panelSort) params.set('sort', panelSort)
-        if (panelGroup) params.set('group', panelGroup)
+        if (panelGroup && panelGroup !== '__favorites__') params.set('group', panelGroup)
+        if (panelGroup === '__favorites__' && panelSearch.trim().length < 2) {
+          params.set('sort', 'trending')
+        }
         params.set('limit', '300')
         const response = await fetch(`/api/geil/live/catalog?${params}`, { signal: controller.signal })
         const data = await response.json() as { ok?: boolean; items?: GeilItem[]; features?: GeilFeatures }
@@ -63,7 +82,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
         setPanelFeatures(data.features || {})
         // Use the full server-side result when available; fall back to the supplied
         // channel set if the catalog request fails or returns no items.
-        if (Array.isArray(data.items) && data.items.length > 0) setPanelChannels(data.items)
+        if (Array.isArray(data.items)) setCatalogChannels(data.items)
       } catch {
         // Keep the current list available if the optional refresh fails.
       } finally {
@@ -71,11 +90,12 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       }
     }, 250)
     return () => { window.clearTimeout(timer); controller.abort() }
-  }, [panelOpen, state.isLive, panelSearch, panelSort, panelGroup])
+  }, [panelOpen, state.isLive, panelSearch, panelSort, panelGroup, favIds])
 
   useEffect(() => {
-    setPanelChannels(channels)
-  }, [channels])
+    const merged = [...channels, ...catalogChannels].filter((channel, index, all) => all.findIndex((entry) => entry.id === channel.id) === index)
+    setPanelChannels(panelGroup === '__favorites__' ? merged.filter((channel) => favIds.has(channel.id)) : channels.length ? channels : catalogChannels)
+  }, [channels, catalogChannels, panelGroup, favIds])
 
   function togglePanelFavorite(id: string) {
     const next = new Set(favIds)
@@ -83,6 +103,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     else next.add(id)
     setFavIds(next)
     try { localStorage.setItem('notflix_geil_live_favorites', JSON.stringify([...next])) } catch { /* storage may be unavailable */ }
+    window.dispatchEvent(new CustomEvent('notflix-geil-live-favorites'))
   }
 
   useEffect(() => {
@@ -115,21 +136,34 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       }
     }
     const onDurationChange = () => setDuration(video.duration || 0)
-    const onError = () => setError('Akış oynatılamadı')
+    const onError = () => {
+      const mediaError = video.error
+      if (mediaError) setError(`Akış oynatılamadı (${mediaError.code})`)
+      else setError('Akış oynatılamadı')
+    }
+    const onStalled = () => {
+      if (!video.paused && video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) setLoading(true)
+    }
+    const onCanPlay = () => { setLoading(false); setError('') }
 
     video.addEventListener('playing', onPlaying)
     video.addEventListener('pause', onPause)
     video.addEventListener('timeupdate', onTimeUpdate)
     video.addEventListener('durationchange', onDurationChange)
     video.addEventListener('error', onError)
+    video.addEventListener('stalled', onStalled)
+    video.addEventListener('canplay', onCanPlay)
 
-    const subtitles = state.subtitles || []
+    const subtitles = state.subtitles?.length ? state.subtitles : currentVideos.current
+      ?.filter((entry) => /subtitle|caption|altyaz/i.test(`${entry.name || ''} ${entry.url}`))
+      .map((entry) => ({ url: entry.url, name: entry.name, language: entry.languages?.[0], format: entry.url.split('?')[0].split('.').pop() })) || []
     video.querySelectorAll('track[data-vod-subtitle]').forEach((track) => track.remove())
     subtitles.forEach((subtitle, index) => {
       const track = document.createElement('track')
       track.kind = 'subtitles'
       track.label = subtitle.name || subtitle.language || `Altyazı ${index + 1}`
-      track.srclang = (subtitle.language || 'und').slice(0, 2).toLowerCase()
+      const language = (subtitle.language || 'und').toLowerCase()
+      track.srclang = language === 'und' ? 'und' : language.split(/[-_]/)[0].slice(0, 2)
       track.src = subtitle.url
       track.setAttribute('data-vod-subtitle', 'true')
       video.appendChild(track)
@@ -146,6 +180,11 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       })
     } else if (state.isLive && !video.canPlayType('application/vnd.apple.mpegurl')) {
       setError('Tarayıcı HLS oynatmayı desteklemiyor')
+    } else if (state.isLive) {
+      video.src = source
+      video.load()
+      const playWhenReady = () => { void video.play().catch(() => {}) }
+      video.addEventListener('loadedmetadata', playWhenReady, { once: true })
     } else {
       video.src = source
       video.play().catch(() => {})
@@ -157,6 +196,8 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       video.removeEventListener('timeupdate', onTimeUpdate)
       video.removeEventListener('durationchange', onDurationChange)
       video.removeEventListener('error', onError)
+      video.removeEventListener('stalled', onStalled)
+      video.removeEventListener('canplay', onCanPlay)
       if (hls) hls.destroy()
       video.pause()
       video.removeAttribute('src')
@@ -179,14 +220,20 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     video.muted = muted
   }, [volume, muted])
 
-  useEffect(() => {
-    if (!showControls || panelOpen) return
+  function revealControls() {
+    if (panelOpen && state.isLive) return
+    userInteracted.current = true
+    setShowControls(true)
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
     hideTimer.current = window.setTimeout(() => setShowControls(false), 2500)
-    return () => {
-      if (hideTimer.current) window.clearTimeout(hideTimer.current)
-    }
-  }, [showControls, panelOpen])
+  }
+
+  function openChannelPanel() {
+    userInteracted.current = true
+    setPanelOpen(true)
+    setShowControls(false)
+    if (hideTimer.current) window.clearTimeout(hideTimer.current)
+  }
 
   if (!state.open) return null
 
@@ -241,12 +288,12 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   }
 
   return (
-    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={() => setShowControls(true)}>
+    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={revealControls}>
       <div className="player-pager">
         <div className="player-video-wrap">
           <video ref={videoRef} className="player-video" playsInline onClick={togglePlay} />
         </div>
-        <div className="player-click-area" onClick={() => setShowControls((value) => !value)} />
+        <div className="player-click-area" onClick={() => { userInteracted.current = true; setShowControls((value) => !value) }} />
         {loading ? (
           <div className="player-loading">
             <div className="player-pulse" />
@@ -261,7 +308,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
 
       {state.isLive ? (
         <div className={`player-controls show player-live ${showControls && !panelOpen ? '' : 'player-controls-hidden'}`}>
-          <div className="player-bottom player-iptv">
+          <div className={`player-bottom player-iptv ${showControls && !panelOpen ? '' : 'player-controls-hidden'}`}>
             <div className="iptv-bar-wrap">
               <div className="iptv-bar" data-zone="h">
                 <div className="iptv-bar-main">
@@ -302,9 +349,9 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                     </button>
                   ) : null}
                   {onChannelSelect ? (
-                    <button className={`player-ctrl-btn ${panelOpen ? 'active' : ''}`} aria-label={panelOpen ? 'Kanal listesini kapat' : 'Kanal listesini aç'} aria-pressed={panelOpen} onClick={() => setPanelOpen((value) => !value)}>
+                  <button className={`player-ctrl-btn ${panelOpen ? 'active' : ''}`} aria-label={panelOpen ? 'Kanal listesini kapat' : 'Kanal listesini aç'} aria-pressed={panelOpen} onClick={() => panelOpen ? (setPanelOpen(false), revealControls()) : openChannelPanel()}>
                       <List size={20} />
-                    </button>
+                  </button>
                   ) : null}
                   <button className="player-ctrl-btn" aria-label="PiP" onClick={togglePip}>
                     <PipIcon size={20} />
@@ -409,11 +456,13 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       ) : null}
 
       {state.isLive && panelOpen && onChannelSelect ? (
-        <div className="ch-overlay" role="dialog" aria-modal="true" aria-label="Kanallar" onClick={(event) => { if (event.target === event.currentTarget) setPanelOpen(false) }}>
-          <div className="ch-panel" onMouseEnter={() => setShowControls(false)} onMouseLeave={() => setShowControls(true)}>
+        <div className="ch-overlay" role="dialog" aria-modal="true" aria-label="Kanallar" onClick={(event) => { if (event.target === event.currentTarget) { setPanelOpen(false); revealControls() } }}>
+          <div className="ch-panel">
             <div className="ch-panel-head" data-zone="h">
               <h3>Kanallar</h3>
-              <button className="modal-close" aria-label="Kanal listesini kapat" onClick={() => setPanelOpen(false)}>×</button>
+              <div className="ch-panel-head-actions">
+                <button className="modal-close" aria-label="Kanal listesini kapat" onClick={() => { setPanelOpen(false); revealControls() }}>×</button>
+              </div>
             </div>
             <div className="ch-now" role="button" tabIndex={-1}>
               <span className="ch-now-logo ch-logo-ph" style={{ background: channelColor(state.title) }}>
@@ -434,12 +483,6 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 })()}
               </div>
             </div>
-            <div className="ep-pills ch-panel-tabs" data-zone="h">
-              <button className={`ep-pill ${panelFavoritesOnly ? 'active' : ''}`} onClick={() => setPanelFavoritesOnly((value) => !value)}>
-                <HeartIcon size={14} /> Favoriler {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
-              </button>
-              <button className={`ep-pill ${!panelFavoritesOnly ? 'active' : ''}`} onClick={() => setPanelFavoritesOnly(false)}>Live TV</button>
-            </div>
             <div className="search-wrap" style={{ margin: '10px 12px' }}>
               <SearchIcon size={20} />
               <input className="glass-input" placeholder="Kanallarda ara..." value={panelSearch} onChange={(event) => setPanelSearch(event.target.value)} />
@@ -456,10 +499,12 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                   <option key={option.id} value={option.id}>{option.name}</option>
                 ))}
               </select>
+              <button className={`ep-pill panel-favorites-filter ${panelGroup === '__favorites__' ? 'active' : ''}`} aria-pressed={panelGroup === '__favorites__'} onClick={() => setPanelGroup((value) => value === '__favorites__' ? '' : '__favorites__')}>
+                Favoriler {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
+              </button>
             </div>
             <div className="ch-list" style={{ maxHeight: 'none', minHeight: 0, overflowY: 'auto', flex: 1 }} aria-busy={panelLoading}>
               {panelChannels
-                .filter((channel) => !panelFavoritesOnly || favIds.has(channel.id))
                 .filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase()))
                 .map((channel, index) => (
                   <div className="ch-item" key={channel.id} style={{ position: 'relative', height: 64 }}>
@@ -493,20 +538,20 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                     </div>
                   </div>
                 ))}
-              {!panelLoading && panelChannels.filter((channel) => (!panelFavoritesOnly || favIds.has(channel.id)) && channel.name.toLowerCase().includes(panelSearch.toLowerCase())).length === 0 ? (
+              {!panelLoading && panelChannels.filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase())).length === 0 ? (
                 <div className="empty"><h3>Sonuç bulunamadı</h3><p>Farklı bir arama veya filtre deneyin.</p></div>
               ) : null}
             </div>
           </div>
         </div>
       ) : null}
-      {state.isLive && onChannelSelect ? (
+      {state.isLive && onChannelSelect && showControls && !panelOpen ? (
         <button
           className={`player-panel-toggle ${panelOpen ? 'is-open' : ''}`}
           type="button"
           aria-label={panelOpen ? 'Kanal listesini kapat' : 'Kanal listesini aç'}
           aria-pressed={panelOpen}
-          onClick={() => setPanelOpen((value) => !value)}
+          onClick={() => panelOpen ? (setPanelOpen(false), revealControls()) : openChannelPanel()}
         >
           <List size={21} />
         </button>

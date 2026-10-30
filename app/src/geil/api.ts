@@ -121,6 +121,17 @@ export async function fetchVodSources(type: string, id: string, signal?: AbortSi
   return Array.isArray(data.sources) ? data.sources : []
 }
 
+export async function fetchVodSourcesForTypes(types: string[], id: string, signal?: AbortSignal): Promise<GeilSource[]> {
+  const unique = [...new Set(types.filter(Boolean))]
+  const results = await Promise.all(unique.map(async (type) => {
+    try { return await fetchVodSources(type, id, signal) } catch { return [] }
+  }))
+  const byUrl = new Map<string, GeilSource>()
+  for (const source of results.flat()) byUrl.set(source.url, source)
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+  return [...byUrl.values()]
+}
+
 export async function resolveVodSource(
   type: string,
   id: string,

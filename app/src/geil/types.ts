@@ -109,6 +109,7 @@ export interface GeilSource {
   name: string
   quality?: string
   languages?: string[]
+  subtitles?: GeilSubtitle[]
   size?: number | null
 }
 

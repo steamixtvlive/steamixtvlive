@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { GeilItem, GeilSource } from './types'
-import { fetchVodSources, resolveVodSource } from './api'
+import { fetchVodSourcesForTypes, resolveVodSource } from './api'
 import { XIcon, PlayIcon, LoaderIcon } from './icons'
 import type { GeilPlayback } from './types'
 
@@ -27,34 +27,28 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
   useEffect(() => {
     mountedRef.current = true
     const controller = new AbortController()
+    const requestedTypes = episode ? ['series'] : item.type === 'series' ? ['series', 'video'] : ['video', 'series']
     setLoading(true)
+    setSources([])
+    setPlaybackReady(null)
     setError('')
-    fetchVodSources(vodType, vodId, controller.signal)
+    fetchVodSourcesForTypes(requestedTypes, vodId, controller.signal)
       .then((data) => {
         if (controller.signal.aborted) return
-        setSources(data)
+        if (!controller.signal.aborted) setSources(data)
       })
       .catch((err) => {
         if (controller.signal.aborted) return
         setError(err instanceof Error ? err.message : 'Kaynaklar yüklenemedi')
       })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false)
-      })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => { mountedRef.current = false; controller.abort() }
-  }, [vodType, vodId])
+  }, [vodType, vodId, episode?.id, item.type])
 
   async function resolve(source: GeilSource, signal?: AbortSignal): Promise<GeilPlayback> {
     setResolvingUrl(source.url)
-    try {
-      const resolved = await resolveVodSource(
-        vodType,
-        vodId,
-        source.url,
-        signal,
-      )
-      return resolved
-    } finally {
+    try { return await resolveVodSource(vodType, vodId, source.url, signal) }
+    finally {
       if (!signal?.aborted && mountedRef.current) setResolvingUrl(null)
     }
   }
@@ -79,19 +73,23 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
     setResolvingAll(true)
     setError('')
     setPlaybackReady(null)
-    for (const source of sources) {
+    const ordered = [...sources].sort((a, b) => {
+      const score = (source: GeilSource) => (source.subtitles?.length ? 10 : 0) + (source.quality ? 1 : 0)
+      return score(b) - score(a)
+    })
+    for (const source of ordered) {
       if (controller.signal.aborted) break
       try {
         await trySource(source, controller.signal)
-        setResolvingAll(false)
+        if (mountedRef.current) setResolvingAll(false)
         return
       } catch (err) {
         if (controller.signal.aborted) return
         setError(`${source.name}: ${err instanceof Error ? err.message : 'Kaynak çözümlenemedi'}`)
       }
     }
-    if (!controller.signal.aborted) setError('Denenecek kaynaklar çözümlenemedi. Başka bir zamanda tekrar deneyin.')
-    setResolvingAll(false)
+    if (!controller.signal.aborted && mountedRef.current) setError('Denenecek kaynaklar çözümlenemedi. Sağlayıcı kaynak uç noktası şu anda yanıt vermiyor olabilir.')
+    if (mountedRef.current) setResolvingAll(false)
   }
 
   async function resolveOne(source: GeilSource) {
@@ -154,8 +152,8 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
                     <span className="source-detail">
                       {[source.quality, source.size ? `${Math.round(source.size / 1048576)} MB` : ''].filter(Boolean).join(' · ')}
                     </span>
-                    {source.languages?.length ? (
-                      <span className="source-langs">{source.languages.join(', ')}</span>
+                    {(source.languages?.length || source.subtitles?.length) ? (
+                      <span className="source-langs">{[...(source.languages || []), ...(source.subtitles || []).map((subtitle) => subtitle.name || subtitle.language || '').filter(Boolean)].filter((language, index, all) => all.indexOf(language) === index).join(', ')}</span>
                     ) : null}
                   </span>
                   <span className="source-play">
