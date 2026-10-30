@@ -37,7 +37,7 @@ export function PosterCard({
           <img
             src={poster}
             alt=""
-            loading="lazy"
+            loading="eager"
             className={loaded ? 'loaded' : ''}
             onLoad={() => setLoaded(true)}
           />
@@ -126,7 +126,7 @@ export function SectionRow({
   captionOf?: (item: GeilItem) => string | undefined
 }) {
   return (
-    <section className="section reveal">
+    <section className="section reveal is-in">
       <div className="section-head">
         <h2 className="section-title section-title-static">
           <span className="section-title-text">{title}</span>
