@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import videojs from 'video.js'
-import 'video.js/dist/video-js.css'
 import type { PlayerState, GeilItem } from './types'
 import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, TvIcon } from './icons'
 import { channelColor, currentEpg, formatClock, initialOf, remainingLabel } from './api'
+
+// Keep the live-panel improvements compatible with the pre-Video.js player.
 
 interface Props {
   state: PlayerState
@@ -106,23 +106,8 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     video.addEventListener('durationchange', onDurationChange)
     video.addEventListener('error', onError)
 
-    const vjsPlayer: any = videojs(video, {
-      controls: false,
-      autoplay: true,
-      preload: 'auto',
-      fluid: false,
-      liveui: state.isLive,
-    }, () => {
-      vjsPlayer.src({ src: source, type: 'application/x-mpegURL' })
-    })
-    vjsPlayer.on('loadedmetadata', () => {
-      setLoading(false)
-      void vjsPlayer.play().catch(() => {})
-    })
-    vjsPlayer.on('error', () => {
-      setError('Akış oynatılamadı')
-    })
-    ;(video as any)._vjsPlayer = vjsPlayer
+    video.src = source
+    video.play().catch(() => {})
 
     return () => {
       video.removeEventListener('playing', onPlaying)
@@ -130,10 +115,6 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       video.removeEventListener('timeupdate', onTimeUpdate)
       video.removeEventListener('durationchange', onDurationChange)
       video.removeEventListener('error', onError)
-      const vjsPlayer = (video as any)._vjsPlayer
-      if (vjsPlayer) {
-        try { vjsPlayer.dispose() } catch {}
-      }
       try { video.pause() } catch {}
       video.removeAttribute('src')
       video.load()
