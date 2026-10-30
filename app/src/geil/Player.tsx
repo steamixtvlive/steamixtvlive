@@ -190,7 +190,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   }
 
   return (
-    <div className="player-root" ref={containerRef} onMouseMove={() => setShowControls(true)}>
+    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={() => setShowControls(true)}>
       <div className="player-pager">
         <div className="player-video-wrap">
           <video ref={videoRef} className="player-video" playsInline onClick={togglePlay} />

@@ -144,6 +144,16 @@ body,
   transition: opacity 0.3s var(--ease);
 }
 
+/* Match the legacy live-player video framing from commit 8cabb46 without
+   changing the current channel panel or its controls. */
+.player-renderer-legacy .player-video {
+  object-fit: contain;
+}
+
+.player-renderer-legacy-fullscreen .player-video {
+  object-fit: cover;
+}
+
 .item-facts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
