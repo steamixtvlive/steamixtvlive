@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { GeilItem, GeilSource } from './types'
-import { fetchVodSources, resolveVodSource, imageUrl } from './api'
+import { fetchVodSources, resolveVodSource } from './api'
 import { XIcon, PlayIcon, LoaderIcon } from './icons'
+import type { GeilPlayback } from './types'
 
 interface Props {
   item: GeilItem
   episode?: GeilItem | null
   onClose: () => void
-  onPlay: (url: string, title: string, headers?: Record<string, string>) => void
+  onPlay: (url: string, title: string, headers?: Record<string, string>, subtitles?: GeilPlayback['subtitles']) => void
 }
 
 export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
@@ -18,8 +19,13 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [resolvingUrl, setResolvingUrl] = useState<string | null>(null)
+  const [resolvingAll, setResolvingAll] = useState(false)
+  const resolveAbort = useRef<AbortController | null>(null)
+  const [playbackReady, setPlaybackReady] = useState<{ source: GeilSource; playback: GeilPlayback } | null>(null)
+  const mountedRef = useRef(false)
 
   useEffect(() => {
+    mountedRef.current = true
     const controller = new AbortController()
     setLoading(true)
     setError('')
@@ -35,25 +41,76 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
-    return () => controller.abort()
+    return () => { mountedRef.current = false; controller.abort() }
   }, [vodType, vodId])
 
-  async function resolve(source: GeilSource) {
+  async function resolve(source: GeilSource, signal?: AbortSignal): Promise<GeilPlayback> {
     setResolvingUrl(source.url)
     try {
       const resolved = await resolveVodSource(
         vodType,
         vodId,
         source.url,
+        signal,
       )
-      onPlay(resolved.url, target.name, resolved.headers || undefined)
-      onClose()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Kaynak çözümlenemedi')
+      return resolved
     } finally {
-      setResolvingUrl(null)
+      if (!signal?.aborted && mountedRef.current) setResolvingUrl(null)
     }
   }
+
+  async function trySource(source: GeilSource, signal?: AbortSignal) {
+    const resolved = await resolve(source, signal)
+    if (!signal?.aborted && mountedRef.current) setPlaybackReady({ source, playback: resolved })
+    return resolved
+  }
+
+  async function playResolved() {
+    if (!playbackReady) return
+    onPlay(playbackReady.playback.url, target.name, playbackReady.playback.headers || undefined, playbackReady.playback.subtitles || [])
+    onClose()
+  }
+
+  async function resolveAll() {
+    if (resolvingAll || !sources.length) return
+    const controller = new AbortController()
+    resolveAbort.current?.abort()
+    resolveAbort.current = controller
+    setResolvingAll(true)
+    setError('')
+    setPlaybackReady(null)
+    for (const source of sources) {
+      if (controller.signal.aborted) break
+      try {
+        await trySource(source, controller.signal)
+        setResolvingAll(false)
+        return
+      } catch (err) {
+        if (controller.signal.aborted) return
+        setError(`${source.name}: ${err instanceof Error ? err.message : 'Kaynak çözümlenemedi'}`)
+      }
+    }
+    if (!controller.signal.aborted) setError('Denenecek kaynaklar çözümlenemedi. Başka bir zamanda tekrar deneyin.')
+    setResolvingAll(false)
+  }
+
+  async function resolveOne(source: GeilSource) {
+    const controller = new AbortController()
+    resolveAbort.current?.abort()
+    resolveAbort.current = controller
+    setResolvingAll(true)
+    setError('')
+    setPlaybackReady(null)
+    try {
+      await trySource(source, controller.signal)
+    } catch (err) {
+      if (!controller.signal.aborted) setError(`${source.name}: ${err instanceof Error ? err.message : 'Kaynak çözümlenemedi'}`)
+    } finally {
+      if (!controller.signal.aborted) setResolvingAll(false)
+    }
+  }
+
+  useEffect(() => () => { mountedRef.current = false; resolveAbort.current?.abort() }, [])
 
   return (
     <div className="modal-bg" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) onClose() }}>
@@ -71,7 +128,14 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
           </div>
           {loading ? (
             <div className="empty"><p>Kaynaklar yükleniyor...</p></div>
-          ) : error ? (
+          ) : playbackReady ? (
+            <div className="empty source-preview">
+              <h3>Kaynak hazır: {playbackReady.source.name}</h3>
+              <p>{playbackReady.playback.quality || playbackReady.source.quality || 'Oynatılabilir akış çözümlendi'}</p>
+              <button className="btn" onClick={() => void playResolved()}><PlayIcon size={16} /> İzle</button>
+              {playbackReady.playback.subtitles?.length ? <p>{playbackReady.playback.subtitles.length} altyazı bulundu</p> : null}
+            </div>
+          ) : error && sources.length === 0 ? (
             <div className="empty"><h3>Kaynaklar yüklenemedi</h3><p>{error}</p></div>
           ) : sources.length === 0 ? (
             <div className="empty"><h3>Kaynak bulunamadı</h3><p>Bu içerik için şu an kaynak yok.</p></div>
@@ -81,8 +145,8 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
                 <button
                   key={`${source.url}-${index}`}
                   className="source-item"
-                  onClick={() => resolve(source)}
-                  disabled={resolvingUrl !== null}
+                  onClick={() => { setError(''); void resolveOne(source) }}
+                  disabled={resolvingUrl !== null || resolvingAll}
                 >
                   <span className="source-icon">{source.name.slice(0, 2).toUpperCase()}</span>
                   <span className="source-info">
@@ -101,6 +165,13 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
               ))}
             </div>
           )}
+          {error && sources.length > 0 && !playbackReady ? <p className="source-error" role="alert">{error}</p> : null}
+          {!loading && sources.length > 0 && !playbackReady && !resolvingAll ? (
+            <button className="btn source-auto-resolve" onClick={() => void resolveAll()} disabled={resolvingAll || resolvingUrl !== null}>
+              Kaynakları sırayla dene
+            </button>
+          ) : null}
+          {!loading && resolvingAll && !playbackReady ? <div className="empty source-resolving"><LoaderIcon size={18} /> Kaynaklar sırayla deneniyor…</div> : null}
         </div>
       </div>
     </div>

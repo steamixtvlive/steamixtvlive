@@ -26,6 +26,13 @@ export interface GeilEpgEntry {
   end: string
 }
 
+export interface GeilSubtitle {
+  url: string
+  language?: string
+  name?: string
+  format?: string
+}
+
 export interface GeilCatalogRef {
   id: string
   type?: string
@@ -112,7 +119,7 @@ export interface GeilPlayback {
   live?: boolean
   quality?: string | null
   headers?: Record<string, string>
-  subtitles?: Array<{ url: string; language?: string; name?: string; format?: string }>
+  subtitles?: GeilSubtitle[]
 }
 
 export interface PlayerState {
@@ -121,6 +128,8 @@ export interface PlayerState {
   subtitle?: string
   isLive: boolean
   streamUrl: string
+  streamHeaders?: Record<string, string>
+  subtitles?: GeilSubtitle[]
   sources?: Array<{ name: string; url: string; id?: string }>
   sourceIndex?: number
   poster?: string

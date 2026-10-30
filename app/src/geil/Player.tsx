@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import type { GeilFeatures } from './types'
+import type { MouseEvent } from 'react'
+import Hls from 'hls.js'
+import { Captions, List } from 'lucide-react'
 import type { PlayerState, GeilItem } from './types'
-import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, TvIcon } from './icons'
+import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, HeartIcon, SearchIcon } from './icons'
 import { channelColor, currentEpg, formatClock, initialOf, remainingLabel } from './api'
 
 // Keep the live-panel improvements compatible with the pre-Video.js player.
@@ -11,11 +15,10 @@ interface Props {
   onPrev?: (() => void) | null
   onNext?: (() => void) | null
   channels?: GeilItem[]
-  channelIndex?: number
   onChannelSelect?: ((channel: GeilItem) => void) | null
 }
 
-export default function Player({ state, onClose, onPrev, onNext, channels = [], channelIndex = -1, onChannelSelect }: Props) {
+export default function Player({ state, onClose, onPrev, onNext, channels = [], onChannelSelect }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [loading, setLoading] = useState(true)
@@ -28,13 +31,18 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [buffered, setBuffered] = useState(0)
+  const [subtitleIndex, setSubtitleIndex] = useState(-1)
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelSearch, setPanelSearch] = useState('')
+  const [panelFavoritesOnly, setPanelFavoritesOnly] = useState(false)
   const [panelSort, setPanelSort] = useState('trending')
   const [panelGroup, setPanelGroup] = useState('')
-  const [panelFeatures, setPanelFeatures] = useState<any>(null)
+  const [panelFeatures, setPanelFeatures] = useState<GeilFeatures | null>(null)
   const [panelLoading, setPanelLoading] = useState(false)
   const [panelChannels, setPanelChannels] = useState<GeilItem[]>(channels)
+  const [favIds, setFavIds] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('notflix_geil_live_favorites') || '[]')) } catch { return new Set() }
+  })
   const hideTimer = useRef<number | null>(null)
 
   useEffect(() => {
@@ -49,7 +57,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
         if (panelGroup) params.set('group', panelGroup)
         params.set('limit', '300')
         const response = await fetch(`/api/geil/live/catalog?${params}`, { signal: controller.signal })
-        const data = await response.json()
+        const data = await response.json() as { ok?: boolean; items?: GeilItem[]; features?: GeilFeatures }
         if (!response.ok || data?.ok === false) throw new Error('Kanallar yüklenemedi')
         if (controller.signal.aborted) return
         setPanelFeatures(data.features || {})
@@ -69,6 +77,14 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     setPanelChannels(channels)
   }, [channels])
 
+  function togglePanelFavorite(id: string) {
+    const next = new Set(favIds)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setFavIds(next)
+    try { localStorage.setItem('notflix_geil_live_favorites', JSON.stringify([...next])) } catch { /* storage may be unavailable */ }
+  }
+
   useEffect(() => {
     if (!state.open) return
     document.documentElement.classList.add('player-open', 'player-osd')
@@ -86,6 +102,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     setCurrentTime(0)
     setDuration(0)
     setBuffered(0)
+    setSubtitleIndex(-1)
 
     const source = state.streamUrl
 
@@ -106,8 +123,33 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     video.addEventListener('durationchange', onDurationChange)
     video.addEventListener('error', onError)
 
-    video.src = source
-    video.play().catch(() => {})
+    const subtitles = state.subtitles || []
+    video.querySelectorAll('track[data-vod-subtitle]').forEach((track) => track.remove())
+    subtitles.forEach((subtitle, index) => {
+      const track = document.createElement('track')
+      track.kind = 'subtitles'
+      track.label = subtitle.name || subtitle.language || `Altyazı ${index + 1}`
+      track.srclang = (subtitle.language || 'und').slice(0, 2).toLowerCase()
+      track.src = subtitle.url
+      track.setAttribute('data-vod-subtitle', 'true')
+      video.appendChild(track)
+    })
+
+    let hls: Hls | null = null
+    if (state.isLive && Hls.isSupported()) {
+      hls = new Hls({ enableWorker: true, lowLatencyMode: true })
+      hls.loadSource(source)
+      hls.attachMedia(video)
+      hls.on(Hls.Events.MANIFEST_PARSED, () => { void video.play().catch(() => {}) })
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (data.fatal) setError('Akış oynatılamadı')
+      })
+    } else if (state.isLive && !video.canPlayType('application/vnd.apple.mpegurl')) {
+      setError('Tarayıcı HLS oynatmayı desteklemiyor')
+    } else {
+      video.src = source
+      video.play().catch(() => {})
+    }
 
     return () => {
       video.removeEventListener('playing', onPlaying)
@@ -115,11 +157,20 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       video.removeEventListener('timeupdate', onTimeUpdate)
       video.removeEventListener('durationchange', onDurationChange)
       video.removeEventListener('error', onError)
-      try { video.pause() } catch {}
+      if (hls) hls.destroy()
+      video.pause()
       video.removeAttribute('src')
       video.load()
     }
-  }, [state.open, state.streamUrl, state.isLive])
+  }, [state.open, state.streamUrl, state.isLive, state.subtitles])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || state.isLive) return
+    Array.from(video.textTracks).forEach((track, index) => {
+      track.mode = index === subtitleIndex ? 'showing' : 'disabled'
+    })
+  }, [subtitleIndex, state.subtitles, state.isLive, state.streamUrl])
 
   useEffect(() => {
     const video = videoRef.current
@@ -129,13 +180,13 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   }, [volume, muted])
 
   useEffect(() => {
-    if (!showControls) return
+    if (!showControls || panelOpen) return
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
     hideTimer.current = window.setTimeout(() => setShowControls(false), 2500)
     return () => {
       if (hideTimer.current) window.clearTimeout(hideTimer.current)
     }
-  }, [showControls])
+  }, [showControls, panelOpen])
 
   if (!state.open) return null
 
@@ -173,7 +224,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     else video.pause()
   }
 
-  function seek(event: any) {
+  function seek(event: MouseEvent<HTMLDivElement>) {
     const video = videoRef.current
     if (!video || !duration) return
     const rect = event.currentTarget.getBoundingClientRect()
@@ -209,7 +260,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       </div>
 
       {state.isLive ? (
-        <div className={`player-controls show player-live ${showControls ? '' : 'player-controls-hidden'}`}>
+        <div className={`player-controls show player-live ${showControls && !panelOpen ? '' : 'player-controls-hidden'}`}>
           <div className="player-bottom player-iptv">
             <div className="iptv-bar-wrap">
               <div className="iptv-bar" data-zone="h">
@@ -251,8 +302,8 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                     </button>
                   ) : null}
                   {onChannelSelect ? (
-                    <button className="player-ctrl-btn" aria-label="Kanallar" onClick={() => setPanelOpen((value) => !value)}>
-                      <TvIcon size={20} />
+                    <button className={`player-ctrl-btn ${panelOpen ? 'active' : ''}`} aria-label={panelOpen ? 'Kanal listesini kapat' : 'Kanal listesini aç'} aria-pressed={panelOpen} onClick={() => setPanelOpen((value) => !value)}>
+                      <List size={20} />
                     </button>
                   ) : null}
                   <button className="player-ctrl-btn" aria-label="PiP" onClick={togglePip}>
@@ -261,16 +312,14 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                   <button className="player-ctrl-btn" aria-label="Tam ekran" onClick={toggleFullscreen}>
                     {isFullscreen ? <ExitFullscreenIcon size={20} /> : <FullscreenIcon size={20} />}
                   </button>
-                  <button className="player-ctrl-btn" aria-label="Kapat" onClick={onClose}>
-                    <XIcon size={20} />
-                  </button>
+                  <button className="player-ctrl-btn" aria-label="Kapat" onClick={onClose}><XIcon size={20} /></button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className={`player-controls show ${showControls ? '' : 'player-controls-hidden'}`}>
+        <div className={`player-controls show ${showControls && !panelOpen ? '' : 'player-controls-hidden'}`}>
           <div className="player-top">
             <button className="player-ctrl-btn" aria-label="Kapat" onClick={onClose}>
               <XIcon size={20} />
@@ -285,15 +334,15 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button className="player-ctrl-btn" aria-label="Oynat/Duraklat" onClick={togglePlay}>
                   {playing ? '❚❚' : <PlayIcon size={20} />}
                 </button>
-                <span style={{ fontVariantNumeric: 'tabular-nums', fontSize: 13, color: '#fff' }}>
-                  {formatTime(currentTime)} / {formatTime(duration)}
-                </span>
+                  <span style={{ fontVariantNumeric: 'tabular-nums', fontSize: 13, color: '#fff' }}>
+                    {formatTime(currentTime)} / {formatTime(duration)}
+                  </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div className="player-vol-wrap">
                   <button className="player-ctrl-btn" aria-label="Ses" onClick={() => setMuted((value) => !value)}>
                     {muted || volume === 0 ? <MuteIcon size={20} /> : <VolumeIcon size={20} />}
@@ -311,6 +360,17 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                     }}
                   />
                 </div>
+                {!state.isLive && (state.subtitles?.length || 0) > 0 ? (
+                  <label className="player-subtitle-select" onClick={(event) => event.stopPropagation()}>
+                    <Captions size={19} aria-hidden="true" />
+                    <select aria-label="Altyazı seç" value={subtitleIndex} onChange={(event) => setSubtitleIndex(Number(event.target.value))}>
+                      <option value={-1}>Altyazı kapalı</option>
+                      {state.subtitles?.map((subtitle, index) => (
+                        <option key={`${subtitle.url}-${index}`} value={index}>{subtitle.name || subtitle.language || `Altyazı ${index + 1}`}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 <button className="player-ctrl-btn" aria-label="PiP" onClick={togglePip}>
                   <PipIcon size={20} />
                 </button>
@@ -325,6 +385,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
 
       {state.isLive ? (
         <div
+          className={panelOpen ? 'player-live-brand-hidden' : ''}
           style={{
             position: 'absolute',
             top: 16,
@@ -349,10 +410,10 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
 
       {state.isLive && panelOpen && onChannelSelect ? (
         <div className="ch-overlay" role="dialog" aria-modal="true" aria-label="Kanallar" onClick={(event) => { if (event.target === event.currentTarget) setPanelOpen(false) }}>
-          <div className="ch-panel">
+          <div className="ch-panel" onMouseEnter={() => setShowControls(false)} onMouseLeave={() => setShowControls(true)}>
             <div className="ch-panel-head" data-zone="h">
               <h3>Kanallar</h3>
-              <button className="modal-close" onClick={() => setPanelOpen(false)}>×</button>
+              <button className="modal-close" aria-label="Kanal listesini kapat" onClick={() => setPanelOpen(false)}>×</button>
             </div>
             <div className="ch-now" role="button" tabIndex={-1}>
               <span className="ch-now-logo ch-logo-ph" style={{ background: channelColor(state.title) }}>
@@ -373,28 +434,32 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 })()}
               </div>
             </div>
-            <div className="search-wrap" style={{ margin: '10px 0' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
+            <div className="ep-pills ch-panel-tabs" data-zone="h">
+              <button className={`ep-pill ${panelFavoritesOnly ? 'active' : ''}`} onClick={() => setPanelFavoritesOnly((value) => !value)}>
+                <HeartIcon size={14} /> Favoriler {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
+              </button>
+              <button className={`ep-pill ${!panelFavoritesOnly ? 'active' : ''}`} onClick={() => setPanelFavoritesOnly(false)}>Live TV</button>
+            </div>
+            <div className="search-wrap" style={{ margin: '10px 12px' }}>
+              <SearchIcon size={20} />
               <input className="glass-input" placeholder="Kanallarda ara..." value={panelSearch} onChange={(event) => setPanelSearch(event.target.value)} />
             </div>
             <div className="ch-controls" style={{ display: 'flex', gap: 8, padding: '0 12px 10px', flexShrink: 0 }}>
               <select className="sort-select" aria-label="Sıralama" value={panelSort} onChange={(event) => setPanelSort(event.target.value)}>
-                {(panelFeatures?.sort || [{ id: 'trending', name: 'Trending' }, { id: 'name', name: 'A-Z' }]).map((option: any) => (
+                {(panelFeatures?.sort || [{ id: 'trending', name: 'Trending' }, { id: 'name', name: 'A-Z' }]).map((option) => (
                   <option key={option.id} value={option.id}>{option.name === 'Trending' ? 'Trending' : option.name}</option>
                 ))}
               </select>
               <select className="sort-select" aria-label="Ülke" value={panelGroup} onChange={(event) => setPanelGroup(event.target.value)}>
                 <option value="">Country: tümü</option>
-                {(panelFeatures?.filter?.find((feature: any) => feature.id === 'group')?.values || []).map((option: any) => (
+                {(panelFeatures?.filter?.find((feature) => feature.id === 'group')?.values || []).map((option) => (
                   <option key={option.id} value={option.id}>{option.name}</option>
                 ))}
               </select>
             </div>
             <div className="ch-list" style={{ maxHeight: 'none', minHeight: 0, overflowY: 'auto', flex: 1 }} aria-busy={panelLoading}>
               {panelChannels
+                .filter((channel) => !panelFavoritesOnly || favIds.has(channel.id))
                 .filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase()))
                 .map((channel, index) => (
                   <div className="ch-item" key={channel.id} style={{ position: 'relative', height: 64 }}>
@@ -422,15 +487,29 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                           })()}
                         </div>
                       </div>
+                      <button className={`ch-fav ${favIds.has(channel.id) ? 'on' : ''}`} aria-label="Favori" aria-pressed={favIds.has(channel.id)} onClick={(event) => { event.stopPropagation(); togglePanelFavorite(channel.id) }}>
+                        <HeartIcon size={20} />
+                      </button>
                     </div>
                   </div>
                 ))}
-              {!panelLoading && panelChannels.filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase())).length === 0 ? (
+              {!panelLoading && panelChannels.filter((channel) => (!panelFavoritesOnly || favIds.has(channel.id)) && channel.name.toLowerCase().includes(panelSearch.toLowerCase())).length === 0 ? (
                 <div className="empty"><h3>Sonuç bulunamadı</h3><p>Farklı bir arama veya filtre deneyin.</p></div>
               ) : null}
             </div>
           </div>
         </div>
+      ) : null}
+      {state.isLive && onChannelSelect ? (
+        <button
+          className={`player-panel-toggle ${panelOpen ? 'is-open' : ''}`}
+          type="button"
+          aria-label={panelOpen ? 'Kanal listesini kapat' : 'Kanal listesini aç'}
+          aria-pressed={panelOpen}
+          onClick={() => setPanelOpen((value) => !value)}
+        >
+          <List size={21} />
+        </button>
       ) : null}
     </div>
   )

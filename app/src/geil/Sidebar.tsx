@@ -44,6 +44,15 @@ export function BrandMark() {
   )
 }
 
+function NotflixSidebarMark() {
+  return (
+    <svg className="nf-sidebar-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <rect x="4" y="4" width="40" height="40" rx="13" fill="#D90007" />
+      <path d="M16 33V15l16 18V15" stroke="#fff" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default function Sidebar({ route }: { route: RouteState }) {
   const mainActive = MAIN_ITEMS.findIndex((item) => isActive(route, item.view))
   const settingsActive = isActive(route, 'settings')
@@ -54,8 +63,8 @@ export default function Sidebar({ route }: { route: RouteState }) {
       <aside className="sidebar" data-zone="sidebar" role="navigation" aria-label="Main navigation">
         <div className="sidebar-dock">
           <a className="sidebar-brand" href="#/" aria-label="Anasayfa">
-            <BrandMark />
-            <span className="brand-text">NOTFLİX</span>
+            <NotflixSidebarMark />
+            <span className="brand-text sidebar-notflix-wordmark">NOTFLİX</span>
           </a>
           <nav className="sidebar-nav" aria-label="Main" style={{ '--nav-active': Math.max(0, mainActive) } as React.CSSProperties}>
             <div className={`nav-pill ${mainActive < 0 ? 'is-off' : ''}`} aria-hidden="true" />

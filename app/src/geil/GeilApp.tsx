@@ -2,7 +2,7 @@ import './geil.css'
 import './overrides.css'
 import { useEffect, useState } from 'react'
 import type { GeilItem, PlayerState } from './types'
-import { resolveLiveChannel, fetchLiveCatalog, signStreamUrl } from './api'
+import { resolveLiveChannel, fetchLiveCatalog } from './api'
 import { useHashRoute } from './router'
 import Sidebar from './Sidebar'
 import HomeView from './HomeView'
@@ -54,6 +54,7 @@ export default function GeilApp() {
         subtitle: channel.tags?.join(' · '),
         isLive: true,
         streamUrl: resolved.url,
+        streamHeaders: resolved.headers,
         poster: undefined,
         item: channel,
         channels: liveChannels,
@@ -83,6 +84,7 @@ export default function GeilApp() {
         subtitle: channel.tags?.join(' · '),
         isLive: true,
         streamUrl: resolved.url,
+        streamHeaders: resolved.headers,
         item: channel,
         channelIndex: current.channels?.findIndex((entry) => entry.id === channel.id) ?? current.channelIndex,
       }))
@@ -120,7 +122,6 @@ export default function GeilApp() {
           state={player}
           onClose={closePlayer}
           channels={player.channels}
-          channelIndex={player.channelIndex}
           onChannelSelect={player.isLive ? selectLiveChannel : null}
         />
       ) : null}
@@ -130,12 +131,14 @@ export default function GeilApp() {
           item={sourceModal.item}
           episode={sourceModal.episode}
           onClose={() => setSourceModal(null)}
-          onPlay={(url, title) => {
+          onPlay={(url, title, headers, subtitles) => {
             setPlayer({
               open: true,
               title,
               isLive: false,
               streamUrl: url,
+              streamHeaders: headers,
+              subtitles: subtitles || [],
               item: sourceModal.episode || sourceModal.item,
             })
             setSourceModal(null)

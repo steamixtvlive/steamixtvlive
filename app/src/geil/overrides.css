@@ -154,12 +154,87 @@ body,
   object-fit: cover;
 }
 
+.player-panel-toggle {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 25;
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  background: rgba(16,18,22,.74);
+  color: #f5f5f5;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.player-panel-toggle:hover,
+.player-panel-toggle.is-open { background: rgba(229,9,20,.82); }
+
+.player-root:has(.ch-overlay) .player-controls,
+.player-root:has(.ch-overlay) .player-live-brand-hidden { opacity: 0; pointer-events: none; }
+
+.player-root .player-vol-wrap input[type="range"] { accent-color: #e50914; }
+
+.player-root .player-seek-fill,
+.player-root .player-seek-handle { background-color: #e50914; }
+
+.player-subtitle-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+}
+
+.player-subtitle-select select {
+  max-width: 150px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 7px;
+  padding: 6px 8px;
+  background: rgba(15,17,21,.92);
+  color: #fff;
+  accent-color: #e50914;
+}
+
+.ch-panel-tabs { margin: 0 12px 6px; }
+
+@media (max-width: 760px) {
+  .player-panel-toggle { top: 10px; right: 10px; }
+  .player-subtitle-select select { max-width: 105px; }
+}
+
 .item-facts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   margin-top: 12px;
 }
+
+.sidebar-notflix-wordmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 27px;
+  padding: 3px 12px 4px;
+  border-radius: 999px;
+  background: #c9000a;
+  color: #fff;
+  font-family: 'Bebas Neue', 'Anton', Impact, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1;
+  -webkit-text-fill-color: #fff;
+}
+
+.brand-icon { display: none; }
+.nf-sidebar-mark { width: 30px; height: 30px; flex: 0 0 30px; }
+.sidebar-brand { gap: 8px; }
+.sidebar-brand .brand-text { font-size: 16px; }
 
 .item-facts-grid > div {
   display: flex;
