@@ -2,7 +2,7 @@ import './geil.css'
 import './overrides.css'
 import { useEffect, useState } from 'react'
 import type { GeilItem, PlayerState } from './types'
-import { resolveLiveChannel, fetchLiveCatalog } from './api'
+import { resolveLiveChannel, fetchLiveCatalog, signStreamUrl } from './api'
 import { useHashRoute } from './router'
 import Sidebar from './Sidebar'
 import HomeView from './HomeView'
@@ -67,14 +67,22 @@ export default function GeilApp() {
     setSourceModal({ item, episode: episode || null })
   }
 
-  function playDirect(item: GeilItem, episode?: GeilItem) {
+  async function playDirect(item: GeilItem, episode?: GeilItem) {
     const target = episode || item
     if (!target.url) return
+    let streamUrl = target.url
+    if (/^http:\/\//i.test(target.url)) {
+      try {
+        streamUrl = await signStreamUrl(target.url)
+      } catch {
+        streamUrl = target.url
+      }
+    }
     setPlayer({
       open: true,
       title: target.name,
       isLive: false,
-      streamUrl: target.url,
+      streamUrl,
       item: target,
     })
   }

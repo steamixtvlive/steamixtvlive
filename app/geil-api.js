@@ -722,6 +722,12 @@ export function createGeilApi() {
         await handleM3uItem(reqUrl, res)
         return
       }
+      if (path === '/api/geil/proxy') {
+        const url = (reqUrl.searchParams.get('url') || '').trim()
+        if (!/^https?:\/\//i.test(url)) { sendJson(res, 400, { ok: false, error: 'Geçersiz adres' }); return }
+        sendJson(res, 200, { ok: true, url: proxyUrl(url, {}) })
+        return
+      }
       sendJson(res, 404, { ok: false, error: 'Bilinmeyen GEIL uç noktası' })
     } catch (error) {
       console.error(`[GEIL] ${path}: ${error.message}`)

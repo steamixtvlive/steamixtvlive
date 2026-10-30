@@ -105,6 +105,11 @@ export async function fetchM3uItems(
   }
 }
 
+export async function signStreamUrl(url: string, signal?: AbortSignal): Promise<string> {
+  const data = await requestJson<{ url: string }>(`/api/geil/proxy?url=${encodeURIComponent(url)}`, signal)
+  return data.url
+}
+
 export async function fetchM3uItem(id: string, signal?: AbortSignal): Promise<GeilItem> {
   const data = await requestJson<{ item: GeilItem }>(`/api/geil/vod/m3u/item?id=${encodeURIComponent(id)}`, signal)
   return data.item
