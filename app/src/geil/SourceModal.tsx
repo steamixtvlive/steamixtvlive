@@ -12,6 +12,8 @@ interface Props {
 
 export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
   const target = episode || item
+  const vodType = episode ? 'series' : item.type === 'series' ? 'series' : 'video'
+  const vodId = episode ? episode.id : item.id
   const [sources, setSources] = useState<GeilSource[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -21,7 +23,7 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
     const controller = new AbortController()
     setLoading(true)
     setError('')
-    fetchVodSources(target.type === 'series' ? 'series' : 'video', target.id, controller.signal)
+    fetchVodSources(vodType, vodId, controller.signal)
       .then((data) => {
         if (controller.signal.aborted) return
         setSources(data)
@@ -34,14 +36,14 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
         if (!controller.signal.aborted) setLoading(false)
       })
     return () => controller.abort()
-  }, [target.id, target.type])
+  }, [vodType, vodId])
 
   async function resolve(source: GeilSource) {
     setResolvingUrl(source.url)
     try {
       const resolved = await resolveVodSource(
-        target.type === 'series' ? 'series' : 'video',
-        target.id,
+        vodType,
+        vodId,
         source.url,
       )
       onPlay(resolved.url, target.name, resolved.headers || undefined)
