@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 import type { PlayerState, GeilItem } from './types'
-import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, GridIcon, TvIcon } from './icons'
+import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, TvIcon } from './icons'
+import { channelColor, currentEpg, formatClock, initialOf, remainingLabel } from './api'
 
 interface Props {
   state: PlayerState
@@ -29,7 +30,44 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const [buffered, setBuffered] = useState(0)
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelSearch, setPanelSearch] = useState('')
+  const [panelSort, setPanelSort] = useState('trending')
+  const [panelGroup, setPanelGroup] = useState('')
+  const [panelFeatures, setPanelFeatures] = useState<any>(null)
+  const [panelLoading, setPanelLoading] = useState(false)
+  const [panelChannels, setPanelChannels] = useState<GeilItem[]>(channels)
   const hideTimer = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!panelOpen || !state.isLive) return
+    const controller = new AbortController()
+    const timer = window.setTimeout(async () => {
+      setPanelLoading(true)
+      try {
+        const params = new URLSearchParams()
+        if (panelSearch.trim().length >= 2) params.set('search', panelSearch.trim())
+        if (panelSort) params.set('sort', panelSort)
+        if (panelGroup) params.set('group', panelGroup)
+        params.set('limit', '300')
+        const response = await fetch(`/api/geil/live/catalog?${params}`, { signal: controller.signal })
+        const data = await response.json()
+        if (!response.ok || data?.ok === false) throw new Error('Kanallar yüklenemedi')
+        if (controller.signal.aborted) return
+        setPanelFeatures(data.features || {})
+        // Use the full server-side result when available; fall back to the supplied
+        // channel set if the catalog request fails or returns no items.
+        if (Array.isArray(data.items) && data.items.length > 0) setPanelChannels(data.items)
+      } catch {
+        // Keep the current list available if the optional refresh fails.
+      } finally {
+        if (!controller.signal.aborted) setPanelLoading(false)
+      }
+    }, 250)
+    return () => { window.clearTimeout(timer); controller.abort() }
+  }, [panelOpen, state.isLive, panelSearch, panelSort, panelGroup])
+
+  useEffect(() => {
+    setPanelChannels(channels)
+  }, [channels])
 
   useEffect(() => {
     if (!state.open) return
@@ -336,12 +374,22 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
               <button className="modal-close" onClick={() => setPanelOpen(false)}>×</button>
             </div>
             <div className="ch-now" role="button" tabIndex={-1}>
-              <span className="ch-now-logo ch-logo-ph" style={{ background: 'rgba(255,255,255,0.14)' }}>
-                {state.title ? state.title[0] : '•'}
+              <span className="ch-now-logo ch-logo-ph" style={{ background: channelColor(state.title) }}>
+                {initialOf(state.title)}
               </span>
               <div className="ch-now-text">
                 <div className="ch-now-label">Şu an oynatılıyor</div>
                 <div className="ch-now-name">{state.title}</div>
+                {(() => {
+                  const epg = currentEpg(state.item)
+                  return epg.entry ? (
+                    <div className="ch-epg">
+                      <span className="ch-epg-time">{formatClock(epg.entry.start)} – {formatClock(epg.entry.end)}</span>
+                      <span className="ch-epg-title">{epg.entry.title}</span>
+                      <span className="ch-epg-left">{remainingLabel(epg.entry.end)}</span>
+                    </div>
+                  ) : <div className="ch-epg ch-epg-none">Yayın akışı bilgisi yok</div>
+                })()}
               </div>
             </div>
             <div className="search-wrap" style={{ margin: '10px 0' }}>
@@ -351,21 +399,54 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
               </svg>
               <input className="glass-input" placeholder="Kanallarda ara..." value={panelSearch} onChange={(event) => setPanelSearch(event.target.value)} />
             </div>
-            <div className="ch-list" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-              {channels
+            <div className="ch-controls" style={{ display: 'flex', gap: 8, padding: '0 12px 10px', flexShrink: 0 }}>
+              <select className="sort-select" aria-label="Sıralama" value={panelSort} onChange={(event) => setPanelSort(event.target.value)}>
+                {(panelFeatures?.sort || [{ id: 'trending', name: 'Trending' }, { id: 'name', name: 'A-Z' }]).map((option: any) => (
+                  <option key={option.id} value={option.id}>{option.name === 'Trending' ? 'Trending' : option.name}</option>
+                ))}
+              </select>
+              <select className="sort-select" aria-label="Ülke" value={panelGroup} onChange={(event) => setPanelGroup(event.target.value)}>
+                <option value="">Country: tümü</option>
+                {(panelFeatures?.filter?.find((feature: any) => feature.id === 'group')?.values || []).map((option: any) => (
+                  <option key={option.id} value={option.id}>{option.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="ch-list" style={{ maxHeight: 'none', minHeight: 0, overflowY: 'auto', flex: 1 }} aria-busy={panelLoading}>
+              {panelChannels
                 .filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase()))
-                .slice(0, 200)
                 .map((channel, index) => (
-                  <div className="ch-item" key={channel.id} style={{ position: 'relative', height: 52 }}>
+                  <div className="ch-item" key={channel.id} style={{ position: 'relative', height: 64 }}>
                     <div className="ch-row" style={{ height: '100%' }} onClick={() => onChannelSelect(channel)}>
                       <span className="ch-num">{index + 1}</span>
-                      <span className="ch-logo ch-logo-ph" style={{ background: 'rgba(255,255,255,0.12)' }}>{channel.name[0]}</span>
+                      <span className="ch-logo ch-logo-ph" style={{ background: channelColor(channel.name) }}>{initialOf(channel.name)}</span>
                       <div className="ch-main">
-                        <div className="ch-head"><span className="ch-name">{channel.name}</span></div>
+                        <div className="ch-head">
+                          <span className="ch-name">{channel.name}</span>
+                          {channel.id === state.item?.id ? <span className="ch-now-label">ŞU AN</span> : null}
+                        </div>
+                        <div className="ch-epg-block">
+                          {(() => {
+                            const epg = currentEpg(channel)
+                            return epg.entry ? (
+                              <>
+                                <div className="ch-epg">
+                                  <span className="ch-epg-time">{formatClock(epg.entry.start)} – {formatClock(epg.entry.end)}</span>
+                                  <span className="ch-epg-title">{epg.entry.title}</span>
+                                  <span className="ch-epg-left">{remainingLabel(epg.entry.end)}</span>
+                                </div>
+                                <div className="ch-epg-track"><div className="ch-epg-fill" style={{ width: `${epg.progress}%` }} /></div>
+                              </>
+                            ) : <div className="ch-epg ch-epg-none">Yayın akışı bilgisi yok</div>
+                          })()}
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
+              {!panelLoading && panelChannels.filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase())).length === 0 ? (
+                <div className="empty"><h3>Sonuç bulunamadı</h3><p>Farklı bir arama veya filtre deneyin.</p></div>
+              ) : null}
             </div>
           </div>
         </div>
