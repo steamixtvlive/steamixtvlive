@@ -329,51 +329,44 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       ) : null}
 
       {state.isLive && panelOpen && onChannelSelect ? (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: 320,
-            maxWidth: '80vw',
-            zIndex: 13,
-            background: 'rgba(12, 15, 20, 0.92)',
-            borderLeft: '1px solid rgba(255,255,255,0.12)',
-            backdropFilter: 'blur(18px)',
-            overflowY: 'auto',
-            padding: 16,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <strong style={{ color: '#fff' }}>Kanallar</strong>
-            <button className="player-ctrl-btn" onClick={() => setPanelOpen(false)} aria-label="Kapat">
-              <XIcon size={18} />
-            </button>
-          </div>
-          <input
-            className="glass-input"
-            placeholder="Kanallarda ara..."
-            value={panelSearch}
-            onChange={(event) => setPanelSearch(event.target.value)}
-            style={{ marginBottom: 12 }}
-          />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {channels
-              .filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase()))
-              .slice(0, 200)
-              .map((channel) => (
-                <button
-                  key={channel.id}
-                  className="ch-row"
-                  style={{ width: '100%', textAlign: 'left', borderRadius: 10 }}
-                  onClick={() => {
-                    onChannelSelect(channel)
-                  }}
-                >
-                  <span className="ch-name">{channel.name}</span>
-                </button>
-              ))}
+        <div className="ch-overlay" role="dialog" aria-modal="true" aria-label="Kanallar" onClick={(event) => { if (event.target === event.currentTarget) setPanelOpen(false) }}>
+          <div className="ch-panel">
+            <div className="ch-panel-head" data-zone="h">
+              <h3>Kanallar</h3>
+              <button className="modal-close" onClick={() => setPanelOpen(false)}>×</button>
+            </div>
+            <div className="ch-now" role="button" tabIndex={-1}>
+              <span className="ch-now-logo ch-logo-ph" style={{ background: 'rgba(255,255,255,0.14)' }}>
+                {state.title ? state.title[0] : '•'}
+              </span>
+              <div className="ch-now-text">
+                <div className="ch-now-label">Şu an oynatılıyor</div>
+                <div className="ch-now-name">{state.title}</div>
+              </div>
+            </div>
+            <div className="search-wrap" style={{ margin: '10px 0' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input className="glass-input" placeholder="Kanallarda ara..." value={panelSearch} onChange={(event) => setPanelSearch(event.target.value)} />
+            </div>
+            <div className="ch-list" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+              {channels
+                .filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase()))
+                .slice(0, 200)
+                .map((channel, index) => (
+                  <div className="ch-item" key={channel.id} style={{ position: 'relative', height: 52 }}>
+                    <div className="ch-row" style={{ height: '100%' }} onClick={() => onChannelSelect(channel)}>
+                      <span className="ch-num">{index + 1}</span>
+                      <span className="ch-logo ch-logo-ph" style={{ background: 'rgba(255,255,255,0.12)' }}>{channel.name[0]}</span>
+                      <div className="ch-main">
+                        <div className="ch-head"><span className="ch-name">{channel.name}</span></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
         </div>
       ) : null}

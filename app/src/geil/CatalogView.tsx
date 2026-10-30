@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GeilItem } from './types'
 import { fetchTmdbCatalog, mergeFeatures } from './api'
 import { useHashRoute } from './router'
@@ -20,6 +20,7 @@ export default function CatalogView() {
   const [sort, setSort] = useState(route.query.get('sort') || '')
   const [genre, setGenre] = useState(route.query.get('genre') || '')
   const [year, setYear] = useState(route.query.get('year') || '')
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setSearch(route.query.get('q') || '')
@@ -84,6 +85,16 @@ export default function CatalogView() {
     }
   }
 
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || !nextCursor) return
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) void loadMore()
+    }, { rootMargin: '300px' })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [nextCursor, loadingMore, items.length])
+
   const merged = mergeFeatures(features)
   const sortOptions = merged.sort?.length ? merged.sort : [{ id: 'popularity', name: 'Popularity' }, { id: 'trendingDay', name: 'Trending today' }]
   const genreOptions = merged.filter?.find((feature: any) => feature.id === 'genre')?.values || []
@@ -145,13 +156,7 @@ export default function CatalogView() {
       ) : (
         <>
           <CardGrid items={items} addonId={addonId} loading={loadingMore} skeletonCount={6} />
-          {nextCursor ? (
-            <div style={{ padding: '16px 0', textAlign: 'center' }}>
-              <button className="btn btn-primary" onClick={loadMore} disabled={loadingMore}>
-                {loadingMore ? 'Yükleniyor...' : 'Daha fazla yükle'}
-              </button>
-            </div>
-          ) : null}
+          <div ref={sentinelRef} style={{ height: 1 }} />
         </>
       )}
     </div>

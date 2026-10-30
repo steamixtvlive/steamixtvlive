@@ -134,8 +134,10 @@ export function SectionRow({
           <span className="section-title-text">{title}</span>
         </h2>
         {seeAllHref ? (
-          <a className="section-see-all" href={seeAllHref} style={{ marginLeft: 'auto', color: 'var(--accent)', fontWeight: 600 }}>
-            Tümünü gör ›
+          <a className="section-see-all" href={seeAllHref} aria-label="Tümünü gör" style={{ marginLeft: 'auto', color: 'var(--accent)', display: 'inline-flex', alignItems: 'center' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={20} height={20}>
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </a>
         ) : null}
       </div>
