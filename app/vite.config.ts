@@ -9,6 +9,8 @@ import { inspectAttr } from 'kimi-plugin-inspect-react'
 import { createVavooApi } from "./vavoo-api.js"
 // @ts-expect-error - no declaration file for the shared Node ESM module
 import { createVodApi } from "./vod-api.js"
+// @ts-expect-error - no declaration file for the shared Node ESM module
+import { createGeilApi } from "./geil-api.js"
 
 function vavooApiPlugin(): Plugin {
   return {
@@ -16,7 +18,12 @@ function vavooApiPlugin(): Plugin {
     configureServer(server) {
       const api = createVavooApi()
       const vodApi = createVodApi()
+      const geilApi = createGeilApi()
       server.middlewares.use((req, res, next) => {
+        if (req.url?.startsWith("/api/geil/")) {
+          void geilApi(req, res)
+          return
+        }
         if (req.url?.startsWith("/api/vavoo/")) {
           void api(req, res)
           return

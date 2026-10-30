@@ -8,9 +8,11 @@ import { spawn, execSync } from 'node:child_process'
 import ffmpegPathStatic from 'ffmpeg-static'
 import { createVavooApi } from './vavoo-api.js'
 import { createVodApi } from './vod-api.js'
+import { createGeilApi } from './geil-api.js'
 
 const vavooApi = createVavooApi()
 const vodApi = createVodApi()
+const geilApi = createGeilApi()
 
 // Try to find ffmpeg: first check static, then system PATH, then common locations
 let ffmpegPath = null
@@ -372,6 +374,13 @@ http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', '*')
   if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return }
+
+  // NOTFLIX GEIL bridge (mHub live catalog/resolve, TMDB metadata, VOD sources
+  // and the same-origin HTTPS media proxy)
+  if ((req.url || '').startsWith('/api/geil/')) {
+    void geilApi(req, res)
+    return
+  }
 
   // NOTFLIX live TV API (Vavoo / MediaHubMX catalog, resolve and HLS proxy)
   if ((req.url || '').startsWith('/api/vavoo/')) {

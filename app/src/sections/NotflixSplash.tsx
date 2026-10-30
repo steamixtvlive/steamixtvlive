@@ -20,6 +20,13 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
   const leaveTimer = useRef<number | null>(null)
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (!leaving) handleSkip()
+    }, 2600)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
     return () => {
       if (leaveTimer.current !== null) window.clearTimeout(leaveTimer.current)
     }

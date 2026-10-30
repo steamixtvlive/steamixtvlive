@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import NotflixSplash from '@/sections/NotflixSplash'
-import NotflixShell from '@/sections/NotflixShell'
+import GeilApp from '@/geil/GeilApp'
 import type { VavooCatalog } from '@/lib/vavoo'
 import NotflixVodWatch from '@/pages/NotflixVodWatch'
 import VavooPlayerRoute from '@/sections/NotflixPlayer'
@@ -14,7 +14,7 @@ export default function App() {
 
 function AppContent() {
   const navigate = useNavigate()
-  const [stage, setStage] = useState<Stage>('app')
+  const [stage, setStage] = useState<Stage>('splash')
   const [catalog, setCatalog] = useState<VavooCatalog | null>(() => ({ ok: true, source: 'embedded', group: 'all', total: 0, rawTotal: 0, generatedAt: Date.now(), countries: [], channels: [] }))
   const member = { username: 'Notflix Kullanıcısı', hasSubscription: false, subscriptionExpiresAt: null, banned: false }
   const location = useLocation()
@@ -35,12 +35,11 @@ function AppContent() {
       ) : <main className="nf-vod-watch__message">İçerikleri izleyebilmek için lütfen geçerli bir abonelik paketi satın alınız.<button type="button" onClick={() => navigate('/')}>Keşfet’e dön</button></main>)
       : stage === 'splash' ? <NotflixSplash onDone={finishSplash} /> : null}
 
-      {!isVavooWatch && !isVodWatch && stage === 'app' && member && catalog && (
+      {!isVavooWatch && !isVodWatch && stage === 'app' && (
         <div className="notflix-app-enter nf-shell-enter">
-              <NotflixShell catalog={catalog} activationProfile={member ? { fullName: '', username: member.username, expiresAt: member.subscriptionExpiresAt ? new Date(member.subscriptionExpiresAt).getTime() : 0 } : null} />
+          <GeilApp />
         </div>
       )}
-      {!isVavooWatch && !isVodWatch && stage === 'app' && !member && catalog && <div className="notflix-app-enter nf-shell-enter"><NotflixShell catalog={catalog} /></div>}
     </>
   )
 }
