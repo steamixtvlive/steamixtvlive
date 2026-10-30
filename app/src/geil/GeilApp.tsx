@@ -2,7 +2,7 @@ import './geil.css'
 import './overrides.css'
 import { useEffect, useState } from 'react'
 import type { GeilItem, PlayerState } from './types'
-import { resolveLiveChannel } from './api'
+import { resolveLiveChannel, fetchLiveCatalog } from './api'
 import { useHashRoute } from './router'
 import Sidebar from './Sidebar'
 import HomeView from './HomeView'
@@ -27,6 +27,18 @@ export default function GeilApp() {
   const route = useHashRoute()
   const [player, setPlayer] = useState<PlayerState>(INITIAL_PLAYER)
   const [sourceModal, setSourceModal] = useState<{ item: GeilItem; episode?: GeilItem | null } | null>(null)
+  const [liveChannels, setLiveChannels] = useState<GeilItem[]>([])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchLiveCatalog({ limit: 300 }, controller.signal)
+      .then((data) => {
+        if (controller.signal.aborted) return
+        setLiveChannels(data.items)
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [])
 
   useEffect(() => {
     document.title = 'NOTFLIX'
@@ -43,6 +55,8 @@ export default function GeilApp() {
         streamUrl: resolved.url,
         poster: undefined,
         item: channel,
+        channels: liveChannels,
+        channelIndex: liveChannels.findIndex((entry) => entry.id === channel.id),
       })
     } catch (error) {
       console.error(error)
@@ -53,14 +67,44 @@ export default function GeilApp() {
     setSourceModal({ item, episode: episode || null })
   }
 
+  function playDirect(item: GeilItem, episode?: GeilItem) {
+    const target = episode || item
+    if (!target.url) return
+    setPlayer({
+      open: true,
+      title: target.name,
+      isLive: false,
+      streamUrl: target.url,
+      item: target,
+    })
+  }
+
   function closePlayer() {
     setPlayer(INITIAL_PLAYER)
+  }
+
+  async function selectLiveChannel(channel: GeilItem) {
+    try {
+      const resolved = await resolveLiveChannel(channel.id)
+      setPlayer((current) => ({
+        ...current,
+        open: true,
+        title: channel.name,
+        subtitle: channel.tags?.join(' · '),
+        isLive: true,
+        streamUrl: resolved.url,
+        item: channel,
+        channelIndex: current.channels?.findIndex((entry) => entry.id === channel.id) ?? current.channelIndex,
+      }))
+    } catch {
+      // Keep current stream if resolve fails.
+    }
   }
 
   function renderView() {
     if (route.view === 'channels') return <ChannelsView onPlay={playLive} />
     if (route.view === 'catalog') return <CatalogView />
-    if (route.view === 'item') return <ItemView onPlay={playVod} />
+    if (route.view === 'item') return <ItemView onPlay={playVod} onPlayDirect={playDirect} />
     if (route.view === 'search') return <SearchView />
     if (route.view === 'library') return <LibraryView />
     if (route.view === 'settings') return <SettingsView />
@@ -78,7 +122,13 @@ export default function GeilApp() {
       </main>
 
       {player.open ? (
-        <Player state={player} onClose={closePlayer} />
+        <Player
+          state={player}
+          onClose={closePlayer}
+          channels={player.channels}
+          channelIndex={player.channelIndex}
+          onChannelSelect={player.isLive ? selectLiveChannel : null}
+        />
       ) : null}
 
       {sourceModal ? (

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { GeilItem } from './types'
-import { fetchTmdbCatalog, fetchLiveCatalog, posterUrl } from './api'
+import { fetchTmdbCatalog, fetchLiveCatalog, fetchM3uItems, posterUrl } from './api'
 import { useHashRoute, navigate, searchHref } from './router'
 import { PosterCard, CardGrid } from './Cards'
 import { SearchIcon, XIcon, StarIcon } from './icons'
@@ -21,6 +21,7 @@ export default function SearchView() {
   const [submitted, setSubmitted] = useState(initial)
   const [movies, setMovies] = useState<GeilItem[]>([])
   const [series, setSeries] = useState<GeilItem[]>([])
+  const [vod, setVod] = useState<GeilItem[]>([])
   const [channels, setChannels] = useState<GeilItem[]>([])
   const [loading, setLoading] = useState(false)
   const [recent, setRecent] = useState<string[]>(() => readRecent())
@@ -44,11 +45,13 @@ export default function SearchView() {
       fetchTmdbCatalog('video', 'movie', { search: q, limit: 24 }, controller.signal).catch(() => ({ items: [] })),
       fetchTmdbCatalog('series', 'series', { search: q, limit: 24 }, controller.signal).catch(() => ({ items: [] })),
       fetchLiveCatalog({ search: q, limit: 24 }, controller.signal).catch(() => ({ items: [] })),
-    ]).then(([movieData, seriesData, liveData]) => {
+      fetchM3uItems({ search: q, limit: 24 }, controller.signal).catch(() => ({ items: [] })),
+    ]).then(([movieData, seriesData, liveData, vodData]) => {
       if (controller.signal.aborted) return
       setMovies(movieData.items || [])
       setSeries(seriesData.items || [])
       setChannels(liveData.items || [])
+      setVod(vodData.items || [])
     }).finally(() => {
       if (!controller.signal.aborted) setLoading(false)
     })
@@ -56,9 +59,9 @@ export default function SearchView() {
   }, [submitted])
 
   const topResult = useMemo(() => {
-    const candidates = [...series, ...movies]
+    const candidates = [...vod, ...series, ...movies]
     return candidates.find((item) => item.name.toLowerCase().includes(submitted.toLowerCase())) || candidates[0] || null
-  }, [series, movies, submitted])
+  }, [vod, series, movies, submitted])
 
   function submit(value: string) {
     const trimmed = value.trim()
@@ -144,6 +147,12 @@ export default function SearchView() {
             <section className="section">
               <div className="section-head"><h2 className="section-title section-title-static"><span className="section-title-text">Kanallar</span></h2></div>
               <CardGrid items={channels} addonId="live" loading={false} skeletonCount={0} />
+            </section>
+          ) : null}
+          {vod.length ? (
+            <section className="section">
+              <div className="section-head"><h2 className="section-title section-title-static"><span className="section-title-text">VOD</span></h2></div>
+              <CardGrid items={vod} addonId="m3u" loading={false} skeletonCount={0} />
             </section>
           ) : null}
           {series.length ? (

@@ -547,6 +547,124 @@ async function handleStream(req, res, reqUrl) {
 /* Router                                                                      */
 /* -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
+/* M3U VOD (mclanx)                                                           */
+/* -------------------------------------------------------------------------- */
+
+const M3U_URL = 'http://mclanx.store:8080/get.php?username=hkRAoyqU&password=masbSHSs&type=m3u_plus&output=ts'
+const M3U_TTL = 10 * 60 * 1000
+let m3uCache = { items: null, expiresAt: 0, building: null }
+
+function parseM3uAttributes(line) {
+  const attrs = {}
+  const regex = /([a-zA-Z0-9_-]+)="([^"]*)"/g
+  let match
+  while ((match = regex.exec(line)) !== null) attrs[match[1]] = match[2]
+  return attrs
+}
+
+async function getM3uVodItems() {
+  if (m3uCache.items && m3uCache.expiresAt > Date.now()) return m3uCache.items
+  if (m3uCache.building) return m3uCache.building
+
+  m3uCache.building = (async () => {
+    const response = await fetch(M3U_URL, { signal: AbortSignal.timeout(60000) })
+    if (!response.ok) throw new Error(`M3U kaynağı alınamadı (${response.status})`)
+    const text = await response.text()
+    const lines = text.split(/\\r?\\n/)
+    const items = []
+    let index = 0
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i].trim()
+      if (!line.startsWith('#EXTINF')) continue
+      let url = ''
+      for (let j = i + 1; j < lines.length; j += 1) {
+        const next = lines[j].trim()
+        if (!next || next.startsWith('#')) continue
+        url = next
+        break
+      }
+      if (!url || (!url.includes('/movie/') && !url.includes('/series/'))) continue
+
+      const attrs = parseM3uAttributes(line)
+      const commaIndex = line.lastIndexOf(',')
+      const display = commaIndex >= 0 ? line.slice(commaIndex + 1).trim() : ''
+      const name = attrs['tvg-name'] || display || `İçerik ${index + 1}`
+      const group = attrs['group-title'] || 'Diğer'
+      if (/adult|xxx|\+18/i.test(group)) continue
+
+      const type = url.includes('/series/') ? 'series' : 'video'
+      items.push({
+        id: `m3u-${index}`,
+        type,
+        name,
+        images: { poster: attrs['tvg-logo'] || '' },
+        genres: [group],
+        _group: group,
+        url,
+      })
+      index += 1
+    }
+
+    m3uCache.items = items
+    m3uCache.expiresAt = Date.now() + M3U_TTL
+    m3uCache.building = null
+    return items
+  })()
+
+  try {
+    return await m3uCache.building
+  } catch (error) {
+    m3uCache.building = null
+    throw error
+  }
+}
+
+async function handleM3uGroups(res) {
+  const items = await getM3uVodItems()
+  const counts = new Map()
+  for (const item of items) counts.set(item._group, (counts.get(item._group) || 0) + 1)
+  const groups = [...counts.entries()]
+    .map(([name, count]) => ({ id: name, name, count }))
+    .sort((a, b) => b.count - a.count)
+  sendJson(res, 200, { ok: true, groups })
+}
+
+async function handleM3uItems(reqUrl, res) {
+  const items = await getM3uVodItems()
+  const group = reqUrl.searchParams.get('group') || ''
+  const type = reqUrl.searchParams.get('type') || ''
+  const search = (reqUrl.searchParams.get('search') || '').trim().toLowerCase()
+  const offset = Math.max(0, Number(reqUrl.searchParams.get('offset') || 0) || 0)
+  const limit = Math.min(60, Math.max(1, Number(reqUrl.searchParams.get('limit') || 24) || 24))
+
+  let filtered = items
+  if (group) filtered = filtered.filter((item) => item._group === group)
+  if (type === 'video' || type === 'series') filtered = filtered.filter((item) => item.type === type)
+  if (search) filtered = filtered.filter((item) => item.name.toLowerCase().includes(search))
+
+  const page = filtered.slice(offset, offset + limit)
+  sendJson(res, 200, {
+    ok: true,
+    items: page,
+    total: filtered.length,
+    offset,
+    limit,
+    hasMore: offset + limit < filtered.length,
+  })
+}
+
+async function handleM3uItem(reqUrl, res) {
+  const id = (reqUrl.searchParams.get('id') || '').trim()
+  const items = await getM3uVodItems()
+  const item = items.find((entry) => entry.id === id)
+  if (!item) {
+    sendJson(res, 404, { ok: false, error: 'İçerik bulunamadı' })
+    return
+  }
+  sendJson(res, 200, { ok: true, item })
+}
+
 export function createGeilApi() {
   return async function geilApi(req, res) {
     setCors(res)
@@ -590,6 +708,18 @@ export function createGeilApi() {
       }
       if (path === '/api/geil/stream') {
         await handleStream(req, res, reqUrl)
+        return
+      }
+      if (path === '/api/geil/vod/m3u/groups') {
+        await handleM3uGroups(res)
+        return
+      }
+      if (path === '/api/geil/vod/m3u/items') {
+        await handleM3uItems(reqUrl, res)
+        return
+      }
+      if (path === '/api/geil/vod/m3u/item') {
+        await handleM3uItem(reqUrl, res)
         return
       }
       sendJson(res, 404, { ok: false, error: 'Bilinmeyen GEIL uç noktası' })

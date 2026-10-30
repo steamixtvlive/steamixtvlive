@@ -82,6 +82,34 @@ export async function resolveLiveChannel(id: string, signal?: AbortSignal): Prom
   return requestJson<GeilPlayback>(`/api/geil/live/resolve?id=${encodeURIComponent(id)}`, signal)
 }
 
+export async function fetchM3uGroups(signal?: AbortSignal): Promise<Array<{ id: string; name: string; count: number }>> {
+  const data = await requestJson<{ groups: Array<{ id: string; name: string; count: number }> }>('/api/geil/vod/m3u/groups', signal)
+  return Array.isArray(data.groups) ? data.groups : []
+}
+
+export async function fetchM3uItems(
+  query: { group?: string; type?: string; search?: string; offset?: number; limit?: number } = {},
+  signal?: AbortSignal,
+): Promise<{ items: GeilItem[]; total: number; hasMore: boolean }> {
+  const params = new URLSearchParams()
+  if (query.group) params.set('group', query.group)
+  if (query.type) params.set('type', query.type)
+  if (query.search) params.set('search', query.search)
+  if (query.offset) params.set('offset', String(query.offset))
+  if (query.limit) params.set('limit', String(query.limit))
+  const data = await requestJson<{ items: GeilItem[]; total: number; hasMore: boolean }>(`/api/geil/vod/m3u/items?${params}`, signal)
+  return {
+    items: Array.isArray(data.items) ? data.items : [],
+    total: Number(data.total || 0),
+    hasMore: Boolean(data.hasMore),
+  }
+}
+
+export async function fetchM3uItem(id: string, signal?: AbortSignal): Promise<GeilItem> {
+  const data = await requestJson<{ item: GeilItem }>(`/api/geil/vod/m3u/item?id=${encodeURIComponent(id)}`, signal)
+  return data.item
+}
+
 export async function fetchVodSources(type: string, id: string, signal?: AbortSignal): Promise<GeilSource[]> {
   const params = new URLSearchParams({ type, id })
   const data = await requestJson<{ sources: GeilSource[] }>(`/api/geil/vod/sources?${params}`, signal)

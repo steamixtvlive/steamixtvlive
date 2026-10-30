@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { GeilItem } from './types'
-import { fetchTmdbCatalog, fetchTmdbItem, posterUrl, backdropUrl, runtimeLabel, ratingOf, yearOf } from './api'
+import { fetchTmdbCatalog, fetchTmdbItem, fetchM3uItem, posterUrl, backdropUrl, runtimeLabel, ratingOf, yearOf } from './api'
 import { useHashRoute } from './router'
 import { PosterCard } from './Cards'
 import { PlayIcon, PlusIcon, BookmarkIcon, ChevronLeft, ChevronRight, StarIcon, InfoIcon } from './icons'
 import { pushHistory, toggleFavorite, isFavorite } from './storage'
 
-export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?: GeilItem) => void }) {
+export default function ItemView({
+  onPlay,
+  onPlayDirect,
+}: {
+  onPlay: (item: GeilItem, episode?: GeilItem) => void
+  onPlayDirect?: (item: GeilItem, episode?: GeilItem) => void
+}) {
   const route = useHashRoute()
   const addonId = route.parts[1] || 'tmdb'
   const type = route.parts[2] === 'series' ? 'series' : 'video'
@@ -26,7 +32,10 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
     const controller = new AbortController()
     setLoading(true)
     setError('')
-    fetchTmdbItem(type, id, controller.signal)
+    const itemPromise = addonId === 'm3u'
+      ? fetchM3uItem(id, controller.signal)
+      : fetchTmdbItem(type, id, controller.signal)
+    itemPromise
       .then((data) => {
         if (controller.signal.aborted) return
         setItem(data)
@@ -130,6 +139,10 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
 
   function handlePlay() {
     if (!playable) return
+    if (addonId === 'm3u') {
+      onPlayDirect?.(item as GeilItem)
+      return
+    }
     onPlay(item as GeilItem, type === 'series' ? (selectedEpisode || undefined) : undefined)
   }
 

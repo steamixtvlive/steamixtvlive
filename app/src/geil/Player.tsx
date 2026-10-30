@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import Hls from 'hls.js'
-import type { PlayerState } from './types'
-import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon } from './icons'
+import type { PlayerState, GeilItem } from './types'
+import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, GridIcon, TvIcon } from './icons'
 
 interface Props {
   state: PlayerState
   onClose: () => void
   onPrev?: (() => void) | null
   onNext?: (() => void) | null
+  channels?: GeilItem[]
+  channelIndex?: number
+  onChannelSelect?: ((channel: GeilItem) => void) | null
 }
 
-export default function Player({ state, onClose, onPrev, onNext }: Props) {
+export default function Player({ state, onClose, onPrev, onNext, channels = [], channelIndex = -1, onChannelSelect }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [loading, setLoading] = useState(true)
@@ -23,6 +26,7 @@ export default function Player({ state, onClose, onPrev, onNext }: Props) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [buffered, setBuffered] = useState(0)
+  const [panelOpen, setPanelOpen] = useState(false)
   const hideTimer = useRef<number | null>(null)
 
   useEffect(() => {
@@ -107,7 +111,7 @@ export default function Player({ state, onClose, onPrev, onNext }: Props) {
   useEffect(() => {
     if (!showControls) return
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
-    hideTimer.current = window.setTimeout(() => setShowControls(false), 3200)
+    hideTimer.current = window.setTimeout(() => setShowControls(false), 2500)
     return () => {
       if (hideTimer.current) window.clearTimeout(hideTimer.current)
     }
@@ -226,6 +230,11 @@ export default function Player({ state, onClose, onPrev, onNext }: Props) {
                       <ChevronRight size={20} />
                     </button>
                   ) : null}
+                  {onChannelSelect ? (
+                    <button className="player-ctrl-btn" aria-label="Kanallar" onClick={() => setPanelOpen((value) => !value)}>
+                      <TvIcon size={20} />
+                    </button>
+                  ) : null}
                   <button className="player-ctrl-btn" aria-label="PiP" onClick={togglePip}>
                     <PipIcon size={20} />
                   </button>
@@ -293,6 +302,71 @@ export default function Player({ state, onClose, onPrev, onNext }: Props) {
           </div>
         </div>
       )}
+
+      {state.isLive ? (
+        <div
+          style={{
+            position: 'absolute',
+            top: 16,
+            left: 16,
+            zIndex: 12,
+            padding: '6px 12px',
+            borderRadius: 999,
+            background: 'rgba(217, 0, 7, 0.88)',
+            color: '#fff',
+            fontWeight: 800,
+            fontSize: 12,
+            letterSpacing: '0.08em',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+            opacity: showControls ? 1 : 0.35,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: 'none',
+          }}
+        >
+          NOTFLIX
+        </div>
+      ) : null}
+
+      {state.isLive && panelOpen && onChannelSelect ? (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: 320,
+            maxWidth: '80vw',
+            zIndex: 13,
+            background: 'rgba(12, 15, 20, 0.92)',
+            borderLeft: '1px solid rgba(255,255,255,0.12)',
+            backdropFilter: 'blur(18px)',
+            overflowY: 'auto',
+            padding: 16,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <strong style={{ color: '#fff' }}>Kanallar</strong>
+            <button className="player-ctrl-btn" onClick={() => setPanelOpen(false)} aria-label="Kapat">
+              <XIcon size={18} />
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {channels.slice(0, 200).map((channel) => (
+              <button
+                key={channel.id}
+                className="ch-row"
+                style={{ width: '100%', textAlign: 'left', borderRadius: 10 }}
+                onClick={() => {
+                  onChannelSelect(channel)
+                  setPanelOpen(false)
+                }}
+              >
+                <span className="ch-name">{channel.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

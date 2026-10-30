@@ -125,6 +125,8 @@ export interface PlayerState {
   sourceIndex?: number
   poster?: string
   item?: GeilItem | null
+  channels?: GeilItem[]
+  channelIndex?: number
   onNext?: (() => void) | null
   onPrev?: (() => void) | null
 }

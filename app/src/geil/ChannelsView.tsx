@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GeilItem } from './types'
 import { fetchLiveCatalog, channelColor, channelQuality, initialOf, currentEpg, remainingLabel, formatClock } from './api'
 import { HeartIcon, SearchIcon } from './icons'
@@ -25,6 +25,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
   const [favIds, setFavIds] = useState<Set<string>>(() => readFavs())
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
+  const listRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -90,6 +91,16 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
   }
 
   const groups = features?.filter?.find((feature: any) => feature.id === 'group')?.values || []
+
+  useEffect(() => {
+    const sentinel = listRef.current
+    if (!sentinel || !nextCursor) return
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) void loadMore()
+    }, { rootMargin: '240px' })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [nextCursor, loadingMore])
 
   return (
     <div className="catalog-view channels-view">
@@ -234,12 +245,9 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
               })}
             </div>
             {nextCursor ? (
-              <div style={{ padding: '16px 0', textAlign: 'center' }}>
-                <button className="btn btn-primary" onClick={loadMore} disabled={loadingMore}>
-                  {loadingMore ? 'Yükleniyor...' : 'Daha fazla yükle'}
-                </button>
-              </div>
+              <div ref={listRef} style={{ height: 1, width: '100%' }} />
             ) : null}
+            {loadingMore ? <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--t3)' }}>Yükleniyor...</div> : null}
           </>
         )}
       </div>
