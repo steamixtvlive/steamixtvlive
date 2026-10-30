@@ -22,7 +22,7 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       if (!leaving) handleSkip()
-    }, 4500)
+    }, 12000)
     return () => window.clearTimeout(timer)
   }, [])
 

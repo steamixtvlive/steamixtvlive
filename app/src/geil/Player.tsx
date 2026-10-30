@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import Hls from 'hls.js'
+import videojs from 'video.js'
+import 'video.js/dist/video-js.css'
 import type { PlayerState, GeilItem } from './types'
 import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, GridIcon, TvIcon } from './icons'
 
@@ -48,7 +49,6 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     setDuration(0)
     setBuffered(0)
 
-    let hls: Hls | null = null
     const source = state.streamUrl
 
     const onPlaying = () => { setLoading(false); setPlaying(true) }
@@ -68,26 +68,23 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     video.addEventListener('durationchange', onDurationChange)
     video.addEventListener('error', onError)
 
-    if (Hls.isSupported()) {
-      hls = new Hls({ enableWorker: true, lowLatencyMode: state.isLive })
-      hls.loadSource(source)
-      hls.attachMedia(video)
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        setLoading(false)
-        void video.play().catch(() => {})
-      })
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) setError('Akış oynatılamadı')
-      })
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = source
-      video.addEventListener('loadedmetadata', () => {
-        setLoading(false)
-        void video.play().catch(() => {})
-      }, { once: true })
-    } else {
-      setError('Tarayıcı HLS oynatmayı desteklemiyor')
-    }
+    const vjsPlayer: any = videojs(video, {
+      controls: false,
+      autoplay: true,
+      preload: 'auto',
+      fluid: false,
+      liveui: state.isLive,
+    }, () => {
+      vjsPlayer.src({ src: source, type: 'application/x-mpegURL' })
+    })
+    vjsPlayer.on('loadedmetadata', () => {
+      setLoading(false)
+      void vjsPlayer.play().catch(() => {})
+    })
+    vjsPlayer.on('error', () => {
+      setError('Akış oynatılamadı')
+    })
+    ;(video as any)._vjsPlayer = vjsPlayer
 
     return () => {
       video.removeEventListener('playing', onPlaying)
@@ -95,7 +92,10 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       video.removeEventListener('timeupdate', onTimeUpdate)
       video.removeEventListener('durationchange', onDurationChange)
       video.removeEventListener('error', onError)
-      if (hls) hls.destroy()
+      const vjsPlayer = (video as any)._vjsPlayer
+      if (vjsPlayer) {
+        try { vjsPlayer.dispose() } catch {}
+      }
       try { video.pause() } catch {}
       video.removeAttribute('src')
       video.load()
