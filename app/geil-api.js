@@ -571,7 +571,7 @@ async function getM3uVodItems() {
     const response = await fetch(M3U_URL, { signal: AbortSignal.timeout(60000) })
     if (!response.ok) throw new Error(`M3U kaynağı alınamadı (${response.status})`)
     const text = await response.text()
-    const lines = text.split(/\\r?\\n/)
+    const lines = text.split(/\r?\n/)
     const items = []
     let index = 0
     for (let i = 0; i < lines.length; i += 1) {

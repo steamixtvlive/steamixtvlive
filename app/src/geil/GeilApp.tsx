@@ -41,7 +41,7 @@ export default function GeilApp() {
   }, [])
 
   useEffect(() => {
-    document.title = 'NOTFLIX'
+    document.title = 'NOTFLİX'
   }, [])
 
   async function playLive(channel: GeilItem) {

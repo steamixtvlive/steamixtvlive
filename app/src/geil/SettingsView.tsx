@@ -6,7 +6,7 @@ export default function SettingsView() {
       <div className="settings-head">
         <h1>Ayarlar</h1>
         <div className="settings-meta">
-          <span className="s-chip">NOTFLIX</span>
+          <span className="s-chip">NOTFLİX</span>
           <span className="s-chip">v1.0</span>
         </div>
       </div>
@@ -61,7 +61,7 @@ export default function SettingsView() {
           <div className="s-item">
             <div className="s-item-nav">
               <div>
-                <div className="s-label">NOTFLIX</div>
+                <div className="s-label">NOTFLİX</div>
                 <div className="s-sub">mHub / geil.to verileriyle güçlendirilmiş canlı TV ve VOD.</div>
               </div>
             </div>

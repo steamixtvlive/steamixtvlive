@@ -55,7 +55,7 @@ export default function Sidebar({ route }: { route: RouteState }) {
         <div className="sidebar-dock">
           <a className="sidebar-brand" href="#/" aria-label="Anasayfa">
             <BrandMark />
-            <span className="brand-text">NOTFLIX</span>
+            <span className="brand-text">NOTFLİX</span>
           </a>
           <nav className="sidebar-nav" aria-label="Main" style={{ '--nav-active': Math.max(0, mainActive) } as React.CSSProperties}>
             <div className={`nav-pill ${mainActive < 0 ? 'is-off' : ''}`} aria-hidden="true" />

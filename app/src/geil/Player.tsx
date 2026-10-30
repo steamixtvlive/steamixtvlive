@@ -323,7 +323,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
             pointerEvents: 'none',
           }}
         >
-          NOTFLIX
+          NOTFLİX
         </div>
       ) : null}
 
@@ -358,7 +358,6 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 style={{ width: '100%', textAlign: 'left', borderRadius: 10 }}
                 onClick={() => {
                   onChannelSelect(channel)
-                  setPanelOpen(false)
                 }}
               >
                 <span className="ch-name">{channel.name}</span>
