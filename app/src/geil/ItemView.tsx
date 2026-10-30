@@ -126,7 +126,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
   }
 
   const playable = type === 'video' ? item : selectedEpisode
-  const trailer = null
+  const trailer = item.videos?.find((video) => /youtube/i.test(video.url)) || item.videos?.[0]
 
   function handlePlay() {
     if (!playable) return
@@ -193,7 +193,11 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
                 <button className="btn-hero-play" onClick={handlePlay} disabled={!playable}>
                   <span>▶</span> İzle
                 </button>
-                {null}
+                {trailer ? (
+                  <a className="btn-hero-glass" href={trailer.url} target="_blank" rel="noreferrer">
+                    Fragman
+                  </a>
+                ) : null}
                 <button className={`btn-hero-fav ${fav ? 'on' : ''}`} onClick={handleFavorite} aria-label="Favori">
                   {fav ? '♥' : '♡'}
                 </button>
@@ -236,7 +240,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
                   >
                     <div className="ep-tile-img">
                       {episode.images?.thumbnail || episode.images?.poster ? (
-                        <img src={episode.images?.thumbnail || episode.images?.poster} alt="" />
+                        <img src={episode.images?.thumbnail || episode.images?.poster} alt="" className="loaded" />
                       ) : (
                         <div className="ep-tile-fallback">{episode.episode}</div>
                       )}

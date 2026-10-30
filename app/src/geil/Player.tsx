@@ -27,6 +27,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const [duration, setDuration] = useState(0)
   const [buffered, setBuffered] = useState(0)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [panelSearch, setPanelSearch] = useState('')
   const hideTimer = useRef<number | null>(null)
 
   useEffect(() => {
@@ -350,19 +351,29 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
               <XIcon size={18} />
             </button>
           </div>
+          <input
+            className="glass-input"
+            placeholder="Kanallarda ara..."
+            value={panelSearch}
+            onChange={(event) => setPanelSearch(event.target.value)}
+            style={{ marginBottom: 12 }}
+          />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {channels.slice(0, 200).map((channel) => (
-              <button
-                key={channel.id}
-                className="ch-row"
-                style={{ width: '100%', textAlign: 'left', borderRadius: 10 }}
-                onClick={() => {
-                  onChannelSelect(channel)
-                }}
-              >
-                <span className="ch-name">{channel.name}</span>
-              </button>
-            ))}
+            {channels
+              .filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase()))
+              .slice(0, 200)
+              .map((channel) => (
+                <button
+                  key={channel.id}
+                  className="ch-row"
+                  style={{ width: '100%', textAlign: 'left', borderRadius: 10 }}
+                  onClick={() => {
+                    onChannelSelect(channel)
+                  }}
+                >
+                  <span className="ch-name">{channel.name}</span>
+                </button>
+              ))}
           </div>
         </div>
       ) : null}

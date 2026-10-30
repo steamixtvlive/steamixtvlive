@@ -187,6 +187,7 @@ export default function HomeView() {
               loading={false}
               skeletons={0}
               addonId="tmdb"
+              seeAllHref={`#/catalog/tmdb/${tab.type}/${tab.type === 'series' ? 'series' : 'movie'}?sort=${tab.sort}`}
             />
           ))}
     </div>
