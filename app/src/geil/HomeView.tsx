@@ -6,8 +6,23 @@ import { useHashRoute, itemHref } from './router'
 
 interface SectionData {
   title: string
+  group: string
+  type: string | undefined
   items: GeilItem[]
+  seeAll: string
 }
+
+const HOME_SECTIONS = [
+  { title: 'Yeni Çıkan Filmler', group: 'TR | YENI EKLENEN FILMLER', type: 'video' },
+  { title: 'Yeni Çıkan Diziler', group: 'TR | PAZARTESI DIZILERI', type: 'series' },
+  { title: 'TR Netflix', group: 'TR | NETFLIX' },
+  { title: 'TR Netflix Yabancı', group: 'DE | NETFLIX' },
+  { title: 'Disney+', group: 'TR | DISNEY+' },
+  { title: 'Amazon Prime', group: 'TR | AMAZON PRIME' },
+  { title: 'Sinema', group: 'TR | SINEMA' },
+  { title: '4K', group: 'TR | UHD' },
+  { title: 'Güncel Diziler', group: 'TR | YERLI DIZILER', type: 'series' },
+]
 
 export default function HomeView() {
   const route = useHashRoute()
@@ -19,21 +34,28 @@ export default function HomeView() {
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
-    fetchM3uGroups(controller.signal)
-      .then(async (groups) => {
+    Promise.all(
+      HOME_SECTIONS.map(async (section) => {
+        try {
+          const data = await fetchM3uItems({ group: section.group, type: section.type, limit: 18 }, controller.signal)
+          if (controller.signal.aborted || !data.items.length) return null
+          const params = new URLSearchParams({ group: section.group })
+          if (section.type) params.set('type', section.type)
+          return {
+            title: section.title,
+            group: section.group,
+            type: section.type,
+            items: data.items,
+            seeAll: `#/catalog/m3u/${encodeURIComponent(section.group)}${section.type ? `?type=${section.type}` : ''}`,
+          }
+        } catch {
+          return null
+        }
+      }),
+    )
+      .then((results) => {
         if (controller.signal.aborted) return
-        const selected = groups.slice(0, 4)
-        const results = await Promise.all(
-          selected.map(async (group) => {
-            const data = await fetchM3uItems({ group: group.id, limit: 18 }, controller.signal)
-            return { title: group.name, items: data.items }
-          }),
-        )
-        if (controller.signal.aborted) return
-        setSections(results.filter((section) => section.items.length > 0))
-      })
-      .catch(() => {
-        if (controller.signal.aborted) return
+        setSections(results.filter((section): section is SectionData => section !== null));
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
@@ -142,7 +164,15 @@ export default function HomeView() {
             </section>
           ))
         : sections.map((section) => (
-            <SectionRow key={section.title} title={section.title} items={section.items} loading={false} skeletons={0} addonId="m3u" />
+            <SectionRow
+              key={section.title}
+              title={section.title}
+              items={section.items}
+              loading={false}
+              skeletons={0}
+              addonId="m3u"
+              seeAllHref={section.seeAll}
+            />
           ))}
     </div>
   )

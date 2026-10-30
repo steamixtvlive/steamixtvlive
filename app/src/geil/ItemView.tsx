@@ -135,7 +135,7 @@ export default function ItemView({
   }
 
   const playable = type === 'video' ? item : selectedEpisode
-  const trailer = item.videos?.find((video) => /youtube/i.test(video.url)) || item.videos?.[0]
+  const trailer = null
 
   function handlePlay() {
     if (!playable) return
@@ -206,11 +206,7 @@ export default function ItemView({
                 <button className="btn-hero-play" onClick={handlePlay} disabled={!playable}>
                   <span>▶</span> İzle
                 </button>
-                {trailer ? (
-                  <a className="btn-hero-glass" href={trailer.url} target="_blank" rel="noreferrer">
-                    Fragman
-                  </a>
-                ) : null}
+                {null}
                 <button className={`btn-hero-fav ${fav ? 'on' : ''}`} onClick={handleFavorite} aria-label="Favori">
                   {fav ? '♥' : '♡'}
                 </button>

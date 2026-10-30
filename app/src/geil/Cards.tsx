@@ -115,6 +115,7 @@ export function SectionRow({
   numbered = false,
   progressOf,
   captionOf,
+  seeAllHref,
 }: {
   title: string
   items: GeilItem[]
@@ -124,6 +125,7 @@ export function SectionRow({
   numbered?: boolean
   progressOf?: (item: GeilItem) => number
   captionOf?: (item: GeilItem) => string | undefined
+  seeAllHref?: string
 }) {
   return (
     <section className="section reveal is-in">
@@ -131,6 +133,11 @@ export function SectionRow({
         <h2 className="section-title section-title-static">
           <span className="section-title-text">{title}</span>
         </h2>
+        {seeAllHref ? (
+          <a className="section-see-all" href={seeAllHref} style={{ marginLeft: 'auto', color: 'var(--accent)', fontWeight: 600 }}>
+            Tümünü gör ›
+          </a>
+        ) : null}
       </div>
       <div className="row-wrap row-can-scroll row-at-start">
         <div className="row" data-zone="h" data-scroll="x">

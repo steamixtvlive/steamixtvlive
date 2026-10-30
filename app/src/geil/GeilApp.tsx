@@ -8,6 +8,7 @@ import Sidebar from './Sidebar'
 import HomeView from './HomeView'
 import ChannelsView from './ChannelsView'
 import CatalogView from './CatalogView'
+import M3uCatalogView from './M3uCatalogView'
 import ItemView from './ItemView'
 import SearchView from './SearchView'
 import LibraryView from './LibraryView'
@@ -111,7 +112,11 @@ export default function GeilApp() {
 
   function renderView() {
     if (route.view === 'channels') return <ChannelsView onPlay={playLive} />
-    if (route.view === 'catalog') return <CatalogView />
+    if (route.view === 'catalog') {
+      const addonId = route.parts[1] || 'tmdb'
+      if (addonId === 'm3u') return <M3uCatalogView />
+      return <CatalogView />
+    }
     if (route.view === 'item') return <ItemView onPlay={playVod} onPlayDirect={playDirect} />
     if (route.view === 'search') return <SearchView />
     if (route.view === 'library') return <LibraryView />
