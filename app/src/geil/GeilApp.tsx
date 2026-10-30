@@ -68,25 +68,6 @@ export default function GeilApp() {
     setSourceModal({ item, episode: episode || null })
   }
 
-  async function playDirect(item: GeilItem, episode?: GeilItem) {
-    const target = episode || item
-    if (!target.url) return
-    let streamUrl = target.url
-    if (/^http:\/\//i.test(target.url)) {
-      try {
-        streamUrl = await signStreamUrl(target.url)
-      } catch {
-        streamUrl = target.url
-      }
-    }
-    setPlayer({
-      open: true,
-      title: target.name,
-      isLive: false,
-      streamUrl,
-      item: target,
-    })
-  }
 
   function closePlayer() {
     setPlayer(INITIAL_PLAYER)
@@ -117,7 +98,7 @@ export default function GeilApp() {
       if (addonId === 'm3u') return <M3uCatalogView />
       return <CatalogView />
     }
-    if (route.view === 'item') return <ItemView onPlay={playVod} onPlayDirect={playDirect} />
+    if (route.view === 'item') return <ItemView onPlay={playVod} />
     if (route.view === 'search') return <SearchView />
     if (route.view === 'library') return <LibraryView />
     if (route.view === 'settings') return <SettingsView />

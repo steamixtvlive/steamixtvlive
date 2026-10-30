@@ -1,94 +1,84 @@
 import { useEffect, useState } from 'react'
 import type { GeilItem } from './types'
-import { fetchM3uGroups, fetchM3uItems } from './api'
+import { fetchTmdbCatalog } from './api'
 import { SectionRow } from './Cards'
 import { useHashRoute, itemHref } from './router'
 
-interface SectionData {
-  title: string
-  group: string
-  type: string | undefined
-  items: GeilItem[]
-  seeAll: string
-}
-
-const HOME_SECTIONS = [
-  { title: 'Yeni Çıkan Filmler', group: 'TR | YENI EKLENEN FILMLER', type: 'video' },
-  { title: 'Yeni Çıkan Diziler', group: 'TR | PAZARTESI DIZILERI', type: 'series' },
-  { title: 'TR Netflix', group: 'TR | NETFLIX' },
-  { title: 'TR Netflix Yabancı', group: 'DE | NETFLIX' },
-  { title: 'Disney+', group: 'TR | DISNEY+' },
-  { title: 'Amazon Prime', group: 'TR | AMAZON PRIME' },
-  { title: 'Sinema', group: 'TR | SINEMA' },
-  { title: '4K', group: 'TR | UHD' },
-  { title: 'Güncel Diziler', group: 'TR | YERLI DIZILER', type: 'series' },
+const HERO_TABS = [
+  { key: 'series-trending', title: 'Trend Olan Diziler', type: 'series' as const, sort: 'trendingDay' },
+  { key: 'series-popular', title: 'Popüler Diziler', type: 'series' as const, sort: 'popularity' },
+  { key: 'movie-trending', title: 'Trend Olan Filmler', type: 'video' as const, sort: 'trendingDay' },
+  { key: 'movie-popular', title: 'Popüler Filmler', type: 'video' as const, sort: 'popularity' },
 ]
 
 export default function HomeView() {
   const route = useHashRoute()
-  const [sections, setSections] = useState<SectionData[]>([])
+  const [data, setData] = useState<Record<string, GeilItem[]>>({})
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(0)
   const [heroIndex, setHeroIndex] = useState(0)
+  const [heroDetail, setHeroDetail] = useState<GeilItem | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
     Promise.all(
-      HOME_SECTIONS.map(async (section) => {
-        try {
-          const data = await fetchM3uItems({ group: section.group, type: section.type, limit: 18 }, controller.signal)
-          if (controller.signal.aborted || !data.items.length) return null
-          const params = new URLSearchParams({ group: section.group })
-          if (section.type) params.set('type', section.type)
-          return {
-            title: section.title,
-            group: section.group,
-            type: section.type,
-            items: data.items,
-            seeAll: `#/catalog/m3u/${encodeURIComponent(section.group)}${section.type ? `?type=${section.type}` : ''}`,
-          }
-        } catch {
-          return null
-        }
+      HERO_TABS.map(async (tab) => {
+        const response = await fetchTmdbCatalog(tab.type, tab.type === 'series' ? 'series' : 'movie', { sort: tab.sort, limit: 18 }, controller.signal)
+        return [tab.key, response.items] as const
       }),
     )
-      .then((results) => {
+      .then((entries) => {
         if (controller.signal.aborted) return
-        setSections(results.filter((section): section is SectionData => section !== null));
+        setData(Object.fromEntries(entries))
       })
+      .catch(() => {})
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
     return () => controller.abort()
   }, [])
 
-  const heroSection = sections[activeTab] || sections[0]
-  const heroItems = (heroSection?.items || []).slice(0, 6)
-  const activeHero = heroItems[heroIndex % Math.max(1, heroItems.length)] || heroItems[0]
+  const selectedHeroItems = (data[HERO_TABS[activeTab].key] || []).slice(0, 6)
+  const activeHero = selectedHeroItems[heroIndex % Math.max(1, selectedHeroItems.length)] || selectedHeroItems[0]
 
   useEffect(() => {
-    if (heroItems.length <= 1) return
-    const timer = window.setInterval(() => setHeroIndex((value) => (value + 1) % heroItems.length), 8000)
+    if (selectedHeroItems.length <= 1) return
+    const timer = window.setInterval(() => setHeroIndex((value) => (value + 1) % selectedHeroItems.length), 8000)
     return () => window.clearInterval(timer)
-  }, [heroItems.length])
+  }, [selectedHeroItems.length])
+
+  useEffect(() => {
+    if (!activeHero) return
+    let cancelled = false
+    import('./api').then(({ fetchTmdbItem }) => {
+      fetchTmdbItem(activeHero.type, activeHero.id)
+        .then((item) => { if (!cancelled) setHeroDetail(item) })
+        .catch(() => { if (!cancelled) setHeroDetail(activeHero) })
+    })
+    return () => { cancelled = true }
+  }, [activeHero?.id])
+
+  const hero = heroDetail || activeHero
 
   return (
     <div className="home-view">
       <div className="stage" aria-hidden="true" />
       <section className="hero">
         <div className="hero-bg fade-in">
-          {activeHero?.images?.poster ? <img src={activeHero.images.poster} alt="" className="loaded" /> : null}
+          {hero?.images?.backdrops?.[0] || hero?.images?.poster ? (
+            <img src={hero.images?.backdrops?.[0] || hero.images?.poster} alt="" className="loaded" />
+          ) : null}
         </div>
         <div className="hero-topfade" aria-hidden="true" />
         <div className="hero-tabs" data-zone="h" data-scroll="x">
-          {sections.map((section, index) => (
+          {HERO_TABS.map((tab, index) => (
             <button
-              key={section.title}
+              key={tab.key}
               className={`hero-tab ${index === activeTab ? 'active' : ''}`}
               onClick={() => { setActiveTab(index); setHeroIndex(0) }}
             >
-              {section.title}
+              {tab.title}
             </button>
           ))}
         </div>
@@ -97,31 +87,57 @@ export default function HomeView() {
             <div className="hero-fold">
               <div className="hero-text">
                 <div className="hero-head">
-                  <h1 className="hero-title">{activeHero?.name || ''}</h1>
-                  <div className="hero-meta">{activeHero?.genres?.join(' · ')}</div>
+                  {hero?.images?.logo ? (
+                    <h1 className="hero-title hero-title-logo">
+                      <img src={hero.images.logo} alt={hero.name} />
+                    </h1>
+                  ) : (
+                    <h1 className="hero-title">{hero?.name || ''}</h1>
+                  )}
+                  <div className="hero-meta">
+                    {[hero ? new Date(hero.releaseDate || '').getFullYear() || '' : '', (hero?.genres || []).slice(0, 3).join(' · ')].filter(Boolean).join(' · ')}
+                  </div>
                 </div>
                 <div className="hero-badges">
-                  {(activeHero?.genres || []).slice(0, 3).map((genre) => (
+                  {hero?.ratings?.tmdb ? (
+                    <span className="rating">
+                      <span>★ {Number(hero.ratings.tmdb).toFixed(1)}</span>
+                      <span className="rating-src">TMDB</span>
+                    </span>
+                  ) : null}
+                  {(hero?.genres || []).slice(0, 2).map((genre) => (
                     <span className="badge badge-fact" key={genre}>{genre}</span>
                   ))}
                 </div>
+                {hero?.description ? <p className="hero-desc">{hero.description}</p> : null}
               </div>
               <div className="hero-actions" data-zone="h">
-                {activeHero ? (
-                  <a className="btn-hero-primary" href={itemHref('m3u', activeHero.type, activeHero.id)}>
+                {hero ? (
+                  <a className="btn-hero-primary" href={itemHref('tmdb', hero.type, hero.id)}>
                     Detaylar <span aria-hidden="true">›</span>
                   </a>
                 ) : null}
-                {heroItems.length > 1 ? (
+                {hero ? (
+                  <button
+                    className="btn-hero-fav"
+                    aria-label="Favori"
+                    onClick={() => {
+                      import('./storage').then(({ toggleFavorite }) => toggleFavorite(hero, 'tmdb'))
+                    }}
+                  >
+                    ♡
+                  </button>
+                ) : null}
+                {selectedHeroItems.length > 1 ? (
                   <div className="hero-dots">
-                    {heroItems.map((_, index) => (
+                    {selectedHeroItems.map((_, index) => (
                       <button
                         key={index}
-                        className={`hero-dot ${index === heroIndex % heroItems.length ? 'active' : ''}`}
+                        className={`hero-dot ${index === heroIndex % selectedHeroItems.length ? 'active' : ''}`}
                         aria-label={`Slayt ${index + 1}`}
                         onClick={() => setHeroIndex(index)}
                       >
-                        {index === heroIndex % heroItems.length ? <span className="hero-dot-fill" style={{ animationDuration: '8000ms' }} /> : null}
+                        {index === heroIndex % selectedHeroItems.length ? <span className="hero-dot-fill" style={{ animationDuration: '8000ms' }} /> : null}
                       </button>
                     ))}
                   </div>
@@ -130,20 +146,20 @@ export default function HomeView() {
             </div>
           </div>
         </div>
-        {heroItems.length > 1 ? (
+        {selectedHeroItems.length > 1 ? (
           <div className="hero-strip">
             <span className="hero-strip-label" aria-hidden="true">Sıradaki</span>
-            {heroItems.map((item, index) => (
+            {selectedHeroItems.map((item, index) => (
               <span
                 key={item.id}
-                className={`hero-thumb ${index === heroIndex % heroItems.length ? 'active' : ''}`}
+                className={`hero-thumb ${index === heroIndex % selectedHeroItems.length ? 'active' : ''}`}
                 role="button"
                 aria-label={item.name}
-                aria-current={index === heroIndex % heroItems.length ? 'true' : undefined}
+                aria-current={index === heroIndex % selectedHeroItems.length ? 'true' : undefined}
                 onClick={() => setHeroIndex(index)}
               >
                 <img src={item.images?.poster || ''} alt="" className="loaded" />
-                {index === heroIndex % heroItems.length ? <span className="hero-thumb-fill" style={{ animationDuration: '8000ms' }} /> : null}
+                {index === heroIndex % selectedHeroItems.length ? <span className="hero-thumb-fill" style={{ animationDuration: '8000ms' }} /> : null}
               </span>
             ))}
           </div>
@@ -152,7 +168,7 @@ export default function HomeView() {
 
       {loading
         ? Array.from({ length: 4 }).map((_, index) => (
-            <section className="section reveal" key={`skeleton-${index}`}>
+            <section className="section reveal is-in" key={`skeleton-${index}`}>
               <div className="section-head"><h2 className="section-title section-title-static"><span className="section-title-text">Yükleniyor...</span></h2></div>
               <div className="row-wrap row-can-scroll">
                 <div className="row" data-zone="h">
@@ -163,15 +179,14 @@ export default function HomeView() {
               </div>
             </section>
           ))
-        : sections.map((section) => (
+        : HERO_TABS.map((tab) => (
             <SectionRow
-              key={section.title}
-              title={section.title}
-              items={section.items}
+              key={tab.key}
+              title={tab.title}
+              items={data[tab.key] || []}
               loading={false}
               skeletons={0}
-              addonId="m3u"
-              seeAllHref={section.seeAll}
+              addonId="tmdb"
             />
           ))}
     </div>
