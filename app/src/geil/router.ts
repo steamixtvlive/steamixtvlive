@@ -25,27 +25,30 @@ export function useHashRoute(): RouteState {
   useEffect(() => {
     const update = () => setRoute(parseHash())
     window.addEventListener('hashchange', update)
-    return () => window.removeEventListener('hashchange', update)
+    window.addEventListener('popstate', update)
+    return () => {
+      window.removeEventListener('hashchange', update)
+      window.removeEventListener('popstate', update)
+    }
   }, [])
   return route
 }
 
 export function navigate(path: string) {
   const next = path.startsWith('#') ? path : `#${path}`
-  if (window.location.hash === next) {
-    window.dispatchEvent(new HashChangeEvent('hashchange'))
-    return
-  }
-  window.location.hash = next
+  if (window.location.hash === next) return
+  window.history.pushState({ notflixRoute: next }, '', next)
+  window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }))
 }
 
 export function goBack(fallback = '#/') {
-  if (window.history.length > 1) window.history.back()
+  if (window.history.length > 1 && window.location.hash !== '#/' && window.location.hash !== '') window.history.back()
   else navigate(fallback)
 }
 
 export function itemHref(addonId: string, type: string, id: string): string {
-  return `#/item/${encodeURIComponent(addonId)}/${encodeURIComponent(type)}/${encodeURIComponent(id)}`
+  const normalizedType = type === 'movie' ? 'video' : type
+  return `#/item/${encodeURIComponent(addonId)}/${encodeURIComponent(normalizedType)}/${encodeURIComponent(id)}`
 }
 
 export function catalogHref(addonId: string, type: string, catalogId: string, extra: Record<string, string> = {}): string {

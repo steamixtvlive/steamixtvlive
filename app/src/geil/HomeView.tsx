@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { GeilItem } from './types'
-import { fetchTmdbCatalog } from './api'
+import { fetchM3uGroups, fetchM3uItems, fetchTmdbCatalog } from './api'
 import { SectionRow } from './Cards'
-import { itemHref } from './router'
+import { catalogHref, itemHref } from './router'
 import { toggleFavorite, isFavorite } from './storage'
 import { HeartIcon } from './icons'
 
@@ -15,6 +15,7 @@ const HERO_TABS = [
 
 export default function HomeView() {
   const [data, setData] = useState<Record<string, GeilItem[]>>({})
+  const [m3uRows, setM3uRows] = useState<Array<{ id: string; name: string; items: GeilItem[] }>>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(0)
   const [heroIndex, setHeroIndex] = useState(0)
@@ -26,15 +27,23 @@ export default function HomeView() {
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
-    Promise.all(
-      HERO_TABS.map(async (tab) => {
-        const response = await fetchTmdbCatalog(tab.type, tab.type === 'series' ? 'series' : 'movie', { sort: tab.sort, limit: 18 }, controller.signal)
+    Promise.all([
+      ...HERO_TABS.map(async (tab): Promise<readonly [string, GeilItem[]]> => {
+        const response = await fetchTmdbCatalog(tab.type, tab.type === 'series' ? 'series' : 'movie', { sort: tab.sort, limit: 60 }, controller.signal)
         return [tab.key, response.items] as const
       }),
-    )
+      (async (): Promise<null> => {
+        try {
+          const groups = await fetchM3uGroups(controller.signal)
+          const rows = await Promise.all(groups.map(async (group) => ({ id: group.id, name: group.name, items: (await fetchM3uItems({ group: group.id, limit: 24 }, controller.signal)).items })))
+          if (!controller.signal.aborted) setM3uRows(rows.filter((row) => row.items.length > 0))
+        } catch { /* VOD source can be temporarily unavailable independently of metadata. */ }
+        return null
+      })(),
+    ])
       .then((entries) => {
         if (controller.signal.aborted) return
-        setData(Object.fromEntries(entries))
+        setData(Object.fromEntries(entries.filter((entry): entry is readonly [string, GeilItem[]] => Array.isArray(entry))))
       })
       .catch(() => {})
       .finally(() => {
@@ -210,18 +219,25 @@ export default function HomeView() {
               </div>
             </section>
           ))
-        : HERO_TABS.map((tab) => (
+        : (
+          <>
+            {(['series-trending', 'series-popular', 'movie-trending', 'movie-popular'] as const).map((key) => {
+              const tab = HERO_TABS.find((entry) => entry.key === key)!
+              return (
             <SectionRow
               key={tab.key}
               sectionRef={(element) => { sectionRefs.current[tab.key] = element }}
               title={tab.title}
-              items={data[tab.key] || []}
+              items={m3uRows.length ? m3uRows.find((row) => row.id === (tab.type === 'series' ? 'series' : 'video'))?.items || [] : data[tab.key] || []}
               loading={false}
               skeletons={0}
-              addonId="tmdb"
-              seeAllHref={`#/catalog/tmdb/${tab.type}/${tab.type === 'series' ? 'series' : 'movie'}?sort=${tab.sort}`}
+              addonId={m3uRows.length ? 'm3u' : 'tmdb'}
+              seeAllHref={m3uRows.length ? catalogHref('m3u', tab.type, tab.type === 'series' ? 'series' : 'video') : `#/catalog/tmdb/${tab.type}/${tab.type === 'series' ? 'series' : 'movie'}?sort=${tab.sort}`}
             />
-          ))}
+              )
+            })}
+          </>
+        )}
     </div>
   )
 }

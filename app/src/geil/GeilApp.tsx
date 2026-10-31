@@ -100,7 +100,7 @@ export default function GeilApp() {
       if (addonId === 'm3u') return <M3uCatalogView />
       return <CatalogView />
     }
-    if (route.view === 'item') return <ItemView onPlay={playVod} />
+    if (route.view === 'item') return <ItemView key={route.hash} onPlay={playVod} />
     if (route.view === 'search') return <SearchView />
     if (route.view === 'library') return <LibraryView />
     if (route.view === 'settings') return <SettingsView />

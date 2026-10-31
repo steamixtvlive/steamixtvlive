@@ -6,26 +6,19 @@ import { inspectAttr } from 'kimi-plugin-inspect-react'
 // Plain ESM module shared by the production server (server.js) and the Vite
 // dev middleware below. Keeping one implementation avoids API drift.
 // @ts-expect-error - no declaration file for the shared Node ESM module
-import { createVavooApi } from "./vavoo-api.js"
-// @ts-expect-error - no declaration file for the shared Node ESM module
 import { createVodApi } from "./vod-api.js"
 // @ts-expect-error - no declaration file for the shared Node ESM module
 import { createGeilApi } from "./geil-api.js"
 
-function vavooApiPlugin(): Plugin {
+function apiPlugin(): Plugin {
   return {
-    name: "notflix-vavoo-api",
+    name: "notflix-api",
     configureServer(server) {
-      const api = createVavooApi()
       const vodApi = createVodApi()
       const geilApi = createGeilApi()
       server.middlewares.use((req, res, next) => {
         if (req.url?.startsWith("/api/geil/")) {
           void geilApi(req, res)
-          return
-        }
-        if (req.url?.startsWith("/api/vavoo/")) {
-          void api(req, res)
           return
         }
         if (req.url?.startsWith("/api/vod/")) {
@@ -41,7 +34,7 @@ function vavooApiPlugin(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   base: './',
-  plugins: [vavooApiPlugin(), inspectAttr(), react()],
+  plugins: [apiPlugin(), inspectAttr(), react()],
   build: { chunkSizeWarningLimit: 1000 },
   resolve: {
     alias: {

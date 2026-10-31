@@ -53,6 +53,19 @@ const HLS_CONFIG = {
   fragLoadingMaxRetry: 5,
 }
 
+function countryMatches(candidate: string, wanted: string) {
+  const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').trim()
+  const aliases: Record<string, string[]> = {
+    turkey: ['turkey', 'turkiye', 'tr'], turkiye: ['turkey', 'turkiye', 'tr'], tr: ['turkey', 'turkiye', 'tr'],
+    albania: ['albania', 'shqiperi', 'al', 'sq'], shqiperi: ['albania', 'shqiperi', 'al', 'sq'], al: ['albania', 'shqiperi', 'al', 'sq'], sq: ['albania', 'shqiperi', 'al', 'sq'],
+  }
+  const from = normalize(candidate)
+  const to = normalize(wanted)
+  const fromKeys = [from, from.slice(0, 2)]
+  const toKeys = aliases[to] || [to, to.slice(0, 2)]
+  return toKeys.some((key) => fromKeys.includes(key))
+}
+
 function isSmallScreen() {
   return typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches
 }
@@ -112,7 +125,11 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
     return getNowNext(active, nowTick / 1000)
   }, [active, nowTick])
   const availableCountries = useMemo(() => [...new Set(channels.map((channel) => channel.country || 'Turkey'))].sort((a, b) => a.localeCompare(b, 'tr')), [channels])
-  const countryChannels = useMemo(() => channels.filter((channel) => (channel.country || 'Turkey') === country), [channels, country])
+  const countryChannels = useMemo(() => channels.filter((channel) => {
+    const candidate = String(channel.country || 'Turkey').toLocaleLowerCase('en')
+    const wanted = country.toLocaleLowerCase('en')
+    return countryMatches(candidate, wanted)
+  }), [channels, country])
 
   useEffect(() => {
     if (availableCountries.length && !availableCountries.includes(country)) {
@@ -123,8 +140,20 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
 
   const chooseCountry = useCallback((next: string) => {
     setCountry(next)
+    const firstChannel = channels.find((channel) => {
+      const candidate = String(channel.country || 'Turkey').toLocaleLowerCase('en')
+      const wanted = next.toLocaleLowerCase('en')
+      return countryMatches(candidate, wanted)
+    })
+    if (firstChannel) {
+      setActiveId(firstChannel.id)
+      setStream('')
+      setError('')
+      setResolving(true)
+      setBuffering(true)
+    }
     try { sessionStorage.setItem('notflix_live_country', next) } catch { /* session state still updates */ }
-  }, [])
+  }, [channels])
 
   const epgProgress = useMemo(() => {
     if (!epg.now) return 0
@@ -150,7 +179,7 @@ export default function NotflixPlayer({ channels, initialId, initialStream, onSe
     hideTimer.current = window.setTimeout(() => {
       const video = videoRef.current
       if (video && !video.paused) setUiVisible(false)
-    }, 3800)
+    }, 2000)
   }, [])
 
   useEffect(() => {

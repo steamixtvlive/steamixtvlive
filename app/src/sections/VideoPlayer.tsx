@@ -89,7 +89,7 @@ export default function VideoPlayer({ src, poster, title, onEnded, fallbackSrcs,
   const startHideTimer = useCallback(() => {
     clearTimeout(hideTimer.current)
     setShowControls(true)
-    hideTimer.current = setTimeout(() => { setShowControls(false) }, 4000)
+    hideTimer.current = setTimeout(() => { setShowControls(false) }, 2000)
   }, [])
 
   const tryPlay = useCallback(async (video: HTMLVideoElement) => {

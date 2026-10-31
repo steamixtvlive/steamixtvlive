@@ -635,7 +635,7 @@ async function handleStream(req, res, reqUrl) {
 /* M3U VOD (mclanx)                                                           */
 /* -------------------------------------------------------------------------- */
 
-const M3U_URL = 'http://mclanx.store:8080/get.php?username=hkRAoyqU&password=masbSHSs&type=m3u_plus&output=ts'
+const M3U_URL = (process.env.MCLANX_M3U_URL || '').trim()
 const M3U_TTL = 10 * 60 * 1000
 let m3uCache = { items: null, expiresAt: 0, building: null }
 
@@ -648,6 +648,7 @@ function parseM3uAttributes(line) {
 }
 
 async function getM3uVodItems() {
+  if (!M3U_URL) throw new Error('MCLANX_M3U_URL ortam değişkeni tanımlanmamış')
   if (m3uCache.items && m3uCache.expiresAt > Date.now()) return m3uCache.items
   if (m3uCache.building) return m3uCache.building
 
@@ -678,17 +679,49 @@ async function getM3uVodItems() {
       if (/adult|xxx|\+18/i.test(group)) continue
 
       const type = url.includes('/series/') ? 'series' : 'video'
+      const episodeMatch = name.match(/\bS(\d{1,2})\s*E(\d{1,3})\b/i)
+      const seasonMatch = name.match(/\b(\d{1,2})\.\s*Sezon\s*(\d{1,3})\.\s*Bölüm/i)
+      const season = Number(episodeMatch?.[1] || seasonMatch?.[1] || 1)
+      const episode = Number(episodeMatch?.[2] || seasonMatch?.[2] || 0)
+      const seriesTitle = name.replace(/\bS\d{1,2}\s*E\d{1,3}\b.*$/i, '').replace(/\b\d{1,2}\.\s*Sezon\s*\d{1,3}\.\s*Bölüm.*$/i, '').replace(/\b(?:19|20)\d{2}\b.*$/i, '').replace(/[._-]+/g, ' ').trim()
+      const id = type === 'series'
+        ? `m3u-s-${hashId(seriesTitle || name)}`
+        : `m3u-m-${hashId(url)}`
       items.push({
-        id: `m3u-${index}`,
+        id: type === 'series' ? `m3u-e-${hashId(url)}` : id,
         type,
-        name,
+        name: type === 'series' ? (seriesTitle || name) : name,
+        seriesId: type === 'series' ? id : undefined,
         images: { poster: attrs['tvg-logo'] || '' },
         genres: [group],
         _group: group,
+        season: type === 'series' ? season : undefined,
+        episode: type === 'series' ? episode : undefined,
+        episodeName: type === 'series' ? name : undefined,
         url,
       })
       index += 1
     }
+
+    const dedupedItems = []
+    const seenPosters = new Set()
+    for (const entry of items) {
+      const poster = String(entry.images?.poster || '').split('?')[0].toLowerCase()
+      const key = entry.type === 'series' ? `series:${entry.seriesId}` : poster || `${entry.type}:${entry.id}`
+      if (seenPosters.has(key)) continue
+      seenPosters.add(key)
+      dedupedItems.push(entry)
+    }
+    items.splice(0, items.length, ...dedupedItems)
+
+    const seasonsBySeries = new Map()
+    for (const entry of items) {
+      if (entry.type !== 'series') continue
+      const seasons = seasonsBySeries.get(entry.seriesId) || new Set()
+      seasons.add(Number(entry.season || 1))
+      seasonsBySeries.set(entry.seriesId, seasons)
+    }
+    for (const entry of items) if (entry.type === 'series') entry.seasons = [...(seasonsBySeries.get(entry.seriesId) || [])].sort((a, b) => a - b)
 
     m3uCache.items = items
     m3uCache.expiresAt = Date.now() + M3U_TTL
@@ -707,10 +740,11 @@ async function getM3uVodItems() {
 async function handleM3uGroups(res) {
   const items = await getM3uVodItems()
   const counts = new Map()
-  for (const item of items) counts.set(item._group, (counts.get(item._group) || 0) + 1)
-  const groups = [...counts.entries()]
-    .map(([name, count]) => ({ id: name, name, count }))
-    .sort((a, b) => b.count - a.count)
+  for (const item of items) counts.set(item.type, (counts.get(item.type) || 0) + 1)
+  const groups = [
+    { id: 'series', name: 'Diziler', count: counts.get('series') || 0 },
+    { id: 'video', name: 'Filmler', count: counts.get('video') || 0 },
+  ]
   sendJson(res, 200, { ok: true, groups })
 }
 
@@ -723,7 +757,7 @@ async function handleM3uItems(reqUrl, res) {
   const limit = Math.min(60, Math.max(1, Number(reqUrl.searchParams.get('limit') || 24) || 24))
 
   let filtered = items
-  if (group) filtered = filtered.filter((item) => item._group === group)
+  if (group === 'series' || group === 'video') filtered = filtered.filter((item) => item.type === group)
   if (type === 'video' || type === 'series') filtered = filtered.filter((item) => item.type === type)
   if (search) filtered = filtered.filter((item) => item.name.toLowerCase().includes(search))
 
@@ -747,6 +781,19 @@ async function handleM3uItem(reqUrl, res) {
     return
   }
   sendJson(res, 200, { ok: true, item })
+}
+
+async function handleM3uEpisodes(reqUrl, res) {
+  const id = (reqUrl.searchParams.get('id') || '').trim()
+  const seasonFilter = reqUrl.searchParams.has('season') ? Number(reqUrl.searchParams.get('season')) : null
+  const items = await getM3uVodItems()
+  const series = items.filter((entry) => entry.type === 'series' && entry.seriesId === id)
+  const seasons = [...new Set(series.map((entry) => Number(entry.season || 1)))].sort((a, b) => a - b)
+  const episodes = series
+    .filter((entry) => seasonFilter === null || Number(entry.season || 1) === seasonFilter)
+    .sort((a, b) => Number(a.episode || 0) - Number(b.episode || 0))
+    .map((entry) => ({ ...entry, id: `m3u-e-${hashId(entry.url)}`, type: 'video', seriesId: undefined, name: entry.episodeName || entry.name }))
+  sendJson(res, 200, { ok: true, seasons, episodes })
 }
 
 export function createGeilApi() {
@@ -804,6 +851,10 @@ export function createGeilApi() {
       }
       if (path === '/api/geil/vod/m3u/item') {
         await handleM3uItem(reqUrl, res)
+        return
+      }
+      if (path === '/api/geil/vod/m3u/episodes') {
+        await handleM3uEpisodes(reqUrl, res)
         return
       }
       if (path === '/api/geil/proxy') {

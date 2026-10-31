@@ -7,7 +7,7 @@ import { CardGrid } from './Cards'
 export default function M3uCatalogView() {
   const route = useHashRoute()
   const group = decodeURIComponent(route.parts[2] || '')
-  const type = route.query.get('type') || ''
+  const type = route.query.get('type') || (group === 'series' || group === 'video' ? group : '')
   const [items, setItems] = useState<GeilItem[]>([])
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
@@ -65,7 +65,7 @@ export default function M3uCatalogView() {
   return (
     <div className="catalog-view">
       <div className="catalog-head">
-        <h1>{group}</h1>
+        <h1>{group === 'series' ? 'Diziler' : group === 'video' ? 'Filmler' : group}</h1>
       </div>
       <div className="feature-bar controls-flow">
         <div className="controls">

@@ -13,6 +13,7 @@ interface Props {
 
 export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
   const target = episode || item
+  const isM3u = target.id.startsWith('m3u-')
   const vodType = episode ? 'series' : item.type === 'series' ? 'series' : 'video'
   const vodId = episode ? episode.id : item.id
   const [sources, setSources] = useState<GeilSource[]>([])
@@ -27,6 +28,11 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
   useEffect(() => {
     mountedRef.current = true
     const controller = new AbortController()
+    if (target.url && isM3u) {
+      setSources([{ url: target.url, name: 'MCLanX M3U', quality: '', languages: [], subtitles: [] }])
+      setLoading(false)
+      return () => { mountedRef.current = false; controller.abort() }
+    }
     const requestedTypes = episode ? ['series'] : item.type === 'series' ? ['series', 'video'] : ['video', 'series']
     setLoading(true)
     setSources([])
@@ -43,11 +49,14 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => { mountedRef.current = false; controller.abort() }
-  }, [vodType, vodId, episode?.id, item.type])
+  }, [vodType, vodId, episode?.id, item.type, target.url, isM3u])
 
   async function resolve(source: GeilSource, signal?: AbortSignal): Promise<GeilPlayback> {
     setResolvingUrl(source.url)
-    try { return await resolveVodSource(vodType, vodId, source.url, signal) }
+    try {
+      if (isM3u) return { url: source.url, live: false, subtitles: [] }
+      return await resolveVodSource(vodType, vodId, source.url, signal)
+    }
     finally {
       if (!signal?.aborted && mountedRef.current) setResolvingUrl(null)
     }

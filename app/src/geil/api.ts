@@ -59,6 +59,19 @@ export async function fetchTmdbItem(type: string, id: string, signal?: AbortSign
   return data.item
 }
 
+export async function fetchM3uItem(id: string, signal?: AbortSignal): Promise<GeilItem> {
+  const params = new URLSearchParams({ id })
+  const data = await requestJson<{ item: GeilItem }>(`/api/geil/vod/m3u/item?${params}`, signal)
+  return data.item
+}
+
+export async function fetchM3uSeriesEpisodes(id: string, season?: number, signal?: AbortSignal): Promise<{ episodes: GeilItem[]; seasons: number[] }> {
+  const params = new URLSearchParams({ id })
+  if (season !== undefined) params.set('season', String(season))
+  const data = await requestJson<{ seasons?: number[]; episodes: GeilItem[] }>(`/api/geil/vod/m3u/episodes?${params}`, signal)
+  return { episodes: Array.isArray(data.episodes) ? data.episodes : [], seasons: data.seasons || [] }
+}
+
 export async function fetchLiveCatalog(
   query: CatalogQuery = {},
   signal?: AbortSignal,
@@ -108,11 +121,6 @@ export async function fetchM3uItems(
 export async function signStreamUrl(url: string, signal?: AbortSignal): Promise<string> {
   const data = await requestJson<{ url: string }>(`/api/geil/proxy?url=${encodeURIComponent(url)}`, signal)
   return data.url
-}
-
-export async function fetchM3uItem(id: string, signal?: AbortSignal): Promise<GeilItem> {
-  const data = await requestJson<{ item: GeilItem }>(`/api/geil/vod/m3u/item?id=${encodeURIComponent(id)}`, signal)
-  return data.item
 }
 
 export async function fetchVodSources(type: string, id: string, signal?: AbortSignal): Promise<GeilSource[]> {

@@ -49,16 +49,16 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   currentVideos.current = state.item?.videos
 
   useEffect(() => {
-    if (!state.isLive) return
+    if (!state.open || !state.isLive) return
     if (panelOpen) {
       if (hideTimer.current) window.clearTimeout(hideTimer.current)
       hideTimer.current = null
       return
     }
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
-    hideTimer.current = window.setTimeout(() => setShowControls(false), 2500)
+    hideTimer.current = window.setTimeout(() => setShowControls(false), 2000)
     return () => { if (hideTimer.current) window.clearTimeout(hideTimer.current) }
-  }, [panelOpen, state.isLive])
+  }, [panelOpen, state.isLive, state.open])
 
   useEffect(() => {
     if (!panelOpen || !state.isLive) return
@@ -225,7 +225,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     userInteracted.current = true
     setShowControls(true)
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
-    hideTimer.current = window.setTimeout(() => setShowControls(false), 2500)
+    hideTimer.current = window.setTimeout(() => setShowControls(false), 2000)
   }
 
   function openChannelPanel() {
@@ -432,7 +432,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
 
       {state.isLive ? (
         <div
-          className={panelOpen ? 'player-live-brand-hidden' : ''}
+          className={`${panelOpen || !showControls ? 'player-live-brand-hidden' : ''} player-live-brand`}
           style={{
             position: 'absolute',
             top: 16,
@@ -446,13 +446,19 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
             fontSize: 12,
             letterSpacing: '0.08em',
             boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
-            opacity: showControls ? 1 : 0.35,
+            opacity: showControls && !panelOpen ? 1 : 0,
             transition: 'opacity 0.3s ease',
             pointerEvents: 'none',
           }}
         >
           NOTFLİX
         </div>
+      ) : null}
+
+      {state.isLive ? (
+        <button type="button" className={`player-center-toggle ${showControls ? 'is-visible' : ''}`} onClick={(event) => { event.stopPropagation(); togglePlay(); revealControls() }} aria-label={playing ? 'Yayını durdur' : 'Yayını oynat'}>
+          {playing ? '❚❚' : <PlayIcon size={28} />}
+        </button>
       ) : null}
 
       {state.isLive && panelOpen && onChannelSelect ? (

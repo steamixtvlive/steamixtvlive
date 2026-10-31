@@ -6,11 +6,9 @@ import { fileURLToPath } from 'node:url'
 import { gunzipSync } from 'node:zlib'
 import { spawn, execSync } from 'node:child_process'
 import ffmpegPathStatic from 'ffmpeg-static'
-import { createVavooApi } from './vavoo-api.js'
 import { createVodApi } from './vod-api.js'
 import { createGeilApi } from './geil-api.js'
 
-const vavooApi = createVavooApi()
 const vodApi = createVodApi()
 const geilApi = createGeilApi()
 
@@ -384,7 +382,8 @@ http.createServer((req, res) => {
 
   // NOTFLIX live TV API (Vavoo / MediaHubMX catalog, resolve and HLS proxy)
   if ((req.url || '').startsWith('/api/vavoo/')) {
-    vavooApi(req, res)
+    res.writeHead(410, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({ error: 'Vavoo kapatıldı; VOD MCLanX M3U kaynağını kullanır.' }))
     return
   }
 
@@ -402,8 +401,9 @@ http.createServer((req, res) => {
       if (!query || query.length < 2 || query.length > 120) { res.writeHead(400, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: 'Search query must be 2-120 characters' })); return }
       try {
         const base = process.env.MCLANX_URL || 'http://mclanx.store:8080'
-        const user = process.env.MCLANX_USER || 'Paris123'
-        const pass = process.env.MCLANX_PASS || 'Paris123'
+        const user = process.env.MCLANX_USER || ''
+        const pass = process.env.MCLANX_PASS || ''
+        if (!user || !pass) { res.writeHead(503, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: 'MCLANX_USER ve MCLANX_PASS ortam değişkenleri tanımlanmamış' })); return }
         const actions = type === 'movie' ? ['get_vod_streams'] : type === 'series' ? ['get_series'] : ['get_vod_streams', 'get_series']
         const nameKey = (value) => String(value || '').toLocaleLowerCase('tr').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/[^a-z0-9]+/g, ' ').trim()
         const scoreName = (value) => {

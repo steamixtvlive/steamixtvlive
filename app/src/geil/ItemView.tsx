@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { GeilItem } from './types'
-import { fetchTmdbCatalog, fetchTmdbItem, posterUrl, backdropUrl, runtimeLabel, ratingOf, yearOf } from './api'
+import { fetchM3uItem, fetchM3uSeriesEpisodes, fetchTmdbCatalog, fetchTmdbItem, posterUrl, backdropUrl, runtimeLabel, ratingOf, yearOf } from './api'
 import { useHashRoute } from './router'
 import { PosterCard } from './Cards'
 import { PlayIcon, PlusIcon, BookmarkIcon, ChevronLeft, ChevronRight, StarIcon, InfoIcon } from './icons'
@@ -16,9 +16,11 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
   const [error, setError] = useState('')
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null)
   const [episodes, setEpisodes] = useState<GeilItem[]>([])
+  const [m3uSeasons, setM3uSeasons] = useState<number[]>([])
   const [episodeLoading, setEpisodeLoading] = useState(false)
   const [selectedEpisode, setSelectedEpisode] = useState<GeilItem | null>(null)
   const [related, setRelated] = useState<GeilItem[]>([])
+  const [trailerUrl, setTrailerUrl] = useState('')
   const [fav, setFav] = useState(false)
 
   useEffect(() => {
@@ -26,10 +28,12 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
     const controller = new AbortController()
     setLoading(true)
     setError('')
-    fetchTmdbItem(type, id, controller.signal)
+    const itemPromise = addonId === 'm3u' ? fetchM3uItem(id, controller.signal) : fetchTmdbItem(type, id, controller.signal)
+    itemPromise
       .then((data) => {
         if (controller.signal.aborted) return
         setItem(data)
+        setM3uSeasons([])
         setFav(isFavorite(data.id))
         pushHistory(data, addonId)
         const seasons = (data.catalogs || [])
@@ -39,8 +43,14 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
             return match ? Number(match[1]) : null
           })
           .filter((value): value is number => Number.isFinite(value))
-        const firstSeason = seasons.includes(1) ? 1 : seasons[0] ?? 1
+        const availableSeasons = addonId === 'm3u' ? [1] : seasons
+        const firstSeason = availableSeasons.includes(1) ? 1 : availableSeasons[0] ?? 1
         setSelectedSeason(firstSeason)
+        if (addonId === 'm3u' && data.type === 'series') {
+          fetchM3uSeriesEpisodes(data.id, firstSeason, controller.signal).then((result) => {
+            if (!controller.signal.aborted) setM3uSeasons(result.seasons)
+          }).catch(() => {})
+        }
       })
       .catch((err) => {
         if (controller.signal.aborted) return
@@ -53,8 +63,9 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
   }, [addonId, type, id])
 
   const seasonCatalogs = useMemo(() => {
+    if (addonId === 'm3u') return []
     return (item?.catalogs || []).filter((catalog) => /^season_/.test(catalog.id))
-  }, [item])
+  }, [addonId, item])
 
   const seasonNumbers = useMemo(() => {
     return seasonCatalogs
@@ -67,7 +78,16 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
   }, [seasonCatalogs])
 
   useEffect(() => {
-    if (!item || type !== 'series' || selectedSeason === null) return
+    if (!item || (type !== 'series' && item.type !== 'series') || selectedSeason === null) return
+    if (addonId === 'm3u') {
+      const controller = new AbortController()
+      setEpisodeLoading(true)
+      fetchM3uSeriesEpisodes(item.id, selectedSeason, controller.signal)
+        .then((data) => { if (!controller.signal.aborted) { setEpisodes(data.episodes); setM3uSeasons(data.seasons); setSelectedEpisode(data.episodes[0] || null) } })
+        .catch(() => { if (!controller.signal.aborted) setEpisodes([]) })
+        .finally(() => { if (!controller.signal.aborted) setEpisodeLoading(false) })
+      return () => controller.abort()
+    }
     const catalog = seasonCatalogs.find((entry) => entry.id.endsWith(`_${selectedSeason}`))
     if (!catalog) return
     const controller = new AbortController()
@@ -86,10 +106,21 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
         if (!controller.signal.aborted) setEpisodeLoading(false)
       })
     return () => controller.abort()
-  }, [item, type, selectedSeason, seasonCatalogs])
+  }, [addonId, item, type, selectedSeason, seasonCatalogs])
 
   useEffect(() => {
     if (!item) return
+    const controller = new AbortController()
+    void fetch(`/api/trailer?name=${encodeURIComponent(item.name)}&year=${encodeURIComponent(yearOf(item))}&type=${item.type === 'series' ? 'series' : 'movie'}`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() as Promise<{ youtube_id?: string }> : null)
+      .then((data) => { if (!controller.signal.aborted && data?.youtube_id) setTrailerUrl(`https://www.youtube.com/watch?v=${data.youtube_id}`) })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [item?.id])
+
+  useEffect(() => {
+    if (!item) return
+    if (addonId === 'm3u') return
     const relatedCatalog = (item.catalogs || []).find((catalog) =>
       /similar|recommendation/i.test(catalog.id),
     )
@@ -102,7 +133,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
       })
       .catch(() => {})
     return () => controller.abort()
-  }, [item, type])
+  }, [addonId, item, type])
 
   if (loading) {
     return (
@@ -125,12 +156,16 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
     return <div className="empty"><h3>İçerik yüklenemedi</h3><p>{error || 'İçerik bulunamadı'}</p></div>
   }
 
-  const playable = type === 'video' ? item : selectedEpisode
+  const itemIsSeries = item.type === 'series' || type === 'series'
+  const playable = itemIsSeries ? selectedEpisode : item
+  const itemPoster = posterUrl(item, 'large')
   const trailer = item.videos?.find((video) => /youtube/i.test(video.url)) || item.videos?.[0]
+  const trailerHref = trailer?.url || trailerUrl
+  const trailerHrefNormalized = trailerHref && !/^https?:\/\//i.test(trailerHref) ? `https://${trailerHref.replace(/^\/+/, '')}` : trailerHref
 
   function handlePlay() {
     if (!playable) return
-    onPlay(item as GeilItem, type === 'series' ? (selectedEpisode || undefined) : undefined)
+    onPlay((addonId === 'm3u' ? (itemIsSeries ? selectedEpisode : item) : item) as GeilItem, itemIsSeries && addonId !== 'm3u' ? (selectedEpisode || undefined) : undefined)
   }
 
   function handleFavorite() {
@@ -143,7 +178,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
     <div className="item-view">
       <section className="hero hero-subject">
         <div className="hero-bg fade-in">
-          {backdropUrl(item, 'large') ? <img src={backdropUrl(item, 'large')} alt="" className="loaded" /> : null}
+          {backdropUrl(item, 'large') || itemPoster ? <img src={backdropUrl(item, 'large') || itemPoster} alt="" className="loaded" /> : null}
         </div>
         <div className="hero-topfade" aria-hidden="true" />
         <div className="hero-body">
@@ -174,7 +209,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
                   {item.runtime ? <span className="badge badge-fact">{runtimeLabel(item.runtime)}</span> : null}
                   {item.status ? <span className="badge badge-status">{item.status}</span> : null}
                 </div>
-                {type === 'series' && selectedEpisode ? (
+                {itemIsSeries && selectedEpisode ? (
                   <div className="hero-episode">
                     <div className="hero-episode-head">
                       <span className="hero-episode-num">S{selectedEpisode.season} · B{selectedEpisode.episode}</span>
@@ -193,8 +228,8 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
                 <button className="btn-hero-play" onClick={handlePlay} disabled={!playable}>
                   <span>▶</span> İzle
                 </button>
-                {trailer ? (
-                  <a className="btn-hero-glass" href={trailer.url} target="_blank" rel="noreferrer">
+                {trailerHrefNormalized ? (
+                  <a className="btn-hero-glass" href={trailerHrefNormalized} target="_blank" rel="noreferrer">
                     Fragman
                   </a>
                 ) : null}
@@ -208,13 +243,13 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
       </section>
 
       <div className="item-body">
-        {type === 'series' ? (
+        {itemIsSeries ? (
           <section className="item-section">
             <div className="item-section-head">
               <h2 className="item-section-title">Bölümler</h2>
-              {seasonNumbers.length > 1 ? (
+              {(addonId === 'm3u' ? m3uSeasons.length > 1 : seasonNumbers.length > 1) ? (
                 <div className="ep-pills">
-                  {seasonNumbers.map((season) => (
+                  {(addonId === 'm3u' ? m3uSeasons : seasonNumbers).map((season) => (
                     <button
                       key={season}
                       className={`ep-pill ${selectedSeason === season ? 'active' : ''}`}
@@ -236,7 +271,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
                   <button
                     key={episode.id}
                     className={`ep-tile ${selectedEpisode?.id === episode.id ? 'ep-tile-active' : ''}`}
-                    onClick={() => { setSelectedEpisode(episode); onPlay(item, episode) }}
+                    onClick={() => { setSelectedEpisode(episode); onPlay(addonId === 'm3u' ? episode : item, addonId === 'm3u' ? undefined : episode) }}
                   >
                     <div className="ep-tile-img">
                       {episode.images?.thumbnail || episode.images?.poster ? (
