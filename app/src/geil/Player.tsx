@@ -4,8 +4,11 @@ import type { MouseEvent } from 'react'
 import Hls from 'hls.js'
 import { Captions, List, Layers } from 'lucide-react'
 import type { PlayerState, GeilItem, PlayerSource } from './types'
-import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, HeartIcon, SearchIcon } from './icons'
+import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, HeartIcon, SearchIcon, ArrowLeftIcon } from './icons'
 import { channelColor, currentEpg, formatClock, initialOf, remainingLabel } from './api'
+import { saveContinueWatching } from './storage'
+import { useLang } from '@/lib/language'
+import ShortcutsHelp from './ShortcutsHelp'
 
 // Keep the live-panel improvements compatible with the pre-Video.js player.
 
@@ -15,13 +18,33 @@ interface Props {
   onPrev?: (() => void) | null
   onNext?: (() => void) | null
   channels?: GeilItem[]
-  onChannelSelect?: ((channel: GeilItem) => void) | null
+  onChannelSelect?: ((channel: GeilItem, visible?: GeilItem[]) => void) | null
   onSourceSelect?: ((source: PlayerSource) => void) | null
 }
 
+const RATES = [0.5, 1, 1.25, 1.5, 2]
+
+// Media URLs arrive already wrapped in the signed /api/geil/stream proxy, so the
+// playlist extension has to be read out of the token payload, not the URL suffix.
+function isHlsSource(url: string): boolean {
+  const raw = (url || '').split('#')[0]
+  if (/\.m3u8?([/?]|$)/i.test(raw)) return true
+  try {
+    const token = new URL(raw, window.location.origin).searchParams.get('t')
+    const payload = token ? token.split('.')[0] : ''
+    if (!payload) return false
+    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+    return /\.m3u8?([/?]|$)/i.test(String(decoded && decoded.u || ''))
+  } catch {
+    return false
+  }
+}
+
 export default function Player({ state, onClose, onPrev, onNext, channels = [], onChannelSelect, onSourceSelect }: Props) {
+  const { t } = useLang()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const hlsRef = useRef<Hls | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showControls, setShowControls] = useState(true)
@@ -33,8 +56,12 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const [duration, setDuration] = useState(0)
   const [buffered, setBuffered] = useState(0)
   const [subtitleIndex, setSubtitleIndex] = useState(-1)
+  const [rate, setRate] = useState(1)
   const [panelOpen, setPanelOpen] = useState(false)
   const [sourceChooserOpen, setSourceChooserOpen] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
+  const [osd, setOsd] = useState<string | null>(null)
+  const [zap, setZap] = useState<{ name: string; color: string } | null>(null)
   const [panelSearch, setPanelSearch] = useState('')
   const [panelSort, setPanelSort] = useState('trending')
   const [panelGroup, setPanelGroup] = useState('')
@@ -46,9 +73,17 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     try { return new Set(JSON.parse(localStorage.getItem('notflix_geil_live_favorites') || '[]')) } catch { return new Set() }
   })
   const hideTimer = useRef<number | null>(null)
+  const osdTimer = useRef<number | null>(null)
+  const saveTimer = useRef<number>(0)
+  const startApplied = useRef(0)
   const userInteracted = useRef(false)
+  const actionsRef = useRef<(event: KeyboardEvent | { key: string; remote?: boolean }) => void>(() => {})
   const currentVideos = useRef(state.item?.videos)
   currentVideos.current = state.item?.videos
+  const playerStateRef = useRef(state)
+  playerStateRef.current = state
+  const subtitlesRef = useRef(state.subtitles)
+  subtitlesRef.current = state.subtitles
 
   useEffect(() => {
     if (!state.open || !state.isLive) return
@@ -60,7 +95,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
     hideTimer.current = window.setTimeout(() => setShowControls(false), 2000)
     return () => { if (hideTimer.current) window.clearTimeout(hideTimer.current) }
-  }, [panelOpen, state.isLive, state.open])
+  }, [panelOpen, state.isLive, state.open, state.streamUrl])
 
   useEffect(() => {
     if (!panelOpen || !state.isLive) return
@@ -101,6 +136,14 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     setPanelChannels(panelGroup === '__favorites__' ? merged.filter((channel) => favIds.has(channel.id)) : panelGroup ? catalogChannels.filter((channel) => (channel.tags || []).some((tag) => tag.toLowerCase() === panelGroup.toLowerCase())) : channels.length ? channels : catalogChannels)
   }, [channels, catalogChannels, panelGroup, favIds])
 
+  useEffect(() => {
+    if (!state.open) return
+    document.documentElement.classList.add('player-open', 'player-osd')
+    return () => {
+      document.documentElement.classList.remove('player-open', 'player-osd')
+    }
+  }, [state.open])
+
   function togglePanelFavorite(id: string) {
     const next = new Set(favIds)
     if (next.has(id)) next.delete(id)
@@ -111,12 +154,11 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   }
 
   useEffect(() => {
-    if (!state.open) return
-    document.documentElement.classList.add('player-open', 'player-osd')
-    return () => {
-      document.documentElement.classList.remove('player-open', 'player-osd')
-    }
-  }, [state.open])
+    if (!zap) return
+    if (state.pending || !state.streamUrl) return
+    const timer = window.setTimeout(() => setZap(null), 1800)
+    return () => window.clearTimeout(timer)
+  }, [zap, state.pending, state.streamUrl])
 
   useEffect(() => {
     if (!state.open) return
@@ -128,40 +170,65 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     setDuration(0)
     setBuffered(0)
     setSubtitleIndex(-1)
+    startApplied.current = 0
 
     const source = state.streamUrl
     // The stream is still being resolved; keep the spinner instead of the media error.
     if (!source) return
 
     const onPlaying = () => { setLoading(false); setPlaying(true) }
-    const onPause = () => setPlaying(false)
+    const onPause = () => { setPlaying(false); saveProgress() }
     const onTimeUpdate = () => {
       setCurrentTime(video.currentTime || 0)
       if (video.buffered.length) {
         setBuffered((video.buffered.end(video.buffered.length - 1) / Math.max(1, video.duration || 1)) * 100)
       }
+      const now = Date.now()
+      if (now - saveTimer.current > 5000) {
+        saveTimer.current = now
+        saveProgress()
+      }
     }
     const onDurationChange = () => setDuration(video.duration || 0)
+    const onLoadedMetadata = () => {
+      if (state.isLive) return
+      const startAt = Number(state.startAt || 0)
+      if (startAt > 5 && startApplied.current === 0) {
+        startApplied.current = startAt
+        const target = Math.min(startAt, Math.max(6, (video.duration || startAt + 10) - 8))
+        try { video.currentTime = target } catch { /* seeking may fail before metadata */ }
+      }
+    }
     const onError = () => {
-      const mediaError = video.error
-      if (mediaError) setError(`Akış oynatılamadı (${mediaError.code})`)
-      else setError('Akış oynatılamadı')
+      if (state.isLive) { setError('Akış oynatılamadı'); return }
+      setError(t('sources.inactive'))
     }
     const onStalled = () => {
       if (!video.paused && video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) setLoading(true)
     }
     const onCanPlay = () => { setLoading(false); setError('') }
+    const onEnded = () => {
+      setPlaying(false)
+      saveProgress(true)
+    }
 
     video.addEventListener('playing', onPlaying)
     video.addEventListener('pause', onPause)
     video.addEventListener('timeupdate', onTimeUpdate)
     video.addEventListener('durationchange', onDurationChange)
+    video.addEventListener('loadedmetadata', onLoadedMetadata)
     video.addEventListener('error', onError)
     video.addEventListener('stalled', onStalled)
     video.addEventListener('canplay', onCanPlay)
+    video.addEventListener('ended', onEnded)
 
     const subtitles = state.subtitles?.length ? state.subtitles : currentVideos.current
-      ?.filter((entry) => /subtitle|caption|altyaz/i.test(`${entry.name || ''} ${entry.url}`))
+      ?.filter((entry) => {
+        const url = String(entry.url || '')
+        const name = String(entry.name || '')
+        if (/youtube|youtu\.be/i.test(url) || /fragman|trailer/i.test(name)) return false
+        return /\.(srt|vtt)(\?|$)/i.test(url) || /subtitle|caption|altyaz/i.test(`${name} ${url}`)
+      })
       .map((entry) => ({ url: entry.url, name: entry.name, language: entry.languages?.[0], format: entry.url.split('?')[0].split('.').pop() })) || []
     video.querySelectorAll('track[data-vod-subtitle]').forEach((track) => track.remove())
     subtitles.forEach((subtitle, index) => {
@@ -174,25 +241,44 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       track.setAttribute('data-vod-subtitle', 'true')
       video.appendChild(track)
     })
+    if (!state.isLive && subtitles.length) {
+      const turkish = subtitles.findIndex((subtitle) => /(^|[\s_-])(tr|tur|turk|türk)([\s_-]|$)/i.test(`${subtitle.language || ''} ${subtitle.name || ''}`))
+      if (turkish >= 0) setSubtitleIndex(turkish)
+    }
 
     let hls: Hls | null = null
-    if (state.isLive && Hls.isSupported()) {
-      hls = new Hls({ enableWorker: true, lowLatencyMode: true })
+    hlsRef.current = null
+    const usesHls = isHlsSource(source)
+    if (usesHls && Hls.isSupported()) {
+      hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: state.isLive,
+        manifestLoadingTimeOut: 10000,
+        manifestLoadingMaxRetry: state.isLive ? 1 : 0,
+        manifestLoadingRetryDelay: 500,
+        levelLoadingMaxRetry: 2,
+        fragLoadingMaxRetry: 3,
+      })
+      hlsRef.current = hls
       hls.loadSource(source)
       hls.attachMedia(video)
-      hls.on(Hls.Events.MANIFEST_PARSED, () => { void video.play().catch(() => {}) })
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) setError('Akış oynatılamadı')
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (!state.isLive) video.playbackRate = rate
+        void video.play().catch(() => {})
       })
-    } else if (state.isLive && !video.canPlayType('application/vnd.apple.mpegurl')) {
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (!data.fatal) return
+        setError(state.isLive ? 'Akış oynatılamadı' : t('sources.inactive'))
+      })
+    } else if (usesHls && !video.canPlayType('application/vnd.apple.mpegurl')) {
       setError('Tarayıcı HLS oynatmayı desteklemiyor')
-    } else if (state.isLive) {
-      video.src = source
-      video.load()
-      const playWhenReady = () => { void video.play().catch(() => {}) }
-      video.addEventListener('loadedmetadata', playWhenReady, { once: true })
     } else {
       video.src = source
+      if (!state.isLive) video.playbackRate = rate
+      if (usesHls) {
+        const playWhenReady = () => { void video.play().catch(() => {}) }
+        video.addEventListener('loadedmetadata', playWhenReady, { once: true })
+      }
       video.play().catch(() => {})
     }
 
@@ -201,14 +287,19 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       video.removeEventListener('pause', onPause)
       video.removeEventListener('timeupdate', onTimeUpdate)
       video.removeEventListener('durationchange', onDurationChange)
+      video.removeEventListener('loadedmetadata', onLoadedMetadata)
       video.removeEventListener('error', onError)
       video.removeEventListener('stalled', onStalled)
       video.removeEventListener('canplay', onCanPlay)
+      video.removeEventListener('ended', onEnded)
+      saveProgress()
       if (hls) hls.destroy()
+      hlsRef.current = null
       video.pause()
       video.removeAttribute('src')
       video.load()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.open, state.streamUrl, state.isLive, state.subtitles])
 
   useEffect(() => {
@@ -224,7 +315,40 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     if (!video) return
     video.volume = volume
     video.muted = muted
-  }, [volume, muted])
+    if (!state.isLive) video.playbackRate = rate
+  }, [volume, muted, rate, state.isLive])
+
+  function flashOsd(text: string) {
+    setOsd(text)
+    if (osdTimer.current) window.clearTimeout(osdTimer.current)
+    osdTimer.current = window.setTimeout(() => setOsd(null), 1600)
+  }
+
+  function saveProgress(force = false) {
+    const video = videoRef.current
+    const current = playerStateRef.current
+    const meta = current.watchMeta
+    if (!video || !meta || current.isLive) return
+    const total = video.duration || 0
+    if (!Number.isFinite(total) || total <= 0) return
+    const position = force ? total : video.currentTime
+    saveContinueWatching({
+      key: meta.key,
+      id: meta.id,
+      type: meta.type,
+      name: meta.name,
+      poster: meta.poster,
+      addonId: meta.addonId,
+      season: meta.season,
+      episode: meta.episode,
+      episodeName: meta.episodeName,
+      position,
+      duration: total,
+      progress: total > 0 ? position / total : 0,
+      item: meta.item,
+      episodeItem: meta.episodeItem || null,
+    })
+  }
 
   function revealControls() {
     if (panelOpen && state.isLive) return
@@ -241,7 +365,43 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
   }
 
-  if (!state.open) return null
+  function togglePlay() {
+    const video = videoRef.current
+    if (!video) return
+    if (video.paused) void video.play().catch(() => {})
+    else video.pause()
+    revealControls()
+  }
+
+  function seekBy(seconds: number) {
+    const video = videoRef.current
+    if (!video || state.isLive || !Number.isFinite(video.duration)) return
+    video.currentTime = Math.min(Math.max(0, video.currentTime + seconds), Math.max(0, video.duration - 0.5))
+    flashOsd(`${seconds > 0 ? '+' : ''}${seconds} sn`)
+    revealControls()
+  }
+
+  function jumpToPercent(percent: number) {
+    const video = videoRef.current
+    if (!video || state.isLive || !Number.isFinite(video.duration)) return
+    video.currentTime = video.duration * percent
+    flashOsd(`%${Math.round(percent * 100)}`)
+    revealControls()
+  }
+
+  function changeVolume(delta: number) {
+    const next = Math.min(1, Math.max(0, Math.round((volume + delta) * 100) / 100))
+    setVolume(next)
+    setMuted(next === 0)
+    flashOsd(`${Math.round(next * 100)}%`)
+    revealControls()
+  }
+
+  function toggleMute() {
+    setMuted((value) => !value)
+    flashOsd(muted ? t('player.unmute') : t('player.mute'))
+    revealControls()
+  }
 
   async function toggleFullscreen() {
     const container = containerRef.current
@@ -259,6 +419,12 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     }
   }
 
+  useEffect(() => {
+    const update = () => setIsFullscreen(Boolean(document.fullscreenElement))
+    document.addEventListener('fullscreenchange', update)
+    return () => document.removeEventListener('fullscreenchange', update)
+  }, [])
+
   async function togglePip() {
     const video = videoRef.current
     if (!video || !('requestPictureInPicture' in video)) return
@@ -270,12 +436,142 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     }
   }
 
-  function togglePlay() {
-    const video = videoRef.current
-    if (!video) return
-    if (video.paused) void video.play().catch(() => {})
-    else video.pause()
+  function cycleSubtitle() {
+    const total = subtitlesRef.current?.length || 0
+    if (!total) { flashOsd(t('player.subtitlesOff')); return }
+    const next = subtitleIndex >= total - 1 ? -1 : subtitleIndex + 1
+    setSubtitleIndex(next)
+    flashOsd(next < 0 ? t('player.subtitlesOff') : subtitlesRef.current?.[next]?.name || t('player.subtitles'))
   }
+
+  function cycleRate() {
+    const index = RATES.indexOf(rate)
+    const next = RATES[(index + 1) % RATES.length]
+    setRate(next)
+    flashOsd(`${t('player.speed')}: ${next}×`)
+  }
+
+  function cycleQuality() {
+    const hls = hlsRef.current
+    if (hls && hls.levels.length > 1) {
+      const next = (hls.currentLevel + 2) % (hls.levels.length + 1) - 1
+      hls.currentLevel = next
+      flashOsd(`${t('shortcuts.quality')}: ${next < 0 ? 'Auto' : `${hls.levels[next].height}p`}`)
+      return
+    }
+    flashOsd(t('player.qualityUnavailable'))
+  }
+
+  function zapChannel(direction: -1 | 1) {
+    if (!state.isLive) return
+    const list = state.channels?.length ? state.channels : channels
+    if (!list.length || !onChannelSelect) return
+    const index = list.findIndex((entry) => entry.id === state.item?.id)
+    const nextChannel = list[(index + direction + list.length) % list.length]
+    if (!nextChannel) return
+    setZap({ name: nextChannel.name, color: channelColor(nextChannel.name) })
+    onChannelSelect(nextChannel)
+    revealControls()
+  }
+
+  function copyLink() {
+    const url = window.location.href
+    if (navigator.clipboard?.writeText) {
+      void navigator.clipboard.writeText(url).catch(() => {})
+    }
+    flashOsd(t('player.linkCopied'))
+  }
+
+  function ejectToEpisodes() {
+    const meta = state.watchMeta
+    if (!meta) { flashOsd(t('shortcuts.episodes')); return }
+    window.dispatchEvent(new CustomEvent('notflix-open-episodes', { detail: { item: meta.item } }))
+  }
+
+  actionsRef.current = (event) => {
+    if (!state.open) return
+    const key = event.key
+    const target = (event as KeyboardEvent).target as HTMLElement | null
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
+    const handled = () => { if ('preventDefault' in event) { event.preventDefault(); event.stopPropagation() } }
+    if (key === 'Escape') {
+      handled()
+      if (showHelp) { setShowHelp(false); return }
+      if (sourceChooserOpen) { setSourceChooserOpen(false); return }
+      if (panelOpen) { setPanelOpen(false); revealControls(); return }
+      onClose()
+      return
+    }
+    if (showHelp) return
+    if (key === ' ' || key === 'k' || key === 'K' || key === 'MediaPlayPause') {
+      handled(); togglePlay(); return
+    }
+    if (key === 'j' || key === 'J') { handled(); seekBy(-10); return }
+    if (key === 'l' || key === 'L') { handled(); if (state.isLive) { panelOpen ? setPanelOpen(false) : openChannelPanel() } else seekBy(10); return }
+    if (key === 'ArrowLeft') { handled(); seekBy(-10); return }
+    if (key === 'ArrowRight') { handled(); seekBy(10); return }
+    if (key === 'ArrowUp') { handled(); if (state.isLive) zapChannel(1); else changeVolume(0.1); return }
+    if (key === 'ArrowDown') { handled(); if (state.isLive) zapChannel(-1); else changeVolume(-0.1); return }
+    if (key === 'm' || key === 'M') { handled(); toggleMute(); return }
+    if (key === 'f' || key === 'F') { handled(); void toggleFullscreen(); return }
+    if (key === 'p' || key === 'P') { handled(); void togglePip(); return }
+    if (key === 'c' || key === 'C') { handled(); cycleSubtitle(); return }
+    if (key === 's' || key === 'S') { handled(); if (!state.isLive && (state.sources?.length || 0) > 0) setSourceChooserOpen((value) => !value); return }
+    if (key === 'r' || key === 'R') { handled(); cycleRate(); return }
+    if (key === 'q' || key === 'Q') { handled(); cycleQuality(); return }
+    if (key === 'a' || key === 'A') { handled(); flashOsd(t('shortcuts.audio')); return }
+    if (key === 'e' || key === 'E') { handled(); ejectToEpisodes(); return }
+    if (key === 'i' || key === 'I') { handled(); copyLink(); return }
+    if (key === 't' || key === 'T') {
+      handled()
+      window.open(`${window.location.origin}${window.location.pathname}`, '_blank', 'noopener')
+      flashOsd(t('shortcuts.secondScreen'))
+      return
+    }
+    if (key === 'x' || key === 'X') { handled(); flashOsd(t('player.chatUnavailable')); return }
+    if (key === '?' || key === 'h' || key === 'H') { handled(); setShowHelp(true); return }
+    if (/^[0-9]$/.test(key)) { handled(); jumpToPercent(Number(key) / 10); return }
+  }
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => actionsRef.current(event)
+    window.addEventListener('keydown', handler, true)
+    return () => window.removeEventListener('keydown', handler, true)
+  }, [])
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const command = (event as CustomEvent<{ command?: string }>).detail?.command
+      if (!state.open || !command) return
+      const map: Record<string, string> = {
+        up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', ok: 'Enter',
+        back: 'Escape', home: 'Escape', playpause: ' ', mute: 'm', volup: 'ArrowUp', voldown: 'ArrowDown',
+        chup: 'ArrowUp', chdown: 'ArrowDown',
+      }
+      if (command === 'ok') { togglePlay(); return }
+      if (command === 'home') { onClose(); return }
+      const key = map[command]
+      if (!key) return
+      if (command === 'chup') { zapChannel(1); return }
+      if (command === 'chdown') { zapChannel(-1); return }
+      if (command === 'volup') { changeVolume(0.1); return }
+      if (command === 'voldown') { changeVolume(-0.1); return }
+      if (command === 'playpause') { togglePlay(); return }
+      if (command === 'mute') { toggleMute(); return }
+      if (command === 'back') {
+        if (sourceChooserOpen) setSourceChooserOpen(false)
+        else if (panelOpen) { setPanelOpen(false); revealControls() }
+        else onClose()
+        return
+      }
+      actionsRef.current({ key } as KeyboardEvent)
+    }
+    window.addEventListener('notflix-remote', handler)
+    return () => window.removeEventListener('notflix-remote', handler)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.open, panelOpen, sourceChooserOpen, volume, muted, rate, subtitleIndex])
+
+  if (!state.open) return null
 
   function seek(event: MouseEvent<HTMLDivElement>) {
     const video = videoRef.current
@@ -288,9 +584,13 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
   const formatTime = (value: number) => {
     if (!Number.isFinite(value)) return '0:00'
-    const minutes = Math.floor(value / 60)
-    const seconds = Math.floor(value % 60)
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+    const total = Math.floor(value)
+    const hours = Math.floor(total / 3600)
+    const minutes = Math.floor((total % 3600) / 60)
+    const seconds = total % 60
+    return hours > 0
+      ? `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+      : `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
   }
   const playbackError = state.playbackError || error
   const playerSources = state.sources || []
@@ -303,7 +603,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   }
 
   return (
-    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={revealControls} onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); if (sourceChooserOpen) setSourceChooserOpen(false); else if (panelOpen) setPanelOpen(false); else onClose() } }} tabIndex={-1}>
+    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={revealControls} tabIndex={-1}>
       <div className="player-pager">
         <div className="player-video-wrap">
           <video ref={videoRef} className="player-video" playsInline onClick={togglePlay} />
@@ -315,13 +615,36 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
           </div>
         ) : null}
         {playbackError ? (
-          <div className="player-error">
+          <div className="player-error player-error-danger">
             <p>{playbackError}</p>
-            {playerSources.length ? (
-              <button type="button" className="player-error-action" onClick={() => setSourceChooserOpen(true)}>
-                <Layers size={18} /> Kaynak değiştir
-              </button>
-            ) : null}
+            <div className="player-error-actions">
+              {playerSources.length ? (
+                <button type="button" className="player-error-action" onClick={() => setSourceChooserOpen(true)}>
+                  <Layers size={18} /> {t('sources.change')}
+                </button>
+              ) : null}
+              {!state.isLive ? (
+                <button type="button" className="player-error-action" onClick={onClose}>
+                  <ArrowLeftIcon size={18} /> {t('player.exit')}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {state.isLive && zap ? (
+          <div className="live-zap-overlay" aria-live="polite">
+            <div className="live-zap-logo" style={{ background: zap.color }}>{initialOf(zap.name)}</div>
+            <div className="live-zap-text">
+              <div className="live-zap-name">{zap.name}</div>
+              <div className="live-zap-status">{state.pending || !state.streamUrl ? t('common.loading') : t('channels.live')}</div>
+            </div>
+          </div>
+        ) : null}
+
+        {osd ? (
+          <div className="geil-osd" aria-live="polite">
+            <VolumeIcon size={18} /> <span>{osd}</span>
           </div>
         ) : null}
       </div>
@@ -335,14 +658,24 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                   <span className="iptv-bar-logo ch-logo-ph">{state.title ? state.title[0] : '•'}</span>
                   <div className="iptv-bar-text">
                     <div className="iptv-bar-head">
-                      <span className="ch-chip ch-chip-num">CANLI</span>
+                      <span className="ch-chip ch-chip-num">{t('channels.live')}</span>
                     </div>
                     <div className="iptv-bar-name">{state.title}</div>
                   </div>
                 </div>
                 <div className="iptv-bar-controls">
+                  {onChannelSelect ? (
+                    <>
+                      <button className="player-ctrl-btn" aria-label={t('player.channelDown')} onClick={() => zapChannel(-1)}>
+                        <ChevronLeft size={20} />
+                      </button>
+                      <button className="player-ctrl-btn" aria-label={t('player.channelUp')} onClick={() => zapChannel(1)}>
+                        <ChevronRight size={20} />
+                      </button>
+                    </>
+                  ) : null}
                   <div className="player-vol-wrap">
-                    <button className="player-ctrl-btn" aria-label="Ses" onClick={() => setMuted((value) => !value)}>
+                    <button className="player-ctrl-btn" aria-label={t('player.volume')} onClick={toggleMute}>
                       {muted || volume === 0 ? <MuteIcon size={20} /> : <VolumeIcon size={20} />}
                     </button>
                     <input
@@ -358,16 +691,6 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                       }}
                     />
                   </div>
-                  {onPrev ? (
-                    <button className="player-ctrl-btn" aria-label="Önceki" onClick={onPrev}>
-                      <ChevronLeft size={20} />
-                    </button>
-                  ) : null}
-                  {onNext ? (
-                    <button className="player-ctrl-btn" aria-label="Sonraki" onClick={onNext}>
-                      <ChevronRight size={20} />
-                    </button>
-                  ) : null}
                   {onChannelSelect ? (
                   <button className={`player-ctrl-btn ${panelOpen ? 'active' : ''}`} aria-label={panelOpen ? 'Kanal listesini kapat' : 'Kanal listesini aç'} aria-pressed={panelOpen} onClick={() => panelOpen ? (setPanelOpen(false), revealControls()) : openChannelPanel()}>
                       <List size={20} />
@@ -376,10 +699,10 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                   <button className="player-ctrl-btn" aria-label="PiP" onClick={togglePip}>
                     <PipIcon size={20} />
                   </button>
-                  <button className="player-ctrl-btn" aria-label="Tam ekran" onClick={toggleFullscreen}>
+                  <button className="player-ctrl-btn" aria-label={t('player.fullscreen')} onClick={toggleFullscreen}>
                     {isFullscreen ? <ExitFullscreenIcon size={20} /> : <FullscreenIcon size={20} />}
                   </button>
-                  <button className="player-ctrl-btn" aria-label="Kapat" onClick={onClose}><XIcon size={20} /></button>
+                  <button className="player-ctrl-btn" aria-label={t('common.close')} onClick={onClose}><XIcon size={20} /></button>
                 </div>
               </div>
             </div>
@@ -388,10 +711,11 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       ) : (
         <div className={`player-controls show ${showControls && !panelOpen ? '' : 'player-controls-hidden'}`}>
           <div className="player-top">
-            <button className="player-ctrl-btn" aria-label="Kapat" onClick={onClose}>
-              <XIcon size={20} />
+            <button className="player-exit-btn" onClick={() => { saveProgress(); onClose() }}>
+              <ArrowLeftIcon size={18} /> <span>{t('player.exit')}</span>
             </button>
             <div className="player-title">{state.title}</div>
+            <button className="player-help-btn" onClick={() => setShowHelp(true)} aria-label={t('player.help')}>?</button>
           </div>
           <div className="player-bottom">
             <div className="player-seek" onClick={seek}>
@@ -400,18 +724,19 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 <div className="player-seek-handle" />
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <button className="player-ctrl-btn" aria-label="Oynat/Duraklat" onClick={togglePlay}>
+            <div className="player-vod-controls">
+              <div className="player-vod-left">
+                <button className="player-ctrl-btn" aria-label={t('player.play')} onClick={togglePlay}>
                   {playing ? '❚❚' : <PlayIcon size={20} />}
                 </button>
-                  <span style={{ fontVariantNumeric: 'tabular-nums', fontSize: 13, color: '#fff' }}>
-                    {formatTime(currentTime)} / {formatTime(duration)}
-                  </span>
+                <button className="player-skip-btn" aria-label="10 sn geri" onClick={() => seekBy(-10)}>−10</button>
+                <button className="player-skip-btn" aria-label="10 sn ileri" onClick={() => seekBy(10)}>+10</button>
+                <span className="player-time">{formatTime(currentTime)} / {formatTime(duration)}</span>
               </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="player-vod-right">
+                <button className="player-rate-btn" onClick={cycleRate} aria-label={t('player.speed')}>{rate}×</button>
                 <div className="player-vol-wrap">
-                  <button className="player-ctrl-btn" aria-label="Ses" onClick={() => setMuted((value) => !value)}>
+                  <button className="player-ctrl-btn" aria-label={t('player.mute')} onClick={toggleMute}>
                     {muted || volume === 0 ? <MuteIcon size={20} /> : <VolumeIcon size={20} />}
                   </button>
                   <input
@@ -430,10 +755,10 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 {!state.isLive && (state.subtitles?.length || 0) > 0 ? (
                   <label className="player-subtitle-select" onClick={(event) => event.stopPropagation()}>
                     <Captions size={19} aria-hidden="true" />
-                    <select aria-label="Altyazı seç" value={subtitleIndex} onChange={(event) => setSubtitleIndex(Number(event.target.value))}>
-                      <option value={-1}>Altyazı kapalı</option>
+                    <select aria-label={t('player.subtitles')} value={subtitleIndex} onChange={(event) => setSubtitleIndex(Number(event.target.value))}>
+                      <option value={-1}>{t('player.subtitlesOff')}</option>
                       {state.subtitles?.map((subtitle, index) => (
-                        <option key={`${subtitle.url}-${index}`} value={index}>{subtitle.name || subtitle.language || `Altyazı ${index + 1}`}</option>
+                        <option key={`${subtitle.url}-${index}`} value={index}>{subtitle.name || subtitle.language || `${t('player.subtitles')} ${index + 1}`}</option>
                       ))}
                     </select>
                   </label>
@@ -441,18 +766,18 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 {!state.isLive && playerSources.length > 0 ? (
                   <button
                     className={`player-ctrl-btn ${sourceChooserOpen ? 'active' : ''}`}
-                    aria-label="Kaynaklar"
+                    aria-label={t('player.sources')}
                     aria-pressed={sourceChooserOpen}
                     onClick={() => { userInteracted.current = true; setSourceChooserOpen((value) => !value) }}
                   >
                     <Layers size={20} />
-                    <span className="player-ctrl-label">{playerSources[activeSourceIndex]?.name || 'Kaynaklar'}</span>
+                    <span className="player-ctrl-label">{playerSources[activeSourceIndex]?.name || t('player.sources')}</span>
                   </button>
                 ) : null}
                 <button className="player-ctrl-btn" aria-label="PiP" onClick={togglePip}>
                   <PipIcon size={20} />
                 </button>
-                <button className="player-ctrl-btn" aria-label="Tam ekran" onClick={toggleFullscreen}>
+                <button className="player-ctrl-btn" aria-label={t('player.fullscreen')} onClick={toggleFullscreen}>
                   {isFullscreen ? <ExitFullscreenIcon size={20} /> : <FullscreenIcon size={20} />}
                 </button>
               </div>
@@ -462,12 +787,12 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       )}
 
       {!state.isLive && sourceChooserOpen ? (
-        <div className="ch-overlay source-overlay" role="dialog" aria-modal="true" aria-label="Kaynaklar" onClick={(event) => { if (event.target === event.currentTarget) setSourceChooserOpen(false) }}>
+        <div className="ch-overlay source-overlay" role="dialog" aria-modal="true" aria-label={t('sources.title')} onClick={(event) => { if (event.target === event.currentTarget) setSourceChooserOpen(false) }}>
           <div className="ch-panel source-panel">
             <div className="ch-panel-head">
-              <h3>Kaynaklar</h3>
+              <h3>{t('sources.title')}</h3>
               <div className="ch-panel-head-actions">
-                <button className="modal-close" aria-label="Kaynak listesini kapat" onClick={() => setSourceChooserOpen(false)}>×</button>
+                <button className="modal-close" aria-label={t('common.close')} onClick={() => setSourceChooserOpen(false)}>×</button>
               </div>
             </div>
             <div className="ch-list source-panel-list">
@@ -481,9 +806,9 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                   <span className="source-row-icon">{(source.name || '?').slice(0, 2).toUpperCase()}</span>
                   <span className="source-row-text">
                     <span className="source-row-name">{source.name}</span>
-                    <span className="source-row-meta">{source.quality || `Kaynak ${index + 1}`}</span>
+                    <span className="source-row-meta">{source.quality || `${t('sources.server')} ${index + 1}`}</span>
                   </span>
-                  {index === activeSourceIndex ? <span className="source-row-badge">Oynatılıyor</span> : <PlayIcon size={18} />}
+                  {index === activeSourceIndex ? <span className="source-row-badge">{t('sources.playing')}</span> : <PlayIcon size={18} />}
                 </button>
               ))}
             </div>
@@ -517,18 +842,18 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       ) : null}
 
       {state.isLive ? (
-        <button type="button" className={`player-center-toggle ${showControls ? 'is-visible' : ''}`} onClick={(event) => { event.stopPropagation(); togglePlay(); revealControls() }} aria-label={playing ? 'Yayını durdur' : 'Yayını oynat'}>
+        <button type="button" className={`player-center-toggle ${showControls ? 'is-visible' : ''}`} onClick={(event) => { event.stopPropagation(); togglePlay(); revealControls() }} aria-label={playing ? t('player.pause') : t('player.play')}>
           {playing ? '❚❚' : <PlayIcon size={28} />}
         </button>
       ) : null}
 
       {state.isLive && panelOpen && onChannelSelect ? (
-        <div className="ch-overlay" role="dialog" aria-modal="true" aria-label="Kanallar" onClick={(event) => { if (event.target === event.currentTarget) { setPanelOpen(false); revealControls() } }}>
+        <div className="ch-overlay" role="dialog" aria-modal="true" aria-label={t('channels.title')} onClick={(event) => { if (event.target === event.currentTarget) { setPanelOpen(false); revealControls() } }}>
           <div className="ch-panel">
             <div className="ch-panel-head" data-zone="h">
-              <h3>Kanallar</h3>
+              <h3>{t('channels.title')}</h3>
               <div className="ch-panel-head-actions">
-                <button className="modal-close" aria-label="Kanal listesini kapat" onClick={() => { setPanelOpen(false); revealControls() }}>×</button>
+                <button className="modal-close" aria-label={t('common.close')} onClick={() => { setPanelOpen(false); revealControls() }}>×</button>
               </div>
             </div>
             <div className="ch-now" role="button" tabIndex={-1}>
@@ -536,7 +861,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 {initialOf(state.title)}
               </span>
               <div className="ch-now-text">
-                <div className="ch-now-label">Şu an oynatılıyor</div>
+                <div className="ch-now-label">{t('channels.live')}</div>
                 <div className="ch-now-name">{state.title}</div>
                 {(() => {
                   const epg = currentEpg(state.item)
@@ -546,28 +871,28 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                       <span className="ch-epg-title">{epg.entry.title}</span>
                       <span className="ch-epg-left">{remainingLabel(epg.entry.end)}</span>
                     </div>
-                  ) : <div className="ch-epg ch-epg-none">Yayın akışı bilgisi yok</div>
+                  ) : <div className="ch-epg ch-epg-none">{t('channels.noResultsDesc')}</div>
                 })()}
               </div>
             </div>
             <div className="search-wrap" style={{ margin: '10px 12px' }}>
               <SearchIcon size={20} />
-              <input className="glass-input" placeholder="Kanallarda ara..." value={panelSearch} onChange={(event) => setPanelSearch(event.target.value)} />
+              <input className="glass-input" placeholder={t('channels.search')} value={panelSearch} onChange={(event) => setPanelSearch(event.target.value)} />
             </div>
             <div className="ch-controls" style={{ display: 'flex', gap: 8, padding: '0 12px 10px', flexShrink: 0 }}>
-              <select className="sort-select" aria-label="Sıralama" value={panelSort} onChange={(event) => setPanelSort(event.target.value)}>
-                {(panelFeatures?.sort || [{ id: 'trending', name: 'Popüler' }, { id: 'name', name: 'A-Z' }]).map((option) => (
-                  <option key={option.id} value={option.id}>{option.name === 'Trending' || option.name === 'Popular' ? 'Popüler' : option.name}</option>
+              <select className="sort-select" aria-label={t('channels.sortPopular')} value={panelSort} onChange={(event) => setPanelSort(event.target.value)}>
+                {(panelFeatures?.sort || [{ id: 'trending', name: t('channels.sortPopular') }, { id: 'name', name: 'A-Z' }]).map((option) => (
+                  <option key={option.id} value={option.id}>{option.name === 'Trending' || option.name === 'Popular' ? t('channels.sortPopular') : option.name}</option>
                 ))}
               </select>
-              <select className="sort-select" aria-label="Ülke" value={panelGroup} onChange={(event) => setPanelGroup(event.target.value)}>
-                <option value="">Tüm ülkeler</option>
+              <select className="sort-select" aria-label={t('channels.allCountries')} value={panelGroup} onChange={(event) => setPanelGroup(event.target.value)}>
+                <option value="">{t('channels.allCountries')}</option>
                 {(panelFeatures?.filter?.find((feature) => feature.id === 'group')?.values || []).map((option) => (
                   <option key={option.id} value={option.id}>{option.name}</option>
                 ))}
               </select>
               <button className={`ep-pill panel-favorites-filter ${panelGroup === '__favorites__' ? 'active' : ''}`} aria-pressed={panelGroup === '__favorites__'} onClick={() => setPanelGroup((value) => value === '__favorites__' ? '' : '__favorites__')}>
-                Favoriler {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
+                {t('channels.favorites')} {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
               </button>
             </div>
             <div className="ch-list" style={{ maxHeight: 'none', minHeight: 0, overflowY: 'auto', flex: 1 }} aria-busy={panelLoading}>
@@ -575,7 +900,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 .filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase()))
                 .map((channel, index) => (
                   <div className="ch-item" key={channel.id} style={{ position: 'relative', height: 64 }}>
-                    <div className="ch-row" style={{ height: '100%' }} onClick={() => onChannelSelect(channel)}>
+                    <div className="ch-row" style={{ height: '100%' }} onClick={() => onChannelSelect(channel, panelChannels)}>
                       <span className="ch-num">{index + 1}</span>
                       <span className="ch-logo ch-logo-ph" style={{ background: channelColor(channel.name) }}>{initialOf(channel.name)}</span>
                       <div className="ch-main">
@@ -595,18 +920,18 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                                 </div>
                                 <div className="ch-epg-track"><div className="ch-epg-fill" style={{ width: `${epg.progress}%` }} /></div>
                               </>
-                            ) : <div className="ch-epg ch-epg-none">Yayın akışı bilgisi yok</div>
+                            ) : <div className="ch-epg ch-epg-none">{t('channels.noResultsDesc')}</div>
                           })()}
                         </div>
                       </div>
-                      <button className={`ch-fav ${favIds.has(channel.id) ? 'on' : ''}`} aria-label="Favori" aria-pressed={favIds.has(channel.id)} onClick={(event) => { event.stopPropagation(); togglePanelFavorite(channel.id) }}>
+                      <button className={`ch-fav ${favIds.has(channel.id) ? 'on' : ''}`} aria-label={t('item.favorite')} aria-pressed={favIds.has(channel.id)} onClick={(event) => { event.stopPropagation(); togglePanelFavorite(channel.id) }}>
                         <HeartIcon size={20} />
                       </button>
                     </div>
                   </div>
                 ))}
               {!panelLoading && panelChannels.filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase())).length === 0 ? (
-                <div className="empty"><h3>Sonuç bulunamadı</h3><p>Farklı bir arama veya filtre deneyin.</p></div>
+                <div className="empty"><h3>{t('channels.noResults')}</h3><p>{t('channels.noResultsDesc')}</p></div>
               ) : null}
             </div>
           </div>
@@ -623,6 +948,8 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
           <List size={21} />
         </button>
       ) : null}
+
+      {showHelp ? <ShortcutsHelp onClose={() => setShowHelp(false)} /> : null}
     </div>
   )
 }

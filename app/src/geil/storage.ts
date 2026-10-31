@@ -85,3 +85,68 @@ export function setProgress(id: string, value: number) {
   map[id] = Math.max(0, Math.min(1, value))
   write(PROGRESS_KEY, map)
 }
+
+const CONTINUE_KEY = 'notflix_geil_continue'
+const CONTINUE_LIMIT = 40
+
+export interface ContinueEntry {
+  key: string
+  id: string
+  type: string
+  name: string
+  poster: string
+  addonId: string
+  season?: number
+  episode?: number
+  episodeName?: string
+  position: number
+  duration: number
+  progress: number
+  updatedAt: number
+  item: GeilItem
+  episodeItem?: GeilItem | null
+}
+
+export function getContinueWatching(): ContinueEntry[] {
+  return read<ContinueEntry[]>(CONTINUE_KEY, [])
+    .filter((entry) => entry && entry.progress > 0.01 && entry.progress < 0.98)
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+}
+
+export function getContinueEntry(key: string): ContinueEntry | null {
+  return getContinueWatching().find((entry) => entry.key === key) || null
+}
+
+export function saveContinueWatching(entry: Omit<ContinueEntry, 'updatedAt'>): void {
+  if (!entry.key || !Number.isFinite(entry.progress)) return
+  const current = read<ContinueEntry[]>(CONTINUE_KEY, []).filter((item) => item.key !== entry.key)
+  let next = current
+  if (entry.progress > 0.015 && entry.progress < 0.98) {
+    next = [{ ...entry, updatedAt: Date.now() }, ...current].slice(0, CONTINUE_LIMIT)
+  }
+  write(CONTINUE_KEY, next)
+}
+
+export function removeContinueWatching(key: string): void {
+  const next = read<ContinueEntry[]>(CONTINUE_KEY, []).filter((entry) => entry.key !== key)
+  write(CONTINUE_KEY, next)
+}
+
+export function clearContinueWatching(): void {
+  write(CONTINUE_KEY, [])
+}
+
+export function clearAllData(): void {
+  try {
+    const keys: string[] = []
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index)
+      if (key && (key.startsWith('notflix') || key === 'lang' || key.startsWith('geil'))) keys.push(key)
+    }
+    keys.forEach((key) => localStorage.removeItem(key))
+  } catch {
+    // Storage can be blocked; the UI still reports completion.
+  }
+  window.dispatchEvent(new CustomEvent('notflix-geil-storage'))
+  window.dispatchEvent(new CustomEvent('notflix-geil-live-favorites'))
+}

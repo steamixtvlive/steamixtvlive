@@ -1,0 +1,243 @@
+/* ---- VOD player controls (exit, seek, rate, subtitles, help) ---- */
+.player-top { display: flex; align-items: center; gap: 12px; }
+.player-top .player-title { flex: 1; min-width: 0; }
+.player-exit-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 15px;
+  border-radius: 999px; border: 1px solid rgba(255,255,255,.18);
+  background: rgba(8,8,10,.62); backdrop-filter: blur(14px); color: #fff;
+  font-size: 13px; font-weight: 650; cursor: pointer; flex: 0 0 auto;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.player-exit-btn:hover { background: rgba(229,9,20,.22); border-color: rgba(229,9,20,.55); transform: translateY(-1px); }
+.player-help-btn {
+  width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,.18); background: rgba(8,8,10,.62);
+  backdrop-filter: blur(14px); color: #fff; font-size: 16px; font-weight: 800; cursor: pointer;
+}
+.player-help-btn:hover { border-color: rgba(var(--accent-rgb), .6); color: var(--accent); }
+.player-vod-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 2px 2px; }
+.player-vod-left, .player-vod-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.player-skip-btn, .player-rate-btn {
+  height: 38px; min-width: 48px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08);
+  color: #fff; font-size: 12px; font-weight: 750; cursor: pointer;
+  transition: background .18s ease, border-color .18s ease;
+}
+.player-skip-btn:hover, .player-rate-btn:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.3); }
+.player-subtitle-select {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 10px;
+  border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); color: #fff;
+}
+.player-subtitle-select select { background: transparent; border: 0; outline: none; color: #fff; font-size: 12px; max-width: 150px; }
+.player-subtitle-select select option { color: #111; }
+/* The skin uses `html.player-osd` as a root flag, so the badge needs its own class. */
+.geil-osd {
+  position: absolute; left: 50%; bottom: 24%; transform: translateX(-50%); z-index: 240;
+  display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px;
+  background: rgba(0,0,0,.72); border: 1px solid rgba(255,255,255,.12); color: #fff;
+  font-size: 13px; font-weight: 700; pointer-events: none; backdrop-filter: blur(10px);
+  animation: geilOsdIn .16s ease both;
+}
+@keyframes geilOsdIn { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+.player-error-danger {
+  border-color: rgba(229,9,20,.65) !important;
+  background: rgba(38,4,7,.9) !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(229,9,20,.25) inset;
+}
+.player-error-actions { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.player-error-action {
+  display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 15px;
+  border-radius: 999px; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.1);
+  color: #fff; font-size: 13px; font-weight: 650; cursor: pointer;
+}
+.player-error-action:hover { background: rgba(255,255,255,.18); }
+
+/* ---- Live channel zap overlay ---- */
+.live-zap-overlay {
+  position: absolute; inset: 0; z-index: 220; display: flex; align-items: center; justify-content: center;
+  gap: 18px; padding: 24px; background: rgba(0,0,0,.58); backdrop-filter: blur(6px); pointer-events: none;
+  animation: geilZapIn .2s ease both;
+}
+.live-zap-logo {
+  width: 92px; height: 92px; flex: 0 0 92px; border-radius: 24px; display: grid; place-items: center;
+  color: #fff; font-size: 34px; font-weight: 800; box-shadow: 0 18px 50px rgba(0,0,0,.55);
+}
+.live-zap-text { display: flex; flex-direction: column; gap: 6px; color: #fff; min-width: 0; }
+.live-zap-name { font-size: clamp(22px, 4vw, 40px); font-weight: 800; letter-spacing: -.02em; line-height: 1.08; }
+.live-zap-status { font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+@keyframes geilZapIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---- Shortcuts help ---- */
+.shortcuts-overlay {
+  position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(0,0,0,.74); backdrop-filter: blur(10px);
+}
+.shortcuts-panel {
+  width: min(760px, 100%); max-height: 86vh; overflow: auto; color: #fff;
+  background: #0d0d10; border: 1px solid rgba(255,255,255,.1); border-radius: 20px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
+}
+.shortcuts-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.shortcuts-head h2 { margin: 0; font-size: 18px; font-weight: 800; }
+.shortcuts-close {
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06); color: #fff; font-size: 20px; line-height: 1; cursor: pointer;
+}
+.shortcuts-body { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 20px 22px 26px; }
+.shortcuts-body h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.shortcut-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 13px; }
+.shortcut-keys { display: flex; gap: 5px; flex-wrap: wrap; }
+.shortcut-keys kbd {
+  min-width: 22px; padding: 3px 6px; border-radius: 6px; text-align: center; color: #fff;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16);
+  font-family: inherit; font-size: 11px; font-weight: 700;
+}
+.shortcut-label { color: rgba(255,255,255,.78); text-align: right; }
+@media (max-width: 720px) { .shortcuts-body { grid-template-columns: 1fr; gap: 18px; } }
+
+/* ---- Air remote (phone page) ---- */
+.app-root:has(.remote-page) .sidebar,
+.app-root:has(.remote-page) .bnav { display: none; }
+.remote-page {
+  min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: radial-gradient(circle at 50% 0%, rgba(229,9,20,.2), transparent 62%), #050506;
+}
+.remote-card {
+  width: min(430px, 100%); display: flex; flex-direction: column; gap: 16px; padding: 22px;
+  border-radius: 24px; background: #0d0d10; border: 1px solid rgba(255,255,255,.1);
+  color: #fff; box-shadow: 0 30px 80px rgba(0,0,0,.55);
+}
+.remote-head { display: flex; align-items: center; gap: 12px; }
+.remote-mark { font-size: 11px; font-weight: 800; letter-spacing: .2em; color: #e50914; }
+.remote-head h1 { margin: 0; font-size: 18px; font-weight: 800; }
+.remote-pair { display: flex; flex-direction: column; gap: 10px; }
+.remote-pair label { font-size: 12px; color: rgba(255,255,255,.6); }
+.remote-status { padding: 10px 14px; border-radius: 12px; background: rgba(255,255,255,.06); font-size: 13px; text-align: center; color: rgba(255,255,255,.82); }
+.remote-status.is-ok { background: rgba(34,197,94,.14); color: #6ee7a0; }
+.remote-status.is-error { background: rgba(229,9,20,.16); color: #ff9aa0; }
+.remote-pad {
+  display: grid; gap: 10px; aspect-ratio: 1 / 1; padding: 14px; border-radius: 22px;
+  grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+  background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+}
+.remote-pad > :nth-child(1) { grid-column: 1; grid-row: 1; }
+.remote-pad > :nth-child(2) { grid-column: 2; grid-row: 1; }
+.remote-pad > :nth-child(3) { grid-column: 1; grid-row: 2; }
+.remote-pad > :nth-child(4) { grid-column: 2; grid-row: 2; }
+.remote-pad > :nth-child(5) { grid-column: 3; grid-row: 2; }
+.remote-pad > :nth-child(6) { grid-column: 2; grid-row: 3; }
+.remote-btn {
+  min-height: 44px; padding: 10px; border-radius: 16px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.07);
+  color: #fff; font-size: 14px; font-weight: 700; font-family: inherit;
+  transition: background .15s ease, transform .1s ease;
+}
+.remote-btn:active { background: rgba(255,255,255,.2); transform: scale(.96); }
+.remote-power { color: #ff8b90; }
+.remote-dpad-ok { background: rgba(229,9,20,.22); border-color: rgba(229,9,20,.5); font-size: 16px; }
+.remote-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.remote-grid .remote-btn { min-height: 46px; font-size: 11px; border-radius: 12px; }
+
+/* ---- Settings additions ---- */
+.s-item-nav {
+  display: flex; width: 100%; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap;
+}
+.s-item-nav > div:first-child { min-width: 0; flex: 1 1 180px; }
+.s-item-nav :is(.s-toggle, .s-value, .s-value-btn, .sort-select, .s-remote-actions) { flex: 0 0 auto; }
+.s-toggle {
+  position: relative; width: 48px; height: 27px; flex: 0 0 auto; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.12); transition: background .2s ease, border-color .2s ease;
+}
+.s-toggle span { position: absolute; top: 2px; left: 2px; width: 21px; height: 21px; border-radius: 50%; background: #fff; transition: left .2s var(--ease, ease); }
+.s-toggle.is-on { background: var(--accent); border-color: transparent; }
+.s-toggle.is-on span { left: 23px; }
+.s-remote-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.s-remote-hint { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.s-remote-code { font-size: 34px; font-weight: 800; letter-spacing: .3em; color: var(--accent); }
+.s-error { color: #ff8b90 !important; }
+.s-value-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.08);
+  color: inherit; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.s-value-btn:hover { background: rgba(255,255,255,.16); }
+.s-danger { color: #ff8b90; border-color: rgba(229,9,20,.42); }
+.s-confirm {
+  margin: 6px 14px 14px; padding: 14px; border-radius: 14px; font-size: 13px;
+  display: flex; flex-direction: column; gap: 10px;
+  background: rgba(229,9,20,.12); border: 1px solid rgba(229,9,20,.32); color: #ffd9db;
+}
+.s-confirm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.s-notice { padding: 10px 16px; font-size: 12px; color: #6ee7a0; }
+
+/* ---- Library continue-watching tiles ---- */
+.lib-tile { position: relative; min-width: 0; }
+.lib-tile-btn { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
+.lib-tile-btn .card-img { aspect-ratio: 2 / 3; border-radius: var(--r-sm); overflow: hidden; position: relative; background: var(--bg2, #151519); border: 1px solid var(--border, rgba(255,255,255,.08)); }
+.lib-tile-btn .card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lib-tile-btn .card-overlay { opacity: 1; }
+.lib-tile-btn .ph { display: grid; place-items: center; width: 100%; height: 100%; font-size: 34px; font-weight: 800; color: rgba(255,255,255,.4); }
+.lib-tile-remove {
+  position: absolute; top: 8px; right: 8px; z-index: 5; width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.2); background: rgba(0,0,0,.62); color: #fff;
+  opacity: 0; transition: opacity .18s ease, background .18s ease;
+}
+.lib-tile:hover .lib-tile-remove, .lib-tile:focus-within .lib-tile-remove { opacity: 1; }
+.lib-tile-remove:hover { background: rgba(229,9,20,.75); }
+@media (hover: none) { .lib-tile-remove { opacity: 1; } }
+
+/* ---- Channel controls: favourites pill after the country filter ---- */
+.channel-favorite-tabs { display: flex; align-items: center; flex: 0 0 auto; }
+.ch-controls { flex-wrap: wrap; }
+
+/* ---- Splash lock ---- */
+html.splash-lock, html.splash-lock body { overflow: hidden !important; }
+
+/* ---- TV mode focus ring ---- */
+/* The vendored TV skin pins the rail permanently open and adds 27px overscan padding,
+   which shifted the whole shell the moment TV mode flipped. The rail is an absolutely
+   positioned overlay, so keeping it driven by --open lets it expand for labels on
+   focus without moving anything else. */
+html.tv-mode .sidebar { width: calc(var(--rail-w) + (var(--rail-open) - var(--rail-w)) * var(--open)); }
+html.tv-mode:not(.tv-device) { --sat: env(safe-area-inset-top); --sab: env(safe-area-inset-bottom); }
+html.tv-mode .main :focus,
+html.tv-mode .sidebar :focus,
+html.tv-mode .bnav :focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+html.tv-mode .card:focus { outline-offset: 4px; }
+
+/* ---- Mobile / landscape hardening ---- */
+@media (max-width: 900px) {
+  .hero-body { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+  .hero-tabs { max-width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .hero-tabs::-webkit-scrollbar { display: none; }
+  .hero-actions { flex-wrap: wrap; gap: 10px; }
+  .tab-bar .ep-pills { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .tab-bar .ep-pills::-webkit-scrollbar { display: none; }
+  .ch-controls { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; padding-bottom: 4px; }
+  .ch-controls::-webkit-scrollbar { display: none; }
+  .player-vod-controls { gap: 8px; }
+  .player-vod-left, .player-vod-right { gap: 6px; }
+  .player-subtitle-select select { max-width: 108px; }
+  .settings-head { flex-wrap: wrap; gap: 8px; }
+}
+@media (max-width: 900px) and (orientation: landscape) {
+  .hero { min-height: 68vh; }
+  .settings-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .channels-view .live-stage { min-height: 190px; }
+  .remote-page { padding: 12px; }
+}
+
+/* ---- Player: keep controls reachable in landscape phones ---- */
+@media (max-height: 520px) and (orientation: landscape) {
+  .player-vod-controls { padding: 4px 2px 0; }
+  .player-top { padding: 6px 12px 0; }
+  .player-bottom { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  .player-skip-btn, .player-rate-btn, .player-subtitle-select, .player-ctrl-btn { height: 34px; }
+}

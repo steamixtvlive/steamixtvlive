@@ -5,15 +5,17 @@ import { SectionRow } from './Cards'
 import { catalogHref, itemHref } from './router'
 import { toggleFavorite, isFavorite } from './storage'
 import { HeartIcon } from './icons'
+import { useLang } from '@/lib/language'
 
 const HERO_TABS = [
-  { key: 'series-trending', title: 'Diziler', type: 'series' as const, sort: 'trendingDay' },
-  { key: 'series-popular', title: 'Popüler Diziler', type: 'series' as const, sort: 'popularity' },
-  { key: 'movie-trending', title: 'Filmler', type: 'video' as const, sort: 'trendingDay' },
-  { key: 'movie-popular', title: 'Popüler Filmler', type: 'video' as const, sort: 'popularity' },
+  { key: 'series-trending', title: 'home.trendingSeries', type: 'series' as const, sort: 'trendingDay' },
+  { key: 'series-popular', title: 'home.popularSeries', type: 'series' as const, sort: 'popularity' },
+  { key: 'movie-trending', title: 'home.trendingMovies', type: 'video' as const, sort: 'trendingDay' },
+  { key: 'movie-popular', title: 'home.popularMovies', type: 'video' as const, sort: 'popularity' },
 ]
 
 export default function HomeView() {
+  const { t } = useLang()
   const [data, setData] = useState<Record<string, GeilItem[]>>({})
   const [m3uRows, setM3uRows] = useState<Array<{ id: string; name: string; items: GeilItem[] }>>([])
   const [loading, setLoading] = useState(true)
@@ -119,7 +121,7 @@ export default function HomeView() {
               className={`hero-tab ${index === activeTab ? 'active' : ''}`}
               onClick={() => { setActiveTab(index); setHeroIndex(0); jumpToSection(tab.key) }}
             >
-              {tab.title}
+              {t(tab.title)}
             </button>
           ))}
         </div>
@@ -155,13 +157,13 @@ export default function HomeView() {
               <div className="hero-actions" data-zone="h">
                 {hero ? (
                   <a className="btn-hero-primary" href={itemHref('tmdb', hero.type, hero.id)}>
-                    Detaylar <span aria-hidden="true">›</span>
+                    {t('common.details')} <span aria-hidden="true">›</span>
                   </a>
                 ) : null}
                 {hero ? (
                   <button
                     className={`btn-hero-fav ${heroIsFavorite ? 'on' : ''}`}
-                    aria-label={heroIsFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                    aria-label={t('item.favorite')}
                     aria-pressed={heroIsFavorite}
                     onClick={() => setHeroIsFavorite(toggleFavorite(hero, 'tmdb'))}
                   >
@@ -174,7 +176,7 @@ export default function HomeView() {
                       <button
                         key={index}
                         className={`hero-dot ${index === heroIndex % selectedHeroItems.length ? 'active' : ''}`}
-                        aria-label={`Slayt ${index + 1}`}
+                        aria-label={`${index + 1}`}
                         onClick={() => setHeroIndex(index)}
                       >
                         {index === heroIndex % selectedHeroItems.length ? <span className="hero-dot-fill" style={{ animationDuration: '8000ms' }} /> : null}
@@ -188,7 +190,7 @@ export default function HomeView() {
         </div>
         {selectedHeroItems.length > 1 ? (
           <div className="hero-strip">
-            <span className="hero-strip-label" aria-hidden="true">Sıradaki</span>
+            <span className="hero-strip-label" aria-hidden="true">{t('home.upNext')}</span>
             {selectedHeroItems.map((item, index) => (
               <span
                 key={item.id}
@@ -209,7 +211,7 @@ export default function HomeView() {
       {loading
         ? Array.from({ length: 4 }).map((_, index) => (
             <section className="section reveal is-in" key={`skeleton-${index}`}>
-              <div className="section-head"><h2 className="section-title section-title-static"><span className="section-title-text">Yükleniyor...</span></h2></div>
+              <div className="section-head"><h2 className="section-title section-title-static"><span className="section-title-text">{t('common.loading')}</span></h2></div>
               <div className="row-wrap row-can-scroll">
                 <div className="row" data-zone="h">
                   {Array.from({ length: 6 }).map((__, i) => (
@@ -227,7 +229,7 @@ export default function HomeView() {
             <SectionRow
               key={tab.key}
               sectionRef={(element) => { sectionRefs.current[tab.key] = element }}
-              title={tab.title}
+              title={t(tab.title)}
               items={m3uRows.length ? m3uRows.find((row) => row.id === (tab.type === 'series' ? 'series' : 'video'))?.items || [] : data[tab.key] || []}
               loading={false}
               skeletons={0}

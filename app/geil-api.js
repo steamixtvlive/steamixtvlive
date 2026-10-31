@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream'
-import { createHmac, timingSafeEqual } from 'node:crypto'
+import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto'
 
 /**
  * NOTFLIX / GEIL bridge.
@@ -135,8 +135,17 @@ function subtitleProxyUrl(subtitle) {
   if (!subtitle || typeof subtitle !== 'object' || !/^https?:\/\//i.test(String(subtitle.url || ''))) return null
   return {
     ...subtitle,
-    url: proxyUrl(subtitle.url, allowedSourceHeaders(subtitle.headers)),
+    url: `/api/geil/subtitle?t=${encodeURIComponent(signPayload({ u: subtitle.url }))}`,
   }
+}
+
+function srtToVtt(input) {
+  let body = String(input || '').replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n')
+  if (/^WEBVTT/.test(body.trim())) return body
+  body = body
+    .replace(/(\d{1,2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2')
+    .replace(/(\d{1,2}:\d{2}),(\d{3})\s+-->/g, '00:$1.$2 -->')
+  return `WEBVTT\n\n${body.trim()}\n`
 }
 
 function encodeBase64Url(value) {
@@ -367,28 +376,45 @@ async function handleTmdbItem(reqUrl, res) {
 const VOD_TYPES = new Set(['video', 'series'])
 const VOD_ID_RE = /^[A-Za-z0-9:_-]{1,140}$/
 
+function providerId(id) {
+  const value = String(id || '').trim()
+  return /^(tmdb|imdb):/i.test(value) ? value : `tmdb:${value}`
+}
+
+async function getSourceSubtitles(provider) {
+  try {
+    const data = await fetchVodJson(
+      `${GEIL}/subtitle/subtitle/video/${encodeURIComponent(provider)}.json`,
+      { headers: { origin: GEIL, referer: `${GEIL}/` }, timeout: Math.min(UPSTREAM_TIMEOUT_MS, 9000) },
+    )
+    const list = Array.isArray(data?.subtitles) ? data.subtitles : []
+    const seen = new Set()
+    return list
+      .map(subtitleProxyUrl)
+      .filter((entry) => entry && !seen.has(entry.url) && seen.add(entry.url))
+      .sort((a, b) => {
+        const score = (entry) => (/^(tr|tur|turkish)/i.test(String(entry.language || '')) ? 0 : 1)
+        return score(a) - score(b)
+      })
+  } catch {
+    return []
+  }
+}
+
 async function getSources(type, id) {
   const key = `${type}:${id}`
   const cached = cacheGet(sourcesCache, key)
   if (cached) return cached
-  const idPart = encodeURIComponent(id)
-  const candidates = type === 'video'
-    ? [
-        `${GEIL}/vod/source/video/${idPart}.json`,
-        `${GEIL}/vod/source/movie/${idPart}.json`,
-        `${GEIL}/vod/source/${idPart}/video.json`,
-        `${GEIL}/vod/source/${idPart}.json`,
-      ]
-    : [
-        `${GEIL}/vod/source/series/${idPart}.json`,
-        `${GEIL}/vod/source/series/${idPart}/episodes.json`,
-        `${GEIL}/vod/source/${idPart}/series.json`,
-        `${GEIL}/vod/source/${idPart}.json`,
-      ]
-  const { data } = await fetchVodJsonFirstWorking(candidates, {
-    headers: { origin: GEIL, referer: `${GEIL}/` },
-    timeout: Math.min(UPSTREAM_TIMEOUT_MS, 8000),
-  })
+  // geil.to v2 serves every playable metadata item (movies and individual
+  // series episodes) from the same "video" source endpoint.
+  const provider = providerId(id)
+  const [data, subtitles] = await Promise.all([
+    fetchVodJson(`${GEIL}/vod/source/video/${encodeURIComponent(provider)}.json`, {
+      headers: { origin: GEIL, referer: `${GEIL}/` },
+      timeout: Math.min(UPSTREAM_TIMEOUT_MS, 9000),
+    }),
+    getSourceSubtitles(provider),
+  ])
   const sources = (Array.isArray(data?.sources) ? data.sources : [])
     .filter((source) => source && typeof source.url === 'string' && /^https?:\/\//i.test(source.url))
     .map((source) => ({
@@ -396,7 +422,7 @@ async function getSources(type, id) {
       name: source.name || 'Server',
       quality: source.quality || '',
       languages: Array.isArray(source.languages) ? source.languages : [],
-      subtitles: Array.isArray(source.subtitles) ? source.subtitles.map(subtitleProxyUrl).filter(Boolean) : [],
+      subtitles,
       size: source.size || null,
     }))
   return cacheSet(sourcesCache, key, sources, SOURCES_TTL)
@@ -530,6 +556,41 @@ async function handleVodResolve(reqUrl, res) {
     quality: resolved.quality,
     subtitles: resolved.subtitles,
   })
+}
+
+async function handleGeilSubtitle(reqUrl, res) {
+  const token = reqUrl.searchParams.get('t') || ''
+  const payload = verifyPayload(token)
+  if (!payload || !/^https?:\/\//i.test(String(payload.u || ''))) {
+    sendText(res, 403, 'Geçersiz altyazı anahtarı')
+    return
+  }
+  try {
+    const response = await fetch(payload.u, {
+      headers: {
+        'user-agent': UA,
+        accept: 'text/plain,application/x-subrip,*/*',
+        origin: GEIL,
+        referer: `${GEIL}/`,
+      },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+    })
+    if (!response.ok) {
+      sendText(res, 502, `Altyazı alınamadı (${response.status})`)
+      return
+    }
+    const vtt = srtToVtt(await response.text())
+    res.writeHead(200, {
+      'content-type': 'text/vtt; charset=utf-8',
+      'cache-control': 'public, max-age=3600',
+      'access-control-allow-origin': '*',
+      'content-length': Buffer.byteLength(vtt),
+    })
+    res.end(vtt)
+  } catch {
+    sendText(res, 502, 'Altyazı alınamadı')
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -796,6 +857,101 @@ async function handleM3uEpisodes(reqUrl, res) {
   sendJson(res, 200, { ok: true, seasons, episodes })
 }
 
+/* -------------------------------------------------------------------------- */
+/* Air remote pairing                                                          */
+/* -------------------------------------------------------------------------- */
+
+const remoteSessions = new Map()
+const REMOTE_TTL_MS = 15 * 60 * 1000
+const REMOTE_COMMANDS = new Set([
+  'up', 'down', 'left', 'right', 'ok', 'back', 'home', 'playpause',
+  'volup', 'voldown', 'mute', 'chup', 'chdown',
+])
+
+function cleanupRemoteSessions() {
+  const now = Date.now()
+  for (const [code, session] of remoteSessions) {
+    if (session.expires < now) remoteSessions.delete(code)
+  }
+}
+
+function readJsonBody(req, limit = 8192) {
+  return new Promise((resolve, reject) => {
+    let size = 0
+    const chunks = []
+    req.on('data', (chunk) => {
+      size += chunk.length
+      if (size > limit) { reject(new Error('İstek gövdesi çok büyük')); req.destroy(); return }
+      chunks.push(chunk)
+    })
+    req.on('end', () => {
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')) } catch { resolve({}) }
+    })
+    req.on('error', reject)
+  })
+}
+
+function remoteSession(reqUrl) {
+  const code = (reqUrl.searchParams.get('code') || '').trim()
+  const token = (reqUrl.searchParams.get('token') || '').trim()
+  const session = remoteSessions.get(code)
+  if (!session || session.expires < Date.now()) return null
+  if (token && session.token !== token) return null
+  return session
+}
+
+async function handleRemote(req, res, reqUrl) {
+  cleanupRemoteSessions()
+  const action = reqUrl.searchParams.get('action') || ''
+
+  if (action === 'session' && req.method === 'POST') {
+    const code = String(Math.floor(100000 + Math.random() * 900000))
+    const token = randomBytes(16).toString('hex')
+    remoteSessions.set(code, { code, token, expires: Date.now() + REMOTE_TTL_MS, commands: [], seq: 0 })
+    sendJson(res, 200, { ok: true, code, token, expiresIn: REMOTE_TTL_MS })
+    return
+  }
+
+  if (action === 'poll') {
+    const session = remoteSession(reqUrl)
+    if (!session) { sendJson(res, 404, { ok: false, error: 'Oturum bulunamadı' }); return }
+    const cursor = Number(reqUrl.searchParams.get('cursor') || 0)
+    const commands = session.commands.filter((entry) => entry.seq > cursor)
+    sendJson(res, 200, { ok: true, commands, cursor: session.seq, expires: session.expires })
+    return
+  }
+
+  if (action === 'command' && req.method === 'POST') {
+    const body = await readJsonBody(req)
+    const code = String(body.code || '').trim()
+    const command = String(body.command || '').trim()
+    const session = remoteSessions.get(code)
+    if (!session || session.expires < Date.now()) { sendJson(res, 404, { ok: false, error: 'Geçersiz kod' }); return }
+    if (!REMOTE_COMMANDS.has(command)) { sendJson(res, 400, { ok: false, error: 'Geçersiz komut' }); return }
+    session.seq += 1
+    session.commands.push({ seq: session.seq, command })
+    if (session.commands.length > 80) session.commands.splice(0, session.commands.length - 80)
+    session.expires = Date.now() + REMOTE_TTL_MS
+    sendJson(res, 200, { ok: true })
+    return
+  }
+
+  if (action === 'close' && req.method === 'POST') {
+    const session = remoteSession(reqUrl)
+    if (session) remoteSessions.delete(session.code)
+    sendJson(res, 200, { ok: true })
+    return
+  }
+
+  if (action === 'check') {
+    const session = remoteSession(reqUrl)
+    sendJson(res, session ? 200 : 404, { ok: Boolean(session) })
+    return
+  }
+
+  sendJson(res, 404, { ok: false, error: 'Bilinmeyen kumanda isteği' })
+}
+
 export function createGeilApi() {
   return async function geilApi(req, res) {
     setCors(res)
@@ -835,6 +991,14 @@ export function createGeilApi() {
       }
       if (path === '/api/geil/vod/resolve') {
         await handleVodResolve(reqUrl, res)
+        return
+      }
+      if (path === '/api/geil/subtitle') {
+        await handleGeilSubtitle(reqUrl, res)
+        return
+      }
+      if (path === '/api/geil/remote') {
+        await handleRemote(req, res, reqUrl)
         return
       }
       if (path === '/api/geil/stream') {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GeilItem } from './types'
 import { fetchLiveCatalog, channelColor, channelQuality, initialOf, currentEpg, remainingLabel, formatClock } from './api'
 import { HeartIcon } from './icons'
+import { useLang } from '@/lib/language'
 
 const FAV_KEY = 'notflix_geil_live_favorites'
 
@@ -12,7 +13,8 @@ function writeFavs(set: Set<string>) {
   try { localStorage.setItem(FAV_KEY, JSON.stringify([...set])) } catch {}
 }
 
-export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) => void }) {
+export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, visible?: GeilItem[]) => void }) {
+  const { t } = useLang()
   const [channels, setChannels] = useState<GeilItem[]>([])
   const [features, setFeatures] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -127,16 +129,16 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
               <h2 className="live-stage-name">{selected.name.replace(/\s*\(\d+\)\s*$/, '')}</h2>
               <div className="live-stage-head">
                 {channelQuality(selected.name) ? <span className="ch-chip">{channelQuality(selected.name)}</span> : null}
-                <span className="ch-chip ch-chip-flag">{selected.tags?.[0] || 'Canlı'}</span>
+                <span className="ch-chip ch-chip-flag">{selected.tags?.[0] || t('channels.live')}</span>
                 {(selected.tags || []).slice(0, 2).map((tag) => (
                   <span className="ch-chip ch-chip-tag" key={tag}>{tag}</span>
                 ))}
               </div>
             </div>
-            <div className="live-stage-preview" aria-label="Önizleme" role="button" onClick={() => onPlay(selected)}>
+            <div className="live-stage-preview" aria-label="Önizleme" role="button" onClick={() => onPlay(selected, filtered)}>
               <div className="live-stage-mount" />
               <div className="live-stage-preview-ph" />
-              <span className="live-stage-preview-badge">CANLI</span>
+              <span className="live-stage-preview-badge">{t('channels.live')}</span>
             </div>
           </div>
         </section>
@@ -144,11 +146,6 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
 
       <div className="feature-bar controls-flow">
         <div className="controls ch-controls" data-zone="grid">
-          <div className="ep-pills channel-favorite-tabs">
-          <button className={`ep-pill ${tab === 'favorites' ? 'active' : ''}`} onClick={() => setTab(tab === 'favorites' ? 'live' : 'favorites')}>
-            <HeartIcon size={14} /> Favoriler {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
-          </button>
-          </div>
           <div className="search-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <circle cx="11" cy="11" r="8" />
@@ -156,22 +153,27 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
             </svg>
             <input
               className="glass-input"
-              placeholder="Kanallarda ara..."
+              placeholder={t('channels.search')}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
-          <select className="sort-select" aria-label="Sıralama" value={sort} onChange={(event) => setSort(event.target.value)}>
-            {(features?.sort || [{ id: 'trending', name: 'Popüler' }, { id: 'name', name: 'A-Z' }]).map((option: any) => (
-              <option key={option.id} value={option.id}>{option.name === 'Trending' || option.name === 'Popular' ? 'Popüler' : option.name}</option>
+          <select className="sort-select" aria-label={t('channels.sortPopular')} value={sort} onChange={(event) => setSort(event.target.value)}>
+            {(features?.sort || [{ id: 'trending', name: t('channels.sortPopular') }, { id: 'name', name: 'A-Z' }]).map((option: any) => (
+              <option key={option.id} value={option.id}>{option.name === 'Trending' || option.name === 'Popular' ? t('channels.sortPopular') : option.name}</option>
             ))}
           </select>
-          <select className="sort-select" value={group} onChange={(event) => setGroup(event.target.value)}>
-            <option value="">Tüm ülkeler</option>
+          <select className="sort-select" aria-label={t('channels.allCountries')} value={group} onChange={(event) => setGroup(event.target.value)}>
+            <option value="">{t('channels.allCountries')}</option>
             {groups.map((option: any) => (
               <option key={option.id} value={option.id}>{option.name}</option>
             ))}
           </select>
+          <div className="ep-pills channel-favorite-tabs">
+            <button className={`ep-pill ${tab === 'favorites' ? 'active' : ''}`} onClick={() => setTab(tab === 'favorites' ? 'live' : 'favorites')}>
+              <HeartIcon size={14} /> {t('channels.favorites')} {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -184,17 +186,17 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
                   <span className="ch-num">{index + 1}</span>
                   <span className="ch-logo ch-logo-ph" style={{ background: channelColor(String(index)) }}>•</span>
                   <div className="ch-main">
-                    <div className="ch-head"><span className="ch-name">Yükleniyor...</span></div>
-                    <div className="ch-epg-block"><div className="ch-epg ch-epg-none">Yayın akışı bilgisi yok</div></div>
+                    <div className="ch-head"><span className="ch-name">{t('common.loading')}</span></div>
+                    <div className="ch-epg-block"><div className="ch-epg ch-epg-none">{t('channels.noResultsDesc')}</div></div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="empty"><h3>Kanallar yüklenemedi</h3><p>{error}</p></div>
+          <div className="empty"><h3>{t('channels.title')}</h3><p>{error}</p></div>
         ) : filtered.length === 0 ? (
-          <div className="empty"><h3>Sonuç bulunamadı</h3><p>Farklı bir arama veya filtre deneyin.</p></div>
+          <div className="empty"><h3>{t('channels.noResults')}</h3><p>{t('channels.noResultsDesc')}</p></div>
         ) : (
           <>
             <div className="ch-list">
@@ -208,7 +210,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
                       tabIndex={0}
                       role="button"
                       aria-label={channel.name}
-                      onClick={() => { setSelectedId(channel.id); onPlay(channel) }}
+                      onClick={() => { setSelectedId(channel.id); onPlay(channel, filtered) }}
                     >
                       <span className="ch-num">{index + 1}</span>
                       <span className="ch-logo ch-logo-ph" style={{ background: channelColor(channel.name) }}>
@@ -226,14 +228,14 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
                               <span className="ch-epg-left">{remainingLabel(epg.entry.end)}</span>
                             </div>
                           ) : (
-                            <div className="ch-epg ch-epg-none">Yayın akışı bilgisi yok</div>
+                            <div className="ch-epg ch-epg-none">{t('channels.noResultsDesc')}</div>
                           )}
                           {epg.entry ? <div className="ch-epg-track"><div className="ch-epg-fill" style={{ width: `${epg.progress}%` }} /></div> : null}
                         </div>
                       </div>
                       <button
                         className={`ch-fav ${isFav ? 'on' : ''}`}
-                        aria-label="Favori"
+                        aria-label={t('item.favorite')}
                         aria-pressed={isFav}
                         onClick={(event) => { event.stopPropagation(); toggleFav(channel.id) }}
                       >
@@ -249,7 +251,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
             {nextCursor ? (
               <div ref={listRef} style={{ height: 1, width: '100%' }} />
             ) : null}
-            {loadingMore ? <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--t3)' }}>Yükleniyor...</div> : null}
+            {loadingMore ? <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--t3)' }}>{t('common.loading')}</div> : null}
           </>
         )}
       </div>

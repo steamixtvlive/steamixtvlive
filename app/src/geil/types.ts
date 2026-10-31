@@ -128,6 +128,21 @@ export interface PlayerSource {
   url: string
   id?: string
   quality?: string | null
+  subtitles?: GeilSubtitle[]
+}
+
+export interface WatchMeta {
+  key: string
+  id: string
+  type: string
+  name: string
+  poster: string
+  addonId: string
+  season?: number
+  episode?: number
+  episodeName?: string
+  item: GeilItem
+  episodeItem?: GeilItem | null
 }
 
 export interface PlayerState {
@@ -144,6 +159,8 @@ export interface PlayerState {
   pending?: boolean
   playbackError?: string
   poster?: string
+  startAt?: number
+  watchMeta?: WatchMeta
   item?: GeilItem | null
   channels?: GeilItem[]
   channelIndex?: number

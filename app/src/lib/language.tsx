@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { GEIL_LANGS, LANG_NAMES, geilData, type GeilLang } from './i18n-geil'
 
-export type Language = 'tr' | 'en'
+export type Language = GeilLang
 
 const data: Record<string, Record<string, string>> = {
   tr: {
@@ -199,18 +200,32 @@ const data: Record<string, Record<string, string>> = {
   },
 }
 
-const langNames: Record<string, string> = {
-  tr: 'Türkçe', en: 'English', ru: 'Русский', uk: 'Українська', de: 'Deutsch', fr: 'Français', it: 'Italiano',
-}
+const langNames: Record<string, string> = LANG_NAMES
 
 const LangContext = createContext<any>(null)
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState(() => { try { return localStorage.getItem('lang') || 'tr' } catch { return 'tr' } })
-  const setLang = (l: string) => { setLangState(l); try { localStorage.setItem('lang', l) } catch {}; document.documentElement.lang = l }
+  const [lang, setLangState] = useState(() => {
+    try {
+      const stored = localStorage.getItem('lang') || 'tr'
+      return (GEIL_LANGS as readonly string[]).includes(stored) ? stored : 'tr'
+    } catch { return 'tr' }
+  })
+  const setLang = (l: string) => {
+    const next = (GEIL_LANGS as readonly string[]).includes(l) ? l : 'tr'
+    setLangState(next)
+    try { localStorage.setItem('lang', next) } catch { /* storage may be blocked */ }
+    document.documentElement.lang = next
+  }
   useEffect(() => { document.documentElement.lang = lang }, [lang])
-  const t = (key: string) => data[lang]?.[key] ?? data['tr']?.[key] ?? key
-  return <LangContext.Provider value={{ lang, setLang, t, langNames, languages: Object.keys(data) }}>{children}</LangContext.Provider>
+  const t = (key: string) =>
+    geilData[lang]?.[key]
+    ?? data[lang]?.[key]
+    ?? geilData.en?.[key]
+    ?? data.en?.[key]
+    ?? data.tr?.[key]
+    ?? key
+  return <LangContext.Provider value={{ lang, setLang, t, langNames, languages: [...GEIL_LANGS] }}>{children}</LangContext.Provider>
 }
 
 export function useLang() {

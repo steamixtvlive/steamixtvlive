@@ -144,12 +144,9 @@ body,
   transition: opacity 0.3s var(--ease);
 }
 
-/* Match the legacy live-player video framing from commit 8cabb46 without
-   changing the current channel panel or its controls. */
-.player-renderer-legacy .player-video {
-  object-fit: contain;
-}
-
+/* Live and VOD streams fill the whole player surface — no letterbox gaps on the
+   sides or bottom, in the window or in fullscreen. */
+.player-renderer-legacy .player-video,
 .player-renderer-legacy-fullscreen .player-video {
   object-fit: cover;
 }

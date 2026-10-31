@@ -3,6 +3,9 @@ import { ArrowRight } from 'lucide-react'
 import NotflixLogo from '@/sections/NotflixLogo'
 import NotflixTagline from '@/sections/NotflixTagline'
 import NotflixFooter from '@/sections/NotflixFooter'
+import { useLang } from '@/lib/language'
+
+const REQUIRED_SECONDS = 12
 
 const PARTICLES = [
   [6, 74, 5, 0.2, 5.4], [12, 62, 3, 1.1, 4.8], [18, 82, 6, 2.3, 6.1],
@@ -16,14 +19,22 @@ const PARTICLES = [
 const LEAVE_ANIMATION_MS = 900
 
 export default function NotflixSplash({ onDone }: { onDone: () => void }) {
+  const { t } = useLang()
   const [leaving, setLeaving] = useState(false)
+  const [remaining, setRemaining] = useState(REQUIRED_SECONDS)
   const leaveTimer = useRef<number | null>(null)
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      if (!leaving) handleSkip()
-    }, 12000)
-    return () => window.clearTimeout(timer)
+    const timer = window.setInterval(() => {
+      setRemaining((value) => {
+        if (value <= 1) {
+          window.clearInterval(timer)
+          return 0
+        }
+        return value - 1
+      })
+    }, 1000)
+    return () => window.clearInterval(timer)
   }, [])
 
   useEffect(() => {
@@ -32,8 +43,21 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
     }
   }, [])
 
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      event.stopPropagation()
+      if (event.key === 'Tab' || event.key.startsWith('Arrow') || event.key === 'Backspace') event.preventDefault()
+      if ((event.key === 'Enter' || event.key === ' ' || event.key === 'MediaPlayPause') && !leaving && remaining === 0) {
+        event.preventDefault()
+        handleSkip()
+      }
+    }
+    window.addEventListener('keydown', handler, true)
+    return () => window.removeEventListener('keydown', handler, true)
+  }, [leaving, remaining])
+
   function handleSkip() {
-    if (leaving) return
+    if (leaving || remaining > 0) return
     setLeaving(true)
     leaveTimer.current = window.setTimeout(onDone, LEAVE_ANIMATION_MS)
   }
@@ -346,10 +370,10 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
         type="button"
         className="nf-splash__skip"
         onClick={handleSkip}
-        disabled={leaving}
-        aria-label="Giriş ekranına geç"
+        disabled={leaving || remaining > 0}
+        aria-label={t('splash.skip')}
       >
-        <span>Geç</span>
+        <span>{t('splash.skip')}{remaining > 0 ? ` · ${remaining}` : ''}</span>
         <ArrowRight size={15} aria-hidden="true" />
       </button>
 

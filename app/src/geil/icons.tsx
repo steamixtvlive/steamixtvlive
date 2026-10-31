@@ -19,9 +19,6 @@ export const LibraryIcon = (props: IconProps) => (
 export const TvIcon = (props: IconProps) => (
   <Icon {...props}><rect x="2" y="7" width="20" height="15" rx="2" /><polyline points="17 2 12 7 7 2" /></Icon>
 )
-export const SocialIcon = (props: IconProps) => (
-  <Icon {...props}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></Icon>
-)
 export const SearchIcon = (props: IconProps) => (
   <Icon {...props}><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></Icon>
 )

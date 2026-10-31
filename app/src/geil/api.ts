@@ -150,6 +150,38 @@ export async function resolveVodSource(
   return requestJson<GeilPlayback>(`/api/geil/vod/resolve?${params}`, signal)
 }
 
+export interface RemoteSession {
+  code: string
+  token: string
+  expiresIn: number
+}
+
+export async function createRemoteSession(): Promise<RemoteSession> {
+  const response = await fetch('/api/geil/remote?action=session', { method: 'POST' })
+  const data = await response.json().catch(() => null) as (RemoteSession & { ok?: boolean; error?: string }) | null
+  if (!response.ok || !data || data.ok === false) throw new Error(data?.error || 'Kumanda oturumu açılamadı')
+  return data
+}
+
+export async function pollRemoteCommands(code: string, token: string, cursor: number): Promise<{ commands: Array<{ seq: number; command: string }>; cursor: number }> {
+  const params = new URLSearchParams({ action: 'poll', code, token, cursor: String(cursor) })
+  return requestJson(`/api/geil/remote?${params}`)
+}
+
+export async function sendRemoteCommand(code: string, command: string): Promise<void> {
+  const response = await fetch('/api/geil/remote?action=command', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ code, command }),
+  })
+  const data = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null
+  if (!response.ok || data?.ok === false) throw new Error(data?.error || 'Komut gönderilemedi')
+}
+
+export async function closeRemoteSession(code: string, token: string): Promise<void> {
+  await fetch(`/api/geil/remote?action=close&code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`, { method: 'POST' }).catch(() => {})
+}
+
 export function imageUrl(url: string | undefined | null, size: 'small' | 'medium' | 'large' | 'original' = 'medium'): string {
   if (!url) return ''
   if (!url.includes('image.tmdb.org/t/p/')) return url

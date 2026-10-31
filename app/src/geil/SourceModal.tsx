@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { GeilItem, GeilSource } from './types'
-import { fetchVodSourcesForTypes } from './api'
+import { fetchVodSources } from './api'
 import { XIcon, PlayIcon } from './icons'
 
 export interface SourceSelection {
@@ -24,11 +24,16 @@ interface Props {
 export default function SourceModal({ item, episode, onClose, onSelect }: Props) {
   const target = episode || item
   const isM3u = target.id.startsWith('m3u-')
-  const vodType = episode ? 'series' : item.type === 'series' ? 'series' : 'video'
-  const vodId = episode ? episode.id : item.id
+  // geil.to v2 resolves movies and individual episodes through the same
+  // "video" source endpoint; episodes carry ids like "289517:1:1".
+  const vodType = 'video'
+  const vodId = episode
+    ? (episode.ids?.tmdb || episode.id)
+    : (item.ids?.tmdb || item.id)
   const [sources, setSources] = useState<GeilSource[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadToken, setReloadToken] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -37,11 +42,10 @@ export default function SourceModal({ item, episode, onClose, onSelect }: Props)
       setLoading(false)
       return () => controller.abort()
     }
-    const requestedTypes = episode ? ['series'] : item.type === 'series' ? ['series', 'video'] : ['video', 'series']
     setLoading(true)
     setSources([])
     setError('')
-    fetchVodSourcesForTypes(requestedTypes, vodId, controller.signal)
+    fetchVodSources(vodType, vodId, controller.signal)
       .then((data) => {
         if (!controller.signal.aborted) setSources(data)
       })
@@ -52,15 +56,16 @@ export default function SourceModal({ item, episode, onClose, onSelect }: Props)
         if (!controller.signal.aborted) setLoading(false)
       })
     return () => controller.abort()
-  }, [vodId, episode?.id, item.type, target.url, isM3u])
+  }, [vodId, vodType, target.url, isM3u, reloadToken])
 
   function select(source: GeilSource) {
     onSelect({ item, episode: episode || null, vodType, vodId, isM3u, title: target.name, source, sources })
   }
 
   function selectBest() {
+    const reliableHost = (url: string) => /dood\.yt|voe\.sx|vidsonic|supervideo/i.test(url) ? 4 : /dood/i.test(url) ? 2 : 0
     const best = [...sources].sort((a, b) => {
-      const score = (source: GeilSource) => (source.subtitles?.length ? 10 : 0) + (source.quality ? 1 : 0)
+      const score = (source: GeilSource) => reliableHost(source.url) + (source.quality ? 2 : 0) + (source.subtitles?.length ? 1 : 0)
       return score(b) - score(a)
     })[0]
     if (best) select(best)
@@ -83,9 +88,17 @@ export default function SourceModal({ item, episode, onClose, onSelect }: Props)
           {loading ? (
             <div className="empty"><p>Kaynaklar yükleniyor...</p></div>
           ) : error && sources.length === 0 ? (
-            <div className="empty"><h3>Kaynaklar yüklenemedi</h3><p>{error}</p></div>
+            <div className="empty">
+              <h3>Kaynaklar yüklenemedi</h3>
+              <p>{error}</p>
+              <button className="btn source-auto-resolve" onClick={() => setReloadToken((value) => value + 1)}>Yeniden dene</button>
+            </div>
           ) : sources.length === 0 ? (
-            <div className="empty"><h3>Kaynak bulunamadı</h3><p>Bu içerik için şu an kaynak yok.</p></div>
+            <div className="empty">
+              <h3>Kaynak bulunamadı</h3>
+              <p>Bu içerik için şu an kaynak yok.</p>
+              <button className="btn source-auto-resolve" onClick={() => setReloadToken((value) => value + 1)}>Yeniden dene</button>
+            </div>
           ) : (
             <div className="source-list">
               {sources.map((source, index) => (

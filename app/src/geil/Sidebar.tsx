@@ -3,25 +3,24 @@ import {
   HomeIcon,
   LibraryIcon,
   TvIcon,
-  SocialIcon,
   SearchIcon,
   SettingsIcon,
 } from './icons'
+import { useLang } from '@/lib/language'
 
 const MAIN_ITEMS = [
-  { view: 'home', label: 'Anasayfa', href: '#/', Icon: HomeIcon },
-  { view: 'library', label: 'Kitaplık', href: '#/library', Icon: LibraryIcon },
-  { view: 'channels', label: 'Kanallar', href: '#/channels', Icon: TvIcon },
-  { view: 'social', label: 'Sosyal', href: '#/social', Icon: SocialIcon },
-  { view: 'search', label: 'Ara', href: '#/search', Icon: SearchIcon },
+  { view: 'home', labelKey: 'nav.home', href: '#/', Icon: HomeIcon },
+  { view: 'library', labelKey: 'nav.library', href: '#/library', Icon: LibraryIcon },
+  { view: 'channels', labelKey: 'nav.channels', href: '#/channels', Icon: TvIcon },
+  { view: 'search', labelKey: 'nav.search', href: '#/search', Icon: SearchIcon },
 ] as const
 
 const BNAV_ITEMS = [
-  { view: 'home', label: 'Anasayfa', href: '#/', Icon: HomeIcon },
-  { view: 'library', label: 'Kitaplık', href: '#/library', Icon: LibraryIcon },
-  { view: 'channels', label: 'Kanallar', href: '#/channels', Icon: TvIcon },
-  { view: 'search', label: 'Ara', href: '#/search', Icon: SearchIcon },
-  { view: 'settings', label: 'Ayarlar', href: '#/settings', Icon: SettingsIcon },
+  { view: 'home', labelKey: 'nav.home', href: '#/', Icon: HomeIcon },
+  { view: 'library', labelKey: 'nav.library', href: '#/library', Icon: LibraryIcon },
+  { view: 'channels', labelKey: 'nav.channels', href: '#/channels', Icon: TvIcon },
+  { view: 'search', labelKey: 'nav.search', href: '#/search', Icon: SearchIcon },
+  { view: 'settings', labelKey: 'nav.settings', href: '#/settings', Icon: SettingsIcon },
 ] as const
 
 function isActive(route: RouteState, view: string): boolean {
@@ -54,6 +53,7 @@ function NotflixSidebarMark() {
 }
 
 export default function Sidebar({ route }: { route: RouteState }) {
+  const { t } = useLang()
   const mainActive = MAIN_ITEMS.findIndex((item) => isActive(route, item.view))
   const settingsActive = isActive(route, 'settings')
   const bnavActive = BNAV_ITEMS.findIndex((item) => isActive(route, item.view))
@@ -68,17 +68,17 @@ export default function Sidebar({ route }: { route: RouteState }) {
           </a>
           <nav className="sidebar-nav" aria-label="Main" style={{ '--nav-active': Math.max(0, mainActive) } as React.CSSProperties}>
             <div className={`nav-pill ${mainActive < 0 ? 'is-off' : ''}`} aria-hidden="true" />
-            {MAIN_ITEMS.map(({ view, label, href, Icon }) => (
+            {MAIN_ITEMS.map(({ view, labelKey, href, Icon }) => (
               <a
                 key={view}
                 href={href}
                 data-tab={view}
                 className={`nav-item ${isActive(route, view) ? 'active' : ''}`}
-                aria-label={label}
+                aria-label={t(labelKey)}
                 aria-current={isActive(route, view) ? 'page' : undefined}
               >
                 <Icon />
-                <span>{label}</span>
+                <span>{t(labelKey)}</span>
               </a>
             ))}
           </nav>
@@ -87,11 +87,11 @@ export default function Sidebar({ route }: { route: RouteState }) {
               href="#/settings"
               data-tab="settings"
               className={`nav-item ${settingsActive ? 'active' : ''}`}
-              aria-label="Ayarlar"
+              aria-label={t('nav.settings')}
               aria-current={settingsActive ? 'page' : undefined}
             >
               <SettingsIcon />
-              <span>Ayarlar</span>
+              <span>{t('nav.settings')}</span>
             </a>
           </div>
         </div>
@@ -105,17 +105,17 @@ export default function Sidebar({ route }: { route: RouteState }) {
         style={{ '--bnav-count': BNAV_ITEMS.length, '--bnav-active': Math.max(0, bnavActive) } as React.CSSProperties}
       >
         <div className={`bnav-pill ${bnavActive < 0 ? 'is-off' : ''}`} aria-hidden="true" />
-        {BNAV_ITEMS.map(({ view, label, href, Icon }) => (
+        {BNAV_ITEMS.map(({ view, labelKey, href, Icon }) => (
           <a
             key={view}
             href={href}
             data-tab={view}
             className={`bnav-item ${isActive(route, view) ? 'active' : ''}`}
-            aria-label={label}
+            aria-label={t(labelKey)}
             aria-current={isActive(route, view) ? 'page' : undefined}
           >
             <Icon size={22} />
-            <span>{label}</span>
+            <span>{t(labelKey)}</span>
           </a>
         ))}
       </nav>
