@@ -1,20 +1,13 @@
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import NotflixSplash from '@/sections/NotflixSplash'
+import NotflixActivation from '@/sections/NotflixActivation'
 import GeilApp from '@/geil/GeilApp'
 import NotflixVodWatch from '@/pages/NotflixVodWatch'
 import { useEffect, useRef, useState } from 'react'
+import { isActivated } from '@/geil/storage'
 
 const IDLE_LIMIT_MS = 10 * 60 * 1000
-const SPLASH_KEY = 'notflix_splash_last_shown'
-
-function shouldShowStartSplash(): boolean {
-  try {
-    const lastShown = Number(localStorage.getItem(SPLASH_KEY) || 0)
-    return !lastShown || Date.now() - lastShown >= 24 * 60 * 60 * 1000
-  } catch {
-    return true
-  }
-}
+const IDLE_SPLASH_SECONDS = 12
 
 export default function App() {
   return <BrowserRouter><AppContent /></BrowserRouter>
@@ -23,29 +16,32 @@ export default function App() {
 function AppContent() {
   const location = useLocation()
   const isVodWatch = location.pathname.startsWith('/notflix/watch/')
-  const [showSplash, setShowSplash] = useState(shouldShowStartSplash)
+  const [activated, setActivated] = useState(isActivated)
+  const [showSplash, setShowSplash] = useState(true)
+  const [splashSeconds, setSplashSeconds] = useState(0)
   const [splashKey, setSplashKey] = useState(0)
   const [resetKey, setResetKey] = useState(0)
   const idleTimer = useRef<number | null>(null)
-  const initialSplash = useRef(showSplash)
 
   useEffect(() => {
-    if (!initialSplash.current) return
-    try { localStorage.setItem(SPLASH_KEY, String(Date.now())) } catch { /* Splash still works without storage. */ }
+    const handler = () => setActivated(false)
+    window.addEventListener('notflix-activation-reset', handler)
+    return () => window.removeEventListener('notflix-activation-reset', handler)
   }, [])
 
   useEffect(() => {
-    document.documentElement.classList.toggle('splash-lock', showSplash && !isVodWatch)
+    document.documentElement.classList.toggle('splash-lock', (showSplash || !activated) && !isVodWatch)
     return () => document.documentElement.classList.remove('splash-lock')
-  }, [showSplash, isVodWatch])
+  }, [showSplash, activated, isVodWatch])
 
   useEffect(() => {
-    if (isVodWatch) return
+    if (isVodWatch || !activated) return
     const arm = () => {
       if (idleTimer.current) window.clearTimeout(idleTimer.current)
       idleTimer.current = window.setTimeout(() => {
         window.history.replaceState({ notflixRoute: '#/' }, '', '#/')
         setResetKey((value) => value + 1)
+        setSplashSeconds(IDLE_SPLASH_SECONDS)
         setSplashKey((value) => value + 1)
         setShowSplash(true)
       }, IDLE_LIMIT_MS)
@@ -58,7 +54,16 @@ function AppContent() {
       events.forEach((name) => window.removeEventListener(name, onActivity))
       if (idleTimer.current) window.clearTimeout(idleTimer.current)
     }
-  }, [isVodWatch])
+  }, [isVodWatch, activated])
+
+  function handleActivated() {
+    setActivated(true)
+    setSplashSeconds(0)
+    setSplashKey((value) => value + 1)
+    setShowSplash(true)
+  }
+
+  if (!activated) return <NotflixActivation onActivated={handleActivated} />
 
   return (
     <>
@@ -69,7 +74,9 @@ function AppContent() {
           <GeilApp />
         </div>
       )}
-      {showSplash && !isVodWatch && <NotflixSplash key={splashKey} onDone={() => setShowSplash(false)} />}
+      {showSplash && !isVodWatch && (
+        <NotflixSplash key={splashKey} seconds={splashSeconds} onDone={() => setShowSplash(false)} />
+      )}
     </>
   )
 }

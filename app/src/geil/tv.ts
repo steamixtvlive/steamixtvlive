@@ -1,7 +1,17 @@
 export const TV_MODE_KEY = 'notflix_tv_mode'
 
+/** Smart TVs and TV sticks announce themselves in the user agent, so the interface can
+    switch to remote navigation on its own without asking the viewer for a setting. */
+function isTvDevice(): boolean {
+  return /smart[-_ ]?tv|internet[-_ ]?tv|browser[-_ ]?tv|tizen|webos|bravia|viera|aquos|hisense|haier|hbbtv|googletv|appletv|firetv|samsungbrowser|lgbrowser/i.test(navigator.userAgent)
+}
+
 export function readTvMode(): boolean {
-  try { return localStorage.getItem(TV_MODE_KEY) === '1' } catch { return false }
+  try {
+    const stored = localStorage.getItem(TV_MODE_KEY)
+    if (stored !== null) return stored === '1'
+  } catch { /* storage may be unavailable */ }
+  return isTvDevice()
 }
 
 export function applyTvMode(enabled: boolean) {

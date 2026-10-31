@@ -4,8 +4,10 @@ import NotflixLogo from '@/sections/NotflixLogo'
 import NotflixTagline from '@/sections/NotflixTagline'
 import NotflixFooter from '@/sections/NotflixFooter'
 import { useLang } from '@/lib/language'
+import { playSplashSting, stopSplashSting } from '@/lib/splash-sting'
+import { SWEEP_SECONDS, SWEEP_START_AT } from '@/lib/splash-timing'
 
-const REQUIRED_SECONDS = 12
+const DEFAULT_SECONDS = 12
 
 const PARTICLES = [
   [6, 74, 5, 0.2, 5.4], [12, 62, 3, 1.1, 4.8], [18, 82, 6, 2.3, 6.1],
@@ -18,13 +20,21 @@ const PARTICLES = [
 
 const LEAVE_ANIMATION_MS = 900
 
-export default function NotflixSplash({ onDone }: { onDone: () => void }) {
+interface SplashProps {
+  onDone: () => void
+  /** Mandatory hold before "Geç" unlocks. 0 means the button is ready straight away. */
+  seconds?: number
+}
+
+export default function NotflixSplash({ onDone, seconds = DEFAULT_SECONDS }: SplashProps) {
   const { t } = useLang()
   const [leaving, setLeaving] = useState(false)
-  const [remaining, setRemaining] = useState(REQUIRED_SECONDS)
+  const [remaining, setRemaining] = useState(seconds)
   const leaveTimer = useRef<number | null>(null)
+  const stingPlayed = useRef(false)
 
   useEffect(() => {
+    if (seconds <= 0) return
     const timer = window.setInterval(() => {
       setRemaining((value) => {
         if (value <= 1) {
@@ -35,12 +45,18 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
       })
     }, 1000)
     return () => window.clearInterval(timer)
-  }, [])
+  }, [seconds])
 
   useEffect(() => {
     return () => {
       if (leaveTimer.current !== null) window.clearTimeout(leaveTimer.current)
     }
+  }, [])
+
+  useEffect(() => {
+    if (stingPlayed.current) return
+    stingPlayed.current = true
+    playSplashSting()
   }, [])
 
   useEffect(() => {
@@ -58,6 +74,7 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
 
   function handleSkip() {
     if (leaving || remaining > 0) return
+    stopSplashSting()
     setLeaving(true)
     leaveTimer.current = window.setTimeout(onDone, LEAVE_ANIMATION_MS)
   }
@@ -129,7 +146,7 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
           pointer-events: none;
           background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.5) 47%, rgba(255,120,120,.28) 52%, transparent 64%);
           transform: translateX(-140%) skewX(-14deg);
-          animation: notflixSweep 3s cubic-bezier(.4,0,.2,1) 6.4s both;
+          animation: notflixSweep ${SWEEP_SECONDS}s cubic-bezier(.4,0,.2,1) ${SWEEP_START_AT.toFixed(2)}s both;
           mix-blend-mode: screen;
         }
         .notflix-splash .notflix-slogan {
@@ -360,7 +377,7 @@ export default function NotflixSplash({ onDone }: { onDone: () => void }) {
 
       <div className="notflix-stage">
         <div className="notflix-wordmark">
-          <NotflixLogo animated startDelay={0.9} stagger={0.4} />
+          <NotflixLogo animated />
           <div className="notflix-sweep" />
         </div>
         <NotflixTagline />

@@ -2,10 +2,10 @@ import './geil.css'
 import './overrides.css'
 import './extras.css'
 import { useEffect, useRef, useState } from 'react'
-import type { GeilItem, PlayerSource, PlayerState, WatchMeta } from './types'
-import { resolveLiveChannel, fetchLiveCatalog, resolveVodSource, posterUrl, pollRemoteCommands } from './api'
+import type { GeilItem, GeilSource, PlayerSource, PlayerState, WatchMeta } from './types'
+import { resolveLiveChannel, fetchLiveCatalog, resolveVodSource, posterUrl, pollRemoteCommands, fetchVodSources } from './api'
 import { useHashRoute, parseHash, replaceRoute, navigate, itemHref } from './router'
-import { getContinueEntry, type ContinueEntry } from './storage'
+import { getContinueEntry, getDeadSourceUrls, getSavedSourceUrl, markDeadSource, clearDeadSource, saveSavedSourceUrl, type ContinueEntry } from './storage'
 import { applyTvMode, moveFocus, readTvMode, setTvMode, activateFocused } from './tv'
 import Sidebar from './Sidebar'
 import HomeView from './HomeView'
@@ -19,7 +19,7 @@ import SettingsView from './SettingsView'
 import Player from './Player'
 import RemoteView from './RemoteView'
 import ShortcutsHelp from './ShortcutsHelp'
-import SourceModal from './SourceModal'
+import SourceModal, { vodContextOf } from './SourceModal'
 import type { SourceSelection } from './SourceModal'
 
 const INITIAL_PLAYER: PlayerState = {
@@ -36,6 +36,14 @@ interface PlaybackContext {
   vodId: string
   isM3u: boolean
   title: string
+}
+
+interface VodQueue {
+  context: PlaybackContext
+  sources: GeilSource[]
+  order: number[]
+  pos: number
+  seq: number
 }
 
 interface RemoteSessionState {
@@ -73,7 +81,7 @@ function readStoredRemoteSession(): RemoteSessionState | null {
 export default function GeilApp() {
   const route = useHashRoute()
   const [player, setPlayer] = useState<PlayerState>(INITIAL_PLAYER)
-  const [sourceModal, setSourceModal] = useState<{ item: GeilItem; episode?: GeilItem | null } | null>(null)
+  const [sourceModal, setSourceModal] = useState<{ item: GeilItem; episode?: GeilItem | null; notice?: 'unavailable' } | null>(null)
   const [liveChannels, setLiveChannels] = useState<GeilItem[]>([])
   const [showHelp, setShowHelp] = useState(false)
   const [tvMode, setTvModeState] = useState(readTvMode)
@@ -89,6 +97,7 @@ export default function GeilApp() {
   const skipPop = useRef(0)
   const resolveSeq = useRef(0)
   const playbackContext = useRef<PlaybackContext | null>(null)
+  const vodQueue = useRef<VodQueue | null>(null)
 
   // A refreshed deep link has no in-app history entry; keep one so back never leaves the site.
   useEffect(() => {
@@ -336,6 +345,92 @@ export default function GeilApp() {
     setSourceModal({ item, episode: episode || null })
   }
 
+  // A dead server is never announced over a playing picture: the queue walks on to the
+  // next candidate and the picker is the one that reports what could not be opened.
+  function candidateOrder(sources: GeilSource[], preferred: number): number[] {
+    const dead = new Set(getDeadSourceUrls())
+    const rest = sources.map((_, index) => index).filter((index) => index !== preferred)
+    rest.sort((a, b) => Number(dead.has(sources[a].url)) - Number(dead.has(sources[b].url)))
+    return [preferred, ...rest].slice(0, 6)
+  }
+
+  function failOverAllSources() {
+    const queue = vodQueue.current
+    vodQueue.current = null
+    if (!queue) return
+    resolveSeq.current += 1
+    playerRef.current = INITIAL_PLAYER
+    setPlayer(INITIAL_PLAYER)
+    setSourceModal({ item: queue.context.item, episode: queue.context.episode, notice: 'unavailable' })
+  }
+
+  async function playQueueEntry(pos: number) {
+    const queue = vodQueue.current
+    if (!queue) return
+    const index = queue.order[pos]
+    const source = index === undefined ? undefined : queue.sources[index]
+    if (index === undefined || !source) {
+      failOverAllSources()
+      return
+    }
+    queue.pos = pos
+    setPlayer((current) => current.open
+      ? {
+          ...current,
+          streamUrl: '',
+          sourceUrl: '',
+          streamHeaders: undefined,
+          subtitles: [],
+          pending: true,
+          playbackError: undefined,
+          sourceIndex: index,
+        }
+      : current)
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), pos === 0 ? 30000 : 15000)
+    try {
+      const playback = queue.context.isM3u
+        ? { url: source.url, subtitles: [] as NonNullable<PlayerState['subtitles']> }
+        : await resolveVodSource(queue.context.vodType, queue.context.vodId, source.url, controller.signal)
+      window.clearTimeout(timeout)
+      if (resolveSeq.current !== queue.seq) return
+      clearDeadSource(source.url)
+      const subtitles = playback.subtitles?.length ? playback.subtitles : source.subtitles || []
+      setPlayer((current) => current.open
+        ? {
+            ...current,
+            streamUrl: playback.url,
+            sourceUrl: playback.url,
+            streamHeaders: playback.headers,
+            subtitles,
+            pending: false,
+            playbackError: undefined,
+          }
+        : current)
+    } catch {
+      window.clearTimeout(timeout)
+      if (resolveSeq.current !== queue.seq) return
+      markDeadSource(source.url)
+      if (pos + 1 < queue.order.length) {
+        void playQueueEntry(pos + 1)
+        return
+      }
+      failOverAllSources()
+    }
+  }
+
+  function handleStreamFailure() {
+    const queue = vodQueue.current
+    if (!queue) return
+    const source = queue.sources[queue.order[queue.pos]]
+    if (source) markDeadSource(source.url)
+    if (queue.pos + 1 < queue.order.length) {
+      void playQueueEntry(queue.pos + 1)
+      return
+    }
+    failOverAllSources()
+  }
+
   async function openSource(selection: SourceSelection, switching = false) {
     const seq = ++resolveSeq.current
     const context: PlaybackContext = {
@@ -361,7 +456,8 @@ export default function GeilApp() {
       id: playable.id,
       type: context.episode ? 'series' : (context.item.type || 'video'),
       name: context.title,
-      poster: posterUrl(context.episode || context.item, 'medium'),
+      // Episodes inherit the show poster; upstream leaves their own art empty.
+      poster: posterUrl(context.item, 'medium') || posterUrl(playable, 'medium'),
       addonId: context.isM3u ? 'm3u' : 'tmdb',
       season: context.episode?.season,
       episode: context.episode?.episode,
@@ -370,6 +466,7 @@ export default function GeilApp() {
       episodeItem: context.episode,
     }
     const resume = getContinueEntry(watchKey)
+    saveSavedSourceUrl(watchKey, selection.source.url)
 
     modalRef.current = null
     setSourceModal(null)
@@ -389,39 +486,14 @@ export default function GeilApp() {
           startAt: resume?.position || 0,
         })
 
-    const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), 45000)
-    try {
-      const playback = context.isM3u
-        ? { url: selection.source.url, subtitles: [] as NonNullable<PlayerState['subtitles']> }
-        : await resolveVodSource(context.vodType, context.vodId, selection.source.url, controller.signal)
-      window.clearTimeout(timeout)
-      if (resolveSeq.current !== seq) return
-      const subtitles = playback.subtitles?.length
-        ? playback.subtitles
-        : selection.sources[sourceIndex]?.subtitles || []
-      setPlayer((current) => current.open
-        ? {
-            ...current,
-            streamUrl: playback.url,
-            sourceUrl: playback.url,
-            streamHeaders: playback.headers,
-            subtitles,
-            pending: false,
-            playbackError: undefined,
-          }
-        : current)
-    } catch {
-      window.clearTimeout(timeout)
-      if (resolveSeq.current !== seq) return
-      setPlayer((current) => current.open
-        ? {
-            ...current,
-            pending: false,
-            playbackError: 'Bu kaynak aktif değil, lütfen başka kaynak seçiniz.',
-          }
-        : current)
+    vodQueue.current = {
+      context,
+      sources: selection.sources,
+      order: candidateOrder(selection.sources, sourceIndex),
+      pos: 0,
+      seq,
     }
+    await playQueueEntry(0)
   }
 
   function switchSource(source: PlayerSource) {
@@ -477,8 +549,25 @@ export default function GeilApp() {
     }
   }
 
-  function resumeContinue(entry: ContinueEntry) {
-    setSourceModal({ item: entry.item, episode: entry.episodeItem || null })
+  async function resumeContinue(entry: ContinueEntry) {
+    const episode = entry.episodeItem || null
+    const target = episode || entry.item
+    const context = vodContextOf(entry.item, episode)
+    const savedUrl = getSavedSourceUrl(entry.key)
+    if (!savedUrl) {
+      setSourceModal({ item: entry.item, episode })
+      return
+    }
+    // Resuming means the server is already known: replay it and skip the picker.
+    const sources = context.isM3u
+      ? (target.url ? [{ url: target.url, name: 'MCLanX M3U', quality: '', languages: [], subtitles: [] }] : [])
+      : await fetchVodSources(context.vodType, context.vodId).catch(() => [])
+    const source = sources.find((candidate) => candidate.url === savedUrl)
+    if (source) {
+      void openSource({ item: entry.item, episode, ...context, source, sources })
+      return
+    }
+    setSourceModal({ item: entry.item, episode })
   }
 
   function renderView() {
@@ -512,6 +601,7 @@ export default function GeilApp() {
           channels={player.channels}
           onChannelSelect={player.isLive ? selectLiveChannel : null}
           onSourceSelect={player.isLive ? null : switchSource}
+          onStreamFailure={player.isLive ? undefined : handleStreamFailure}
         />
       ) : null}
 
@@ -519,6 +609,7 @@ export default function GeilApp() {
         <SourceModal
           item={sourceModal.item}
           episode={sourceModal.episode}
+          notice={sourceModal.notice}
           onClose={closeSourceModal}
           onSelect={(selection) => { void openSource(selection) }}
         />

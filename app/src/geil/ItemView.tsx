@@ -6,8 +6,10 @@ import { useHashRoute } from './router'
 import { PosterCard } from './Cards'
 import { StarIcon } from './icons'
 import { pushHistory, toggleFavorite, isFavorite } from './storage'
+import { useLang } from '@/lib/language'
 
 export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?: GeilItem) => void }) {
+  const { t } = useLang()
   const route = useHashRoute()
   const addonId = route.parts[1] || 'tmdb'
   const type = route.parts[2] === 'series' ? 'series' : 'video'
@@ -280,7 +282,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
         {itemIsSeries ? (
           <section className="item-section">
             <div className="item-section-head">
-              <h2 className="item-section-title">Bölümler</h2>
+              <h2 className="item-section-title">{t('item.episodes')}</h2>
               {(addonId === 'm3u' ? m3uSeasons.length > 1 : seasonNumbers.length > 1) ? (
                 <div className="ep-pills">
                   {(addonId === 'm3u' ? m3uSeasons : seasonNumbers).map((season) => (
@@ -289,7 +291,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
                       className={`ep-pill ${selectedSeason === season ? 'active' : ''}`}
                       onClick={() => setSelectedSeason(season)}
                     >
-                      {season}. Sezon
+                      {t('item.season')} {season}
                     </button>
                   ))}
                 </div>
@@ -334,7 +336,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
 
         {item.cast?.length ? (
           <section className="item-section">
-            <h2 className="item-section-title">Oyuncular</h2>
+            <h2 className="item-section-title">{t('item.cast')}</h2>
             <div className="geil-horizontal-wrap cast-row-wrap">
               <button className="geil-carousel-arrow geil-carousel-arrow-left" type="button" aria-label="Önceki oyuncular" disabled={!castScroll.left} onClick={() => moveHorizontal(castRowRef, -1, setCastScroll)}><span aria-hidden="true">‹</span></button>
               <div className="cast-row" ref={castRowRef} onScroll={() => updateHorizontalScroll(castRowRef, setCastScroll)}>
@@ -359,7 +361,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
 
         {related.length ? (
           <section className="item-section">
-            <h2 className="item-section-title">Benzer İçerikler</h2>
+            <h2 className="item-section-title">{t('item.similar')}</h2>
             <div className="row-wrap">
               <div className="row" data-zone="h" data-scroll="x">
                 {related.map((relatedItem, index) => (
@@ -371,7 +373,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
         ) : null}
 
         <section className="item-section item-facts">
-          <h2 className="item-section-title">Detaylar</h2>
+          <h2 className="item-section-title">{t('item.details')}</h2>
           <div className="item-facts-grid">
             {yearOf(item) ? <div><span>Yıl</span><strong>{yearOf(item)}</strong></div> : null}
             {item.runtime ? <div><span>Süre</span><strong>{runtimeLabel(item.runtime)}</strong></div> : null}

@@ -136,6 +136,71 @@ export function clearContinueWatching(): void {
   write(CONTINUE_KEY, [])
 }
 
+const SOURCE_KEY = 'notflix_geil_sources'
+
+/** The server a title was last played from, so "continue watching" never asks again. */
+export function getSavedSourceUrl(key: string): string {
+  return read<Record<string, string>>(SOURCE_KEY, {})[key] || ''
+}
+
+export function saveSavedSourceUrl(key: string, url: string): void {
+  if (!key || !url) return
+  const map = read<Record<string, string>>(SOURCE_KEY, {})
+  if (map[key] === url) return
+  map[key] = url
+  write(SOURCE_KEY, map)
+}
+
+const DEAD_SOURCE_KEY = 'notflix_geil_dead_sources'
+const DEAD_SOURCE_TTL = 6 * 60 * 60 * 1000
+
+/** Sources that failed to play recently; the picker keeps them flagged for a few hours. */
+export function getDeadSourceUrls(): string[] {
+  const now = Date.now()
+  const map = read<Record<string, number>>(DEAD_SOURCE_KEY, {})
+  const alive = Object.entries(map).filter(([, at]) => now - at < DEAD_SOURCE_TTL)
+  if (alive.length !== Object.keys(map).length) write(DEAD_SOURCE_KEY, Object.fromEntries(alive))
+  return alive.map(([url]) => url)
+}
+
+export function markDeadSource(url: string): void {
+  if (!url) return
+  const map = read<Record<string, number>>(DEAD_SOURCE_KEY, {})
+  map[url] = Date.now()
+  write(DEAD_SOURCE_KEY, map)
+}
+
+export function clearDeadSource(url: string): void {
+  if (!url) return
+  const map = read<Record<string, number>>(DEAD_SOURCE_KEY, {})
+  if (!(url in map)) return
+  delete map[url]
+  write(DEAD_SOURCE_KEY, map)
+}
+
+const ACTIVATION_KEY = 'notflix_activated'
+const ACTIVATION_CODE = 'BRNnfx26Z2'
+let activatedInMemory = false
+
+export function isActivated(): boolean {
+  try {
+    return localStorage.getItem(ACTIVATION_KEY) === '1'
+  } catch {
+    // Storage can be blocked (private mode); the session stays usable once unlocked.
+    return activatedInMemory
+  }
+}
+
+export function checkActivationCode(code: string): boolean {
+  // The field forces uppercase, so the mixed-case code has to be compared case-insensitively.
+  if (code.trim().toUpperCase() !== ACTIVATION_CODE.toUpperCase()) return false
+  activatedInMemory = true
+  try {
+    localStorage.setItem(ACTIVATION_KEY, '1')
+  } catch { /* fall back to the in-memory flag */ }
+  return true
+}
+
 export function clearAllData(): void {
   try {
     const keys: string[] = []
@@ -144,9 +209,11 @@ export function clearAllData(): void {
       if (key && (key.startsWith('notflix') || key === 'lang' || key.startsWith('geil'))) keys.push(key)
     }
     keys.forEach((key) => localStorage.removeItem(key))
+    activatedInMemory = false
   } catch {
     // Storage can be blocked; the UI still reports completion.
   }
   window.dispatchEvent(new CustomEvent('notflix-geil-storage'))
   window.dispatchEvent(new CustomEvent('notflix-geil-live-favorites'))
+  window.dispatchEvent(new CustomEvent('notflix-activation-reset'))
 }

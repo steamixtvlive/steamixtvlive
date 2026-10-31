@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { GeilItem } from './types'
 import { getFavorites, getHistory, clearHistory, getContinueWatching, removeContinueWatching, type ContinueEntry } from './storage'
+import { posterUrl } from './api'
 import { PosterCard } from './Cards'
 import { HeartIcon, HistoryIcon, TrashIcon } from './icons'
 import { useLang } from '@/lib/language'
@@ -70,7 +71,7 @@ export default function LibraryView({ onResume }: { onResume?: (entry: ContinueE
         ) : (
           <div className="grid portrait lib-grid" data-zone="grid">
             {continueItems.map((entry) => {
-              const poster = entry.poster || ''
+              const poster = entry.poster || posterUrl(entry.item, 'medium') || posterUrl(entry.episodeItem, 'medium')
               return (
                 <div className="lib-tile" key={entry.key}>
                   <button

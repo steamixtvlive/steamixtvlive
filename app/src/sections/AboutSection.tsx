@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLang } from '@/lib/language';
-import { Download, Shield, Smartphone, Info } from 'lucide-react';
+import { Download, Shield, Smartphone } from 'lucide-react';
 
 const appInfoRows = [
-  { label: 'Sürüm', value: 'v1.0.35', icon: Info },
   { label: 'Boyut', value: '18.5 MB', icon: Download },
   { label: 'Gereksinim', value: 'Android 5.0+', icon: Smartphone },
   { label: 'Güvenlik', value: 'SSL Korumalı', icon: Shield },

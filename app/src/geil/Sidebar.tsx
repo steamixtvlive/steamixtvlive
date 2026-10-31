@@ -7,6 +7,7 @@ import {
   SettingsIcon,
 } from './icons'
 import { useLang } from '@/lib/language'
+import NotflixLogo from '@/sections/NotflixLogo'
 
 const MAIN_ITEMS = [
   { view: 'home', labelKey: 'nav.home', href: '#/', Icon: HomeIcon },
@@ -43,15 +44,6 @@ export function BrandMark() {
   )
 }
 
-function NotflixSidebarMark() {
-  return (
-    <svg className="nf-sidebar-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <rect x="4" y="4" width="40" height="40" rx="9" fill="#050505" />
-      <path d="M17 32V16h5l7 9v-9h5v16h-5l-7-9v9z" fill="#E50914" />
-    </svg>
-  )
-}
-
 export default function Sidebar({ route }: { route: RouteState }) {
   const { t } = useLang()
   const mainActive = MAIN_ITEMS.findIndex((item) => isActive(route, item.view))
@@ -63,8 +55,10 @@ export default function Sidebar({ route }: { route: RouteState }) {
       <aside className="sidebar" data-zone="sidebar" role="navigation" aria-label="Main navigation">
         <div className="sidebar-dock">
           <a className="sidebar-brand" href="#/" aria-label="Anasayfa">
-            <NotflixSidebarMark />
-            <span className="brand-text sidebar-notflix-wordmark">NOTFLİX</span>
+            <span className="brand-burger" aria-hidden="true"><i /><i /><i /></span>
+            <span className="brand-text">
+              <NotflixLogo className="sidebar-notflix-wordmark" />
+            </span>
           </a>
           <nav className="sidebar-nav" aria-label="Main" style={{ '--nav-active': Math.max(0, mainActive) } as React.CSSProperties}>
             <div className={`nav-pill ${mainActive < 0 ? 'is-off' : ''}`} aria-hidden="true" />

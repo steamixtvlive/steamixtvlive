@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import type { GeilFeatures } from './types'
-import type { MouseEvent } from 'react'
+import type { GeilFeatures, GeilSubtitle } from './types'
+import type { MouseEvent, TouchEvent as ReactTouchEvent } from 'react'
 import Hls from 'hls.js'
-import { Captions, List, Layers } from 'lucide-react'
+import { Captions, List, Layers, Check } from 'lucide-react'
 import type { PlayerState, GeilItem, PlayerSource } from './types'
 import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, HeartIcon, SearchIcon, ArrowLeftIcon } from './icons'
 import { channelColor, currentEpg, formatClock, initialOf, remainingLabel } from './api'
 import { saveContinueWatching } from './storage'
+import { subtitleLanguageCode, subtitleLanguageLabel } from './subtitle-language'
 import { useLang } from '@/lib/language'
 import ShortcutsHelp from './ShortcutsHelp'
 
@@ -20,9 +21,29 @@ interface Props {
   channels?: GeilItem[]
   onChannelSelect?: ((channel: GeilItem, visible?: GeilItem[]) => void) | null
   onSourceSelect?: ((source: PlayerSource) => void) | null
+  /** Reports a stream that refuses to play so the parent can move on to the next server. */
+  onStreamFailure?: (() => void) | null
 }
 
 const RATES = [0.5, 1, 1.25, 1.5, 2]
+
+/** Subtitles come either from the resolved playback or from the item's video list. */
+function collectSubtitles(state: PlayerState, videos: GeilItem['videos']): GeilSubtitle[] {
+  if (state.subtitles?.length) return state.subtitles
+  return (videos || [])
+    .filter((entry) => {
+      const url = String(entry.url || '')
+      const name = String(entry.name || '')
+      if (/youtube|youtu\.be/i.test(url) || /fragman|trailer/i.test(name)) return false
+      return /\.(srt|vtt)(\?|$)/i.test(url) || /subtitle|caption|altyaz/i.test(`${name} ${url}`)
+    })
+    .map((entry) => ({
+      url: entry.url,
+      name: entry.name,
+      language: entry.languages?.[0],
+      format: entry.url.split('?')[0].split('.').pop(),
+    }))
+}
 
 // Media URLs arrive already wrapped in the signed /api/geil/stream proxy, so the
 // playlist extension has to be read out of the token payload, not the URL suffix.
@@ -40,8 +61,8 @@ function isHlsSource(url: string): boolean {
   }
 }
 
-export default function Player({ state, onClose, onPrev, onNext, channels = [], onChannelSelect, onSourceSelect }: Props) {
-  const { t } = useLang()
+export default function Player({ state, onClose, onPrev, onNext, channels = [], onChannelSelect, onSourceSelect, onStreamFailure }: Props) {
+  const { t, lang } = useLang()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const hlsRef = useRef<Hls | null>(null)
@@ -56,6 +77,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const [duration, setDuration] = useState(0)
   const [buffered, setBuffered] = useState(0)
   const [subtitleIndex, setSubtitleIndex] = useState(-1)
+  const [subtitleMenuOpen, setSubtitleMenuOpen] = useState(false)
   const [rate, setRate] = useState(1)
   const [panelOpen, setPanelOpen] = useState(false)
   const [sourceChooserOpen, setSourceChooserOpen] = useState(false)
@@ -69,6 +91,8 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const [panelLoading, setPanelLoading] = useState(false)
   const [panelChannels, setPanelChannels] = useState<GeilItem[]>(channels)
   const [catalogChannels, setCatalogChannels] = useState<GeilItem[]>(channels)
+  const swipeRef = useRef<{ x: number; y: number } | null>(null)
+  const swipeHandledRef = useRef(false)
   const [favIds, setFavIds] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('notflix_geil_live_favorites') || '[]')) } catch { return new Set() }
   })
@@ -76,14 +100,14 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const osdTimer = useRef<number | null>(null)
   const saveTimer = useRef<number>(0)
   const startApplied = useRef(0)
+  const failureReported = useRef('')
   const userInteracted = useRef(false)
   const actionsRef = useRef<(event: KeyboardEvent | { key: string; remote?: boolean }) => void>(() => {})
-  const currentVideos = useRef(state.item?.videos)
-  currentVideos.current = state.item?.videos
   const playerStateRef = useRef(state)
   playerStateRef.current = state
-  const subtitlesRef = useRef(state.subtitles)
-  subtitlesRef.current = state.subtitles
+  const subtitles = collectSubtitles(state, state.item?.videos)
+  const subtitlesRef = useRef<GeilSubtitle[]>(subtitles)
+  subtitlesRef.current = subtitles
 
   useEffect(() => {
     if (!state.open || !state.isLive) return
@@ -160,6 +184,16 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     return () => window.clearTimeout(timer)
   }, [zap, state.pending, state.streamUrl])
 
+  // A video that will not open is a source problem, not something to shout about over the
+  // picture: the spinner stays up and the parent moves to the next server.
+  function reportStreamFailure(url: string) {
+    if (failureReported.current === url) return
+    failureReported.current = url
+    setLoading(true)
+    setError('')
+    onStreamFailure?.()
+  }
+
   useEffect(() => {
     if (!state.open) return
     const video = videoRef.current
@@ -201,7 +235,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     }
     const onError = () => {
       if (state.isLive) { setError('Akış oynatılamadı'); return }
-      setError(t('sources.inactive'))
+      reportStreamFailure(source)
     }
     const onStalled = () => {
       if (!video.paused && video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) setLoading(true)
@@ -222,19 +256,16 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     video.addEventListener('canplay', onCanPlay)
     video.addEventListener('ended', onEnded)
 
-    const subtitles = state.subtitles?.length ? state.subtitles : currentVideos.current
-      ?.filter((entry) => {
-        const url = String(entry.url || '')
-        const name = String(entry.name || '')
-        if (/youtube|youtu\.be/i.test(url) || /fragman|trailer/i.test(name)) return false
-        return /\.(srt|vtt)(\?|$)/i.test(url) || /subtitle|caption|altyaz/i.test(`${name} ${url}`)
-      })
-      .map((entry) => ({ url: entry.url, name: entry.name, language: entry.languages?.[0], format: entry.url.split('?')[0].split('.').pop() })) || []
+    const trackLabels = subtitles.map((subtitle, index) => subtitleLanguageLabel(
+      [subtitle.language, subtitle.name],
+      lang,
+      `${t('player.subtitleGeneric')} ${index + 1}`,
+    ))
     video.querySelectorAll('track[data-vod-subtitle]').forEach((track) => track.remove())
     subtitles.forEach((subtitle, index) => {
       const track = document.createElement('track')
       track.kind = 'subtitles'
-      track.label = subtitle.name || subtitle.language || `Altyazı ${index + 1}`
+      track.label = trackLabels[index]
       const language = (subtitle.language || 'und').toLowerCase()
       track.srclang = language === 'und' ? 'und' : language.split(/[-_]/)[0].slice(0, 2)
       track.src = subtitle.url
@@ -242,7 +273,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       video.appendChild(track)
     })
     if (!state.isLive && subtitles.length) {
-      const turkish = subtitles.findIndex((subtitle) => /(^|[\s_-])(tr|tur|turk|türk)([\s_-]|$)/i.test(`${subtitle.language || ''} ${subtitle.name || ''}`))
+      const turkish = subtitles.findIndex((subtitle) => subtitleLanguageCode(subtitle.language, subtitle.name) === 'tr')
       if (turkish >= 0) setSubtitleIndex(turkish)
     }
 
@@ -268,7 +299,8 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       })
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (!data.fatal) return
-        setError(state.isLive ? 'Akış oynatılamadı' : t('sources.inactive'))
+        if (state.isLive) { setError('Akış oynatılamadı'); return }
+        reportStreamFailure(source)
       })
     } else if (usesHls && !video.canPlayType('application/vnd.apple.mpegurl')) {
       setError('Tarayıcı HLS oynatmayı desteklemiyor')
@@ -436,12 +468,17 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     }
   }
 
+  function subtitleLabel(subtitle: GeilSubtitle | undefined, index: number): string {
+    if (!subtitle) return t('player.subtitles')
+    return subtitleLanguageLabel([subtitle.language, subtitle.name], lang, `${t('player.subtitleGeneric')} ${index + 1}`)
+  }
+
   function cycleSubtitle() {
-    const total = subtitlesRef.current?.length || 0
-    if (!total) { flashOsd(t('player.subtitlesOff')); return }
-    const next = subtitleIndex >= total - 1 ? -1 : subtitleIndex + 1
+    const list = subtitlesRef.current || []
+    if (!list.length) { flashOsd(t('player.subtitlesNone')); return }
+    const next = subtitleIndex >= list.length - 1 ? -1 : subtitleIndex + 1
     setSubtitleIndex(next)
-    flashOsd(next < 0 ? t('player.subtitlesOff') : subtitlesRef.current?.[next]?.name || t('player.subtitles'))
+    flashOsd(next < 0 ? t('common.off') : subtitleLabel(list[next], next))
   }
 
   function cycleRate() {
@@ -464,14 +501,37 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
 
   function zapChannel(direction: -1 | 1) {
     if (!state.isLive) return
-    const list = state.channels?.length ? state.channels : channels
+    // Zap through exactly the list the channel panel is showing, so a country selection
+    // and its sort order carry over to the arrow keys instead of jumping back to all.
+    const visiblePanel = panelChannels.filter((channel) => channel.name.toLowerCase().includes(panelSearch.trim().toLowerCase()))
+    const list = visiblePanel.length ? visiblePanel : (state.channels?.length ? state.channels : channels)
     if (!list.length || !onChannelSelect) return
     const index = list.findIndex((entry) => entry.id === state.item?.id)
     const nextChannel = list[(index + direction + list.length) % list.length]
     if (!nextChannel) return
     setZap({ name: nextChannel.name, color: channelColor(nextChannel.name) })
-    onChannelSelect(nextChannel)
+    onChannelSelect(nextChannel, visiblePanel.length ? visiblePanel : undefined)
     revealControls()
+  }
+
+  function beginSwipe(event: ReactTouchEvent<HTMLDivElement>) {
+    const touch = event.touches[0]
+    swipeHandledRef.current = false
+    swipeRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null
+  }
+
+  function endSwipe(event: ReactTouchEvent<HTMLDivElement>) {
+    const start = swipeRef.current
+    swipeRef.current = null
+    if (!start || !state.isLive || !onChannelSelect) return
+    const touch = event.changedTouches[0]
+    if (!touch) return
+    const dy = touch.clientY - start.y
+    const dx = touch.clientX - start.x
+    // Only a deliberately vertical drag zaps; horizontal ones stay the browser's.
+    if (Math.abs(dy) < 60 || Math.abs(dy) < Math.abs(dx)) return
+    swipeHandledRef.current = true
+    zapChannel(dy < 0 ? 1 : -1)
   }
 
   function copyLink() {
@@ -497,6 +557,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     if (key === 'Escape') {
       handled()
       if (showHelp) { setShowHelp(false); return }
+      if (subtitleMenuOpen) { setSubtitleMenuOpen(false); return }
       if (sourceChooserOpen) { setSourceChooserOpen(false); return }
       if (panelOpen) { setPanelOpen(false); revealControls(); return }
       onClose()
@@ -560,6 +621,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       if (command === 'mute') { toggleMute(); return }
       if (command === 'back') {
         if (sourceChooserOpen) setSourceChooserOpen(false)
+        else if (subtitleMenuOpen) setSubtitleMenuOpen(false)
         else if (panelOpen) { setPanelOpen(false); revealControls() }
         else onClose()
         return
@@ -608,13 +670,26 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
         <div className="player-video-wrap">
           <video ref={videoRef} className="player-video" playsInline onClick={togglePlay} />
         </div>
-        <div className="player-click-area" onClick={() => { userInteracted.current = true; setShowControls((value) => !value) }} />
+        <div
+          className="player-click-area"
+          onTouchStart={beginSwipe}
+          onTouchEnd={endSwipe}
+          onClick={() => {
+            if (swipeHandledRef.current) { swipeHandledRef.current = false; return }
+            userInteracted.current = true
+            setShowControls((value) => !value)
+          }}
+        />
         {loading && !playbackError ? (
           <div className="player-loading">
             <div className="player-pulse" />
           </div>
         ) : null}
-        {playbackError ? (
+        {playbackError && state.isLive ? (
+          <div className="player-error player-error-offline">
+            <p>{t('channels.offline')}</p>
+          </div>
+        ) : playbackError ? (
           <div className="player-error player-error-danger">
             <p>{playbackError}</p>
             <div className="player-error-actions">
@@ -623,11 +698,9 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                   <Layers size={18} /> {t('sources.change')}
                 </button>
               ) : null}
-              {!state.isLive ? (
-                <button type="button" className="player-error-action" onClick={onClose}>
-                  <ArrowLeftIcon size={18} /> {t('player.exit')}
-                </button>
-              ) : null}
+              <button type="button" className="player-error-action" onClick={onClose}>
+                <ArrowLeftIcon size={18} /> {t('player.exit')}
+              </button>
             </div>
           </div>
         ) : null}
@@ -752,17 +825,62 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                     }}
                   />
                 </div>
-                {!state.isLive && (state.subtitles?.length || 0) > 0 ? (
-                  <label className="player-subtitle-select" onClick={(event) => event.stopPropagation()}>
-                    <Captions size={19} aria-hidden="true" />
-                    <select aria-label={t('player.subtitles')} value={subtitleIndex} onChange={(event) => setSubtitleIndex(Number(event.target.value))}>
-                      <option value={-1}>{t('player.subtitlesOff')}</option>
-                      {state.subtitles?.map((subtitle, index) => (
-                        <option key={`${subtitle.url}-${index}`} value={index}>{subtitle.name || subtitle.language || `${t('player.subtitles')} ${index + 1}`}</option>
-                      ))}
-                    </select>
-                  </label>
-                ) : null}
+                <div className="player-sub-wrap">
+                  <button
+                    className={`player-ctrl-btn ${subtitleMenuOpen || subtitleIndex >= 0 ? 'active' : ''}`}
+                    aria-label={t('player.subtitles')}
+                    aria-pressed={subtitleMenuOpen}
+                    onClick={() => { userInteracted.current = true; setSubtitleMenuOpen((value) => !value) }}
+                  >
+                    <Captions size={20} />
+                  </button>
+                  {subtitleMenuOpen ? (
+                    <div className="subtitle-menu" role="dialog" aria-label={t('player.subtitles')} onClick={(event) => event.stopPropagation()}>
+                      <div className="subtitle-menu-head">{t('player.subtitles')}</div>
+                      <div className="subtitle-switch" role="radiogroup" aria-label={t('player.subtitles')}>
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={subtitleIndex < 0}
+                          className={`subtitle-switch-btn ${subtitleIndex < 0 ? 'is-active' : ''}`}
+                          onClick={() => setSubtitleIndex(-1)}
+                        >
+                          {t('common.off')}
+                        </button>
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={subtitleIndex >= 0}
+                          disabled={!subtitles.length}
+                          className={`subtitle-switch-btn ${subtitleIndex >= 0 ? 'is-active' : ''}`}
+                          onClick={() => {
+                            const turkish = subtitles.findIndex((subtitle) => subtitleLanguageCode(subtitle.language, subtitle.name) === 'tr')
+                            setSubtitleIndex(turkish >= 0 ? turkish : 0)
+                          }}
+                        >
+                          {t('common.on')}
+                        </button>
+                      </div>
+                      {subtitles.length === 0 ? (
+                        <div className="subtitle-empty">{t('player.subtitlesNone')}</div>
+                      ) : subtitleIndex >= 0 ? (
+                        <div className="subtitle-list">
+                          {subtitles.map((subtitle, index) => (
+                            <button
+                              key={`${subtitle.url}-${index}`}
+                              type="button"
+                              className={`subtitle-row ${index === subtitleIndex ? 'is-active' : ''}`}
+                              onClick={() => setSubtitleIndex(index)}
+                            >
+                              <span className="subtitle-row-name">{subtitleLabel(subtitle, index)}</span>
+                              {index === subtitleIndex ? <Check size={16} aria-hidden="true" /> : null}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
                 {!state.isLive && playerSources.length > 0 ? (
                   <button
                     className={`player-ctrl-btn ${sourceChooserOpen ? 'active' : ''}`}
@@ -871,7 +989,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                       <span className="ch-epg-title">{epg.entry.title}</span>
                       <span className="ch-epg-left">{remainingLabel(epg.entry.end)}</span>
                     </div>
-                  ) : <div className="ch-epg ch-epg-none">{t('channels.noResultsDesc')}</div>
+                  ) : <div className="ch-epg ch-epg-none">{t('channels.noEpg')}</div>
                 })()}
               </div>
             </div>
@@ -920,7 +1038,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                                 </div>
                                 <div className="ch-epg-track"><div className="ch-epg-fill" style={{ width: `${epg.progress}%` }} /></div>
                               </>
-                            ) : <div className="ch-epg ch-epg-none">{t('channels.noResultsDesc')}</div>
+                            ) : <div className="ch-epg ch-epg-none">{t('channels.noEpg')}</div>
                           })()}
                         </div>
                       </div>

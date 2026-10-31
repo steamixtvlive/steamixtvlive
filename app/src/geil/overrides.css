@@ -144,11 +144,16 @@ body,
   transition: opacity 0.3s var(--ease);
 }
 
-/* Live and VOD streams fill the whole player surface — no letterbox gaps on the
-   sides or bottom, in the window or in fullscreen. */
+/* The broadcast frame is shown whole and centred, classic 16:9 TV style: cover
+   cropped the channel logos and the score board off the top of live streams. */
 .player-renderer-legacy .player-video,
 .player-renderer-legacy-fullscreen .player-video {
-  object-fit: cover;
+  object-fit: contain;
+}
+
+.player-renderer-legacy .player-video-wrap,
+.player-renderer-legacy-fullscreen .player-video-wrap {
+  background: #000;
 }
 
 .player-panel-toggle {
@@ -180,22 +185,31 @@ body,
 .player-root .player-seek-fill,
 .player-root .player-seek-handle { background-color: #e50914; }
 
-.player-subtitle-select {
+.player-center-toggle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 16;
   display: inline-flex;
+  width: 62px;
+  height: 62px;
+  transform: translate(-50%, -50%);
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 50%;
+  background: rgba(12,14,18,.62);
   color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  backdrop-filter: blur(12px);
+  transition: opacity .25s var(--ease), background .2s var(--ease);
 }
 
-.player-subtitle-select select {
-  max-width: 150px;
-  border: 1px solid rgba(255,255,255,.16);
-  border-radius: 7px;
-  padding: 6px 8px;
-  background: rgba(15,17,21,.92);
-  color: #fff;
-  accent-color: #e50914;
-}
+.player-center-toggle.is-visible { opacity: 1; pointer-events: auto; }
+.player-center-toggle:hover { background: rgba(229,9,20,.8); }
 
 .ch-panel-tabs { margin: 0 12px 6px; }
 
@@ -212,7 +226,6 @@ body,
 
 @media (max-width: 760px) {
   .player-panel-toggle { top: 10px; right: 10px; }
-  .player-subtitle-select select { max-width: 105px; }
 }
 
 .item-facts-grid {
@@ -220,23 +233,6 @@ body,
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   margin-top: 12px;
-}
-
-.sidebar-notflix-wordmark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 27px;
-  padding: 3px 12px 4px;
-  border-radius: 999px;
-  background: #c9000a;
-  color: #fff;
-  font-family: 'Bebas Neue', 'Anton', Impact, sans-serif;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  line-height: 1;
-  -webkit-text-fill-color: #fff;
 }
 
 .brand-icon { display: none; }

@@ -24,12 +24,43 @@
   transition: background .18s ease, border-color .18s ease;
 }
 .player-skip-btn:hover, .player-rate-btn:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.3); }
-.player-subtitle-select {
-  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 10px;
-  border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); color: #fff;
+/* Subtitle menu. The Captions button is always present, so the panel has to look
+   like a player menu (dark glass, segmented switch) and never like a settings list. */
+.player-sub-wrap { position: relative; display: inline-flex; }
+.subtitle-menu {
+  position: absolute; right: 0; bottom: calc(100% + 12px); z-index: 30;
+  display: flex; flex-direction: column; gap: 10px; width: 264px;
+  max-height: min(340px, 48vh); overflow-y: auto; padding: 12px;
+  border: 1px solid rgba(255,255,255,.12); border-radius: 16px; color: #fff;
+  background: rgba(11,13,17,.94); box-shadow: 0 20px 50px rgba(0,0,0,.55);
+  backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%);
+  animation: subtitleMenuIn .16s ease both;
 }
-.player-subtitle-select select { background: transparent; border: 0; outline: none; color: #fff; font-size: 12px; max-width: 150px; }
-.player-subtitle-select select option { color: #111; }
+@keyframes subtitleMenuIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.subtitle-menu-head { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.52); }
+.subtitle-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,.08); }
+.subtitle-switch-btn {
+  height: 34px; border: 0; border-radius: 999px; background: transparent; color: rgba(255,255,255,.72);
+  font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: background .16s ease, color .16s ease;
+}
+.subtitle-switch-btn:hover:not(:disabled) { color: #fff; }
+.subtitle-switch-btn.is-active { background: var(--accent, #e50914); color: #fff; box-shadow: 0 6px 16px rgba(229,9,20,.35); }
+.subtitle-switch-btn:disabled { opacity: .35; cursor: not-allowed; }
+.subtitle-list { display: flex; flex-direction: column; gap: 2px; }
+.subtitle-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+  padding: 10px 12px; border: 0; border-radius: 11px; background: transparent;
+  color: rgba(255,255,255,.86); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+  transition: background .15s ease;
+}
+.subtitle-row:hover { background: rgba(255,255,255,.08); }
+.subtitle-row.is-active { background: rgba(var(--accent-rgb), .16); color: #fff; }
+.subtitle-row-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subtitle-empty { padding: 10px 4px; text-align: center; font-size: 13px; color: rgba(255,255,255,.58); }
+
+/* Finger zapping on the live picture: swipe up = next channel, down = previous. */
+.player-root .player-click-area { touch-action: none; }
 /* The skin uses `html.player-osd` as a root flag, so the badge needs its own class. */
 .geil-osd {
   position: absolute; left: 50%; bottom: 24%; transform: translateX(-50%); z-index: 240;
@@ -45,8 +76,10 @@
   background: rgba(38,4,7,.9) !important;
   box-shadow: 0 24px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(229,9,20,.25) inset;
 }
-.player-error-actions { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-.player-error-action {
+/* A live channel that will not open stays a plain black stage with one calm line. */
+.player-error-offline { background: #000 !important; }
+.player-error-offline p { color: rgba(255,255,255,.84); font-size: 15px; letter-spacing: .01em; }
+.player-error-actions { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }.player-error-action {
   display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 15px;
   border-radius: 999px; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.1);
   color: #fff; font-size: 13px; font-weight: 650; cursor: pointer;
@@ -164,6 +197,23 @@
 }
 .s-value-btn:hover { background: rgba(255,255,255,.16); }
 .s-danger { color: #ff8b90; border-color: rgba(229,9,20,.42); }
+
+/* The skin styles `.s-sub` only when it is nested inside `.s-label`; every description here is
+   a sibling, so it inherited the label's near-white and 15px and outshouted its own title.
+   Softened into a real second tier, but kept far above the grey-on-black mush a TV viewed from
+   the sofa would otherwise turn this into. */
+.s-group-title { color: var(--accent); font-size: .8rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+.s-label { color: #f4f2f8; font-size: .96rem; font-weight: 600; }
+.s-sub {
+  display: block; margin-top: 3px; max-width: 66ch;
+  color: #a8a4b2; font-size: .87rem; font-weight: 400; line-height: 1.55; letter-spacing: .015em;
+}
+
+/* The value on the right repeats the word sitting under the label, so the two have to share a
+   line; centring a bare value in a two-row block left it floating between label and copy. The
+   select carries its own padding, so it has to reach past the line to land on the same axis. */
+.s-item-nav > :is(.s-value, .sort-select) { align-self: flex-end; }
+.s-item-nav > .sort-select { margin-bottom: -6px; }
 .s-confirm {
   margin: 6px 14px 14px; padding: 14px; border-radius: 14px; font-size: 13px;
   display: flex; flex-direction: column; gap: 10px;
@@ -189,9 +239,114 @@
 .lib-tile-remove:hover { background: rgba(229,9,20,.75); }
 @media (hover: none) { .lib-tile-remove { opacity: 1; } }
 
-/* ---- Channel controls: favourites pill after the country filter ---- */
-.channel-favorite-tabs { display: flex; align-items: center; flex: 0 0 auto; }
-.ch-controls { flex-wrap: wrap; }
+/* ---- Channel controls: favourites toggle built from the same shell as the selects ---- */
+.fav-toggle {
+  display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto;
+  min-width: 130px; padding: 10px 14px; border-radius: var(--r-md); cursor: pointer;
+  border: 1px solid var(--border); border-top-color: var(--border-top);
+  background: var(--surface-1); color: var(--t1);
+  font: inherit; font-size: var(--fs-body); font-weight: 600; white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15), inset 0 1px rgba(255,255,255,.04);
+  transition: background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease);
+}
+.fav-toggle:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--accent); }
+.fav-toggle svg { flex: 0 0 auto; }
+.fav-toggle.is-on { background: rgba(var(--accent-rgb), .16); border-color: rgba(var(--accent-rgb), .55); color: var(--accent); }
+.fav-toggle-count { margin-left: auto; padding-left: 6px; opacity: .65; font-weight: 700; font-size: var(--fs-small); }
+
+/* ---- Source rows ----
+   A server that refused to open stays listed but carries a short tag; the row itself
+   only shows the audio countries, never file sizes or subtitle filenames. */
+.source-dead {
+  margin-left: 8px;
+  padding: 2px 7px;
+  border: 1px solid rgba(var(--accent-rgb, 229, 9, 20), .45);
+  border-radius: 999px;
+  color: var(--accent, #e50914);
+  background: rgba(var(--accent-rgb, 229, 9, 20), .12);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-decoration: none;
+  text-transform: none;
+  vertical-align: 2px;
+}
+
+/* ---- Brand wordmark ----
+   The rail title is the splash logo component, but the vendored skin styles every span
+   inside `.sidebar-brand`, which out-specifies `.notflix-logo` and quietly reset the
+   wordmark to the 18px UI font. The splash treatment is therefore restated here at a
+   higher specificity: same condensed face, same tracking, and a stroke scaled to the
+   rail size so the letters keep the splash's bold, rounded weight. No glow and no red
+   wash behind it — the rail only carries the letters themselves. */
+.sidebar-brand .brand-text {
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  /* The rail clips its title to make the collapse tidy, which also sheared off the dot
+     of the İ. The padding gives that dot room; the negative margin keeps the baseline. */
+  padding-top: 8px;
+  margin-top: -8px;
+}
+.sidebar-brand .brand-text .notflix-logo.sidebar-notflix-wordmark {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  margin: 0;
+  white-space: nowrap;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-family: 'Bebas Neue', 'Arial Narrow', 'Arial Black', Impact, sans-serif;
+  font-size: 27px;
+  font-weight: 400;
+  line-height: .82;
+  letter-spacing: .012em;
+  color: #e50914;
+  -webkit-text-fill-color: #e50914;
+  -webkit-text-stroke: .05em #e50914;
+  text-shadow: none;
+}
+.sidebar-brand .brand-text .notflix-logo__letter {
+  display: inline-block;
+  position: relative;
+  margin: 0 .028em;
+  font: inherit;
+  color: inherit;
+  text-shadow: none;
+}
+
+/* The wordmark is the only thing in flow, so it sits dead centre in the rail while the
+   three-line mark is pinned out of the layout and stays on the same axis in both states. */
+.sidebar-brand {
+  position: relative;
+  justify-content: center;
+  padding-left: 11px;
+}
+.sidebar-brand .brand-burger {
+  position: absolute;
+  top: 50%;
+  left: calc(50% - 13px + (24px - 50%) * var(--open, 0));
+  transform: translateY(-50%);
+}
+
+/* The rail opens with a three-line menu mark instead of the old N tile. */
+.brand-burger {
+  display: flex;
+  width: 26px;
+  height: 26px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+.brand-burger i {
+  height: 3px;
+  border-radius: 2px;
+  background: #e50914;
+  box-shadow: 0 0 10px rgba(229, 9, 20, .55);
+  transition: transform .25s var(--ease), opacity .25s var(--ease);
+}
+.sidebar-brand:hover .brand-burger i:nth-child(2) { transform: scaleX(.72); }
 
 /* ---- Splash lock ---- */
 html.splash-lock, html.splash-lock body { overflow: hidden !important; }
@@ -202,6 +357,12 @@ html.splash-lock, html.splash-lock body { overflow: hidden !important; }
    positioned overlay, so keeping it driven by --open lets it expand for labels on
    focus without moving anything else. */
 html.tv-mode .sidebar { width: calc(var(--rail-w) + (var(--rail-open) - var(--rail-w)) * var(--open)); }
+/* The vendored skin disables the rail in TV mode, so hovering never expanded it and
+   the menu looked dead. TV mode must stay usable with a mouse as well as a remote. */
+html.tv-mode .sidebar { pointer-events: auto; }
+@media (hover: hover) {
+  html.tv-mode .sidebar:hover { --open: 1; }
+}
 html.tv-mode:not(.tv-device) { --sat: env(safe-area-inset-top); --sab: env(safe-area-inset-bottom); }
 html.tv-mode .main :focus,
 html.tv-mode .sidebar :focus,
@@ -212,7 +373,7 @@ html.tv-mode .bnav :focus {
 }
 html.tv-mode .card:focus { outline-offset: 4px; }
 
-/* ---- Mobile / landscape hardening ---- */
+/* ---- Tablet band ---- */
 @media (max-width: 900px) {
   .hero-body { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
   .hero-tabs { max-width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
@@ -220,24 +381,76 @@ html.tv-mode .card:focus { outline-offset: 4px; }
   .hero-actions { flex-wrap: wrap; gap: 10px; }
   .tab-bar .ep-pills { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
   .tab-bar .ep-pills::-webkit-scrollbar { display: none; }
-  .ch-controls { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; padding-bottom: 4px; }
-  .ch-controls::-webkit-scrollbar { display: none; }
   .player-vod-controls { gap: 8px; }
   .player-vod-left, .player-vod-right { gap: 6px; }
-  .player-subtitle-select select { max-width: 108px; }
   .settings-head { flex-wrap: wrap; gap: 8px; }
 }
+
+/* ---- Phone layout ----
+   The vendored skin already carries the source site's own phone design under
+   `@media(max-width:599px),(max-width:768px)and (max-aspect-ratio:5/7)`: rail off,
+   bottom nav on, search full width, selects two per row, transport buttons 36px and
+   the volume slider hidden. The app's own classes join that same breakpoint so
+   nothing fights it, instead of inventing a separate mobile layout. */
+@media (max-width: 599px), (max-width: 768px) and (max-aspect-ratio: 5 / 7) {
+  /* Rails are swipe-only here, exactly like the source site. */
+  .geil-carousel-arrow { display: none; }
+
+  /* Channel filter row: search full width, selects and favourites share the next lines. */
+  .ch-controls { overflow: visible; flex-wrap: wrap; }
+  .ch-controls > .sort-select,
+  .ch-controls > .fav-toggle {
+    flex: 1 1 calc(50% - 4px); min-width: 0; max-width: calc(50% - 4px);
+    padding: 8px 12px; border-radius: 999px; font-size: var(--fs-small);
+  }
+  .fav-toggle-count { padding-left: 4px; }
+  .ch-overlay .ch-controls { display: flex !important; }
+  .panel-favorites-filter { flex: 0 0 auto; }
+
+  /* In-player panels become edge-to-edge sheets instead of fixed 400px columns. */
+  .source-panel { width: 100%; max-width: 100%; }
+  .source-row { min-height: 58px; padding: 10px 12px; }
+  .source-row-meta { font-size: var(--fs-nano); }
+  .modal-sources .source-item { min-height: 60px; }
+
+  /* Player transport: keep every control on the surface without shrinking the icons. */
+  .player-ctrl-btn { min-width: 36px; min-height: 36px; }
+  .player-vod-controls { gap: 6px; }
+  .player-vod-left, .player-vod-right { gap: 5px; flex: 1 1 auto; }
+  .player-vol-wrap input[type="range"] { display: none; }
+  .player-time { font-size: var(--fs-small); padding: 0 2px; }
+  .player-skip-btn, .player-rate-btn { min-width: 42px; padding: 0 9px; height: 34px; font-size: 11px; }
+  .player-exit-btn { height: 34px; padding: 0 11px; font-size: 12px; }
+  .player-help-btn { width: 34px; height: 34px; font-size: 14px; }
+  .player-sub-wrap { position: relative; }
+  .subtitle-menu {
+    position: fixed; right: 12px; left: 12px; bottom: calc(124px + var(--player-foot, 0px));
+    width: auto; max-height: min(300px, 42vh);
+  }
+  .player-center-toggle { width: 52px; height: 52px; font-size: 17px; }
+  .player-top { gap: 8px; }
+  .player-title { font-size: var(--fs-body); }
+
+  /* Episode rails take the skin's own tile width here; cast cards are left untouched. */
+  .ep-strip-wrap .ep-tile { flex: 0 0 200px; min-width: 200px; }
+
+  .live-stage-preview { display: none; }
+  .item-facts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .shortcuts-head { padding: 14px 16px; }
+  .shortcuts-body { padding: 16px; gap: 14px; }
+}
+
+/* Landscape phones keep the broadcast centred and the controls inside the safe area. */
 @media (max-width: 900px) and (orientation: landscape) {
   .hero { min-height: 68vh; }
   .settings-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .channels-view .live-stage { min-height: 190px; }
   .remote-page { padding: 12px; }
 }
-
-/* ---- Player: keep controls reachable in landscape phones ---- */
 @media (max-height: 520px) and (orientation: landscape) {
   .player-vod-controls { padding: 4px 2px 0; }
   .player-top { padding: 6px 12px 0; }
   .player-bottom { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
-  .player-skip-btn, .player-rate-btn, .player-subtitle-select, .player-ctrl-btn { height: 34px; }
+  .player-skip-btn, .player-rate-btn, .player-ctrl-btn { height: 34px; }
+  .subtitle-menu { max-height: 60vh; }
 }

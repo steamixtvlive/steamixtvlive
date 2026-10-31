@@ -21,8 +21,11 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
   const [error, setError] = useState('')
   const [nextCursor, setNextCursor] = useState<string | number | null>(null)
   const [search, setSearch] = useState('')
-  const [sort, setSort] = useState('trending')
-  const [group, setGroup] = useState('')
+  // No sort parameter is the provider's own channel order, which is what its country
+  // lists are built around (Turkey opens with 24 HABER, not the sports block).
+  const [sort, setSort] = useState('')
+  // Channels open on the viewer's own country; the provider calls it Turkey.
+  const [group, setGroup] = useState('Turkey')
   const [tab, setTab] = useState<'favorites' | 'live'>('live')
   const [favIds, setFavIds] = useState<Set<string>>(() => readFavs())
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -88,6 +91,21 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
     writeFavs(next)
   }
 
+  // Opening a channel is intent enough to keep it: it joins the favourites on its own.
+  function keepFav(id: string) {
+    if (favIds.has(id)) return
+    const next = new Set(favIds)
+    next.add(id)
+    setFavIds(next)
+    writeFavs(next)
+  }
+
+  function openChannel(channel: GeilItem) {
+    setSelectedId(channel.id)
+    keepFav(channel.id)
+    onPlay(channel, filtered)
+  }
+
   async function loadMore() {
     if (!nextCursor || loadingMore) return
     setLoadingMore(true)
@@ -103,6 +121,12 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
   }
 
   const groups = features?.filter?.find((feature: any) => feature.id === 'group')?.values || []
+
+  // The catalogue decides which country groups exist, so an unsupported default falls back to all.
+  useEffect(() => {
+    if (!features) return
+    if (group && !groups.some((option: any) => option.id === group)) setGroup('')
+  }, [features])
 
   useEffect(() => {
     const sentinel = listRef.current
@@ -135,7 +159,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
                 ))}
               </div>
             </div>
-            <div className="live-stage-preview" aria-label="Önizleme" role="button" onClick={() => onPlay(selected, filtered)}>
+            <div className="live-stage-preview" aria-label="Önizleme" role="button" onClick={() => openChannel(selected)}>
               <div className="live-stage-mount" />
               <div className="live-stage-preview-ph" />
               <span className="live-stage-preview-badge">{t('channels.live')}</span>
@@ -159,6 +183,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
             />
           </div>
           <select className="sort-select" aria-label={t('channels.sortPopular')} value={sort} onChange={(event) => setSort(event.target.value)}>
+            <option value="">{t('channels.sortOriginal')}</option>
             {(features?.sort || [{ id: 'trending', name: t('channels.sortPopular') }, { id: 'name', name: 'A-Z' }]).map((option: any) => (
               <option key={option.id} value={option.id}>{option.name === 'Trending' || option.name === 'Popular' ? t('channels.sortPopular') : option.name}</option>
             ))}
@@ -169,11 +194,16 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
               <option key={option.id} value={option.id}>{option.name}</option>
             ))}
           </select>
-          <div className="ep-pills channel-favorite-tabs">
-            <button className={`ep-pill ${tab === 'favorites' ? 'active' : ''}`} onClick={() => setTab(tab === 'favorites' ? 'live' : 'favorites')}>
-              <HeartIcon size={14} /> {t('channels.favorites')} {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
-            </button>
-          </div>
+          <button
+            type="button"
+            className={`fav-toggle ${tab === 'favorites' ? 'is-on' : ''}`}
+            aria-pressed={tab === 'favorites'}
+            onClick={() => setTab(tab === 'favorites' ? 'live' : 'favorites')}
+          >
+            <HeartIcon size={16} />
+            <span>{t('channels.favorites')}</span>
+            <span className="fav-toggle-count">{favIds.size}</span>
+          </button>
         </div>
       </div>
 
@@ -187,7 +217,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
                   <span className="ch-logo ch-logo-ph" style={{ background: channelColor(String(index)) }}>•</span>
                   <div className="ch-main">
                     <div className="ch-head"><span className="ch-name">{t('common.loading')}</span></div>
-                    <div className="ch-epg-block"><div className="ch-epg ch-epg-none">{t('channels.noResultsDesc')}</div></div>
+                    <div className="ch-epg-block"><div className="ch-epg ch-epg-none">{t('channels.noEpg')}</div></div>
                   </div>
                 </div>
               </div>
@@ -210,7 +240,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
                       tabIndex={0}
                       role="button"
                       aria-label={channel.name}
-                      onClick={() => { setSelectedId(channel.id); onPlay(channel, filtered) }}
+                      onClick={() => openChannel(channel)}
                     >
                       <span className="ch-num">{index + 1}</span>
                       <span className="ch-logo ch-logo-ph" style={{ background: channelColor(channel.name) }}>
@@ -228,7 +258,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
                               <span className="ch-epg-left">{remainingLabel(epg.entry.end)}</span>
                             </div>
                           ) : (
-                            <div className="ch-epg ch-epg-none">{t('channels.noResultsDesc')}</div>
+                            <div className="ch-epg ch-epg-none">{t('channels.noEpg')}</div>
                           )}
                           {epg.entry ? <div className="ch-epg-track"><div className="ch-epg-fill" style={{ width: `${epg.progress}%` }} /></div> : null}
                         </div>

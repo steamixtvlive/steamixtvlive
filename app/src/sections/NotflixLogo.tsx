@@ -1,3 +1,5 @@
+import { LETTER_AT } from '@/lib/splash-timing'
+
 const LETTERS = [
   { char: 'N', offset: '0.032em' },
   { char: 'O', offset: '0.010em' },
@@ -10,17 +12,10 @@ const LETTERS = [
 
 interface NotflixLogoProps {
   animated?: boolean
-  startDelay?: number
-  stagger?: number
   className?: string
 }
 
-export default function NotflixLogo({
-  animated = false,
-  startDelay = 0.8,
-  stagger = 0.4,
-  className = '',
-}: NotflixLogoProps) {
+export default function NotflixLogo({ animated = false, className = '' }: NotflixLogoProps) {
   return (
     <h1
       className={`notflix-logo ${animated ? 'notflix-logo--animated' : ''} ${className}`.trim()}
@@ -29,15 +24,14 @@ export default function NotflixLogo({
       {LETTERS.map(({ char, offset }, index) => (
         <span
           key={`${char}-${index}`}
-          className="notflix-logo__letter"
+          /* Bebas Neue has no dotted capital İ, so the mark draws its own dot. */
+          className={`notflix-logo__letter${char === 'İ' ? ' notflix-logo__letter--idot' : ''}`}
           style={{
             top: offset,
-            animationDelay: animated
-              ? `${startDelay + index * stagger + (index >= 3 ? 0.18 : 0)}s`
-              : undefined,
+            animationDelay: animated ? `${LETTER_AT[index]}s` : undefined,
           }}
         >
-          {char}
+          {char === 'İ' ? 'I' : char}
         </span>
       ))}
     </h1>

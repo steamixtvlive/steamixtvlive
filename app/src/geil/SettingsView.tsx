@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLang } from '@/lib/language'
 import { createRemoteSession, closeRemoteSession } from './api'
-import { readTvMode, setTvMode } from './tv'
 import { clearAllData } from './storage'
 import ShortcutsHelp from './ShortcutsHelp'
 import { ClockIcon, DatabaseIcon, GlobeIcon, InfoIcon, SettingsIcon, InviteIcon, TvIcon, TrashIcon } from './icons'
@@ -34,7 +33,6 @@ function storeSession(session: StoredSession | null) {
 
 export default function SettingsView() {
   const { t, lang, setLang, languages, langNames } = useLang()
-  const [tvMode, setTvModeState] = useState(readTvMode)
   const [session, setSession] = useState<StoredSession | null>(readSession)
   const [remoteBusy, setRemoteBusy] = useState(false)
   const [remoteError, setRemoteError] = useState('')
@@ -43,25 +41,10 @@ export default function SettingsView() {
   const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
-    const handler = (event: Event) => {
-      const enabled = Boolean((event as CustomEvent<{ enabled?: boolean }>).detail?.enabled)
-      setTvModeState(enabled)
-    }
-    window.addEventListener('notflix-tv-mode', handler)
-    return () => window.removeEventListener('notflix-tv-mode', handler)
-  }, [])
-
-  useEffect(() => {
     if (!notice) return
     const timer = window.setTimeout(() => setNotice(''), 2600)
     return () => window.clearTimeout(timer)
   }, [notice])
-
-  function toggleTvMode() {
-    const next = !tvMode
-    setTvModeState(next)
-    setTvMode(next)
-  }
 
   async function pairRemote() {
     if (remoteBusy) return
@@ -116,7 +99,6 @@ export default function SettingsView() {
         <h1>{t('settings.title')}</h1>
         <div className="settings-meta">
           <span className="s-chip">NOTFLİX</span>
-          <span className="s-chip">v8.0</span>
         </div>
       </div>
 
@@ -148,24 +130,6 @@ export default function SettingsView() {
               <span className="s-value">{t('settings.themeDark')}</span>
             </div>
           </div>
-          <div className="s-item">
-            <div className="s-item-nav">
-              <div>
-                <div className="s-label">{t('settings.tvMode')}</div>
-                <div className="s-sub">{t('settings.tvModeDesc')}</div>
-              </div>
-              <button
-                type="button"
-                className={`s-toggle ${tvMode ? 'is-on' : ''}`}
-                role="switch"
-                aria-checked={tvMode}
-                aria-label={t('settings.tvMode')}
-                onClick={toggleTvMode}
-              >
-                <span />
-              </button>
-            </div>
-          </div>
         </section>
 
         <section className="s-group">
@@ -176,7 +140,6 @@ export default function SettingsView() {
           <div className="s-item">
             <div className="s-item-nav">
               <div>
-                <div className="s-label">{t('settings.remote')}</div>
                 <div className="s-sub">{session ? `${t('settings.remoteCode')}: ${session.code}` : t('settings.remoteDesc')}</div>
               </div>
               {session ? (
@@ -266,14 +229,13 @@ export default function SettingsView() {
                 <div className="s-label">NOTFLİX</div>
                 <div className="s-sub">{t('settings.aboutDesc')}</div>
               </div>
-              <span className="s-value">v8.0</span>
             </div>
           </div>
           <div className="s-item">
             <div className="s-item-nav">
               <div>
                 <div className="s-label">{t('settings.developer')}</div>
-                <div className="s-sub">RENDER MEDIA</div>
+                <div className="s-sub">RENDIR MEDİA</div>
               </div>
             </div>
           </div>

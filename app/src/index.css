@@ -342,6 +342,20 @@
   margin: 0 .028em;
 }
 
+/* Bebas Neue maps İ to a plain I, so the brand mark carries its own dot. The cap top of
+   the glyph sits .01em below the line box, which is what the offset below clears. */
+.notflix-logo__letter--idot::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -.21em;
+  width: .16em;
+  height: .16em;
+  margin-left: -.08em;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 .notflix-logo--animated .notflix-logo__letter {
   opacity: 0;
   animation: notflixLetterReveal 2.4s cubic-bezier(.19, .9, .25, 1) both;
