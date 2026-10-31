@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { GeilFeatures } from './types'
 import type { MouseEvent } from 'react'
 import Hls from 'hls.js'
-import { Captions, List } from 'lucide-react'
-import type { PlayerState, GeilItem } from './types'
+import { Captions, List, Layers } from 'lucide-react'
+import type { PlayerState, GeilItem, PlayerSource } from './types'
 import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, HeartIcon, SearchIcon } from './icons'
 import { channelColor, currentEpg, formatClock, initialOf, remainingLabel } from './api'
 
@@ -16,9 +16,10 @@ interface Props {
   onNext?: (() => void) | null
   channels?: GeilItem[]
   onChannelSelect?: ((channel: GeilItem) => void) | null
+  onSourceSelect?: ((source: PlayerSource) => void) | null
 }
 
-export default function Player({ state, onClose, onPrev, onNext, channels = [], onChannelSelect }: Props) {
+export default function Player({ state, onClose, onPrev, onNext, channels = [], onChannelSelect, onSourceSelect }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [loading, setLoading] = useState(true)
@@ -33,6 +34,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const [buffered, setBuffered] = useState(0)
   const [subtitleIndex, setSubtitleIndex] = useState(-1)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [sourceChooserOpen, setSourceChooserOpen] = useState(false)
   const [panelSearch, setPanelSearch] = useState('')
   const [panelSort, setPanelSort] = useState('trending')
   const [panelGroup, setPanelGroup] = useState('')
@@ -128,6 +130,8 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     setSubtitleIndex(-1)
 
     const source = state.streamUrl
+    // The stream is still being resolved; keep the spinner instead of the media error.
+    if (!source) return
 
     const onPlaying = () => { setLoading(false); setPlaying(true) }
     const onPause = () => setPlaying(false)
@@ -288,22 +292,36 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     const seconds = Math.floor(value % 60)
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
   }
+  const playbackError = state.playbackError || error
+  const playerSources = state.sources || []
+  const activeSourceIndex = state.sourceIndex ?? -1
+
+  function pickSource(source: PlayerSource) {
+    setSourceChooserOpen(false)
+    setShowControls(true)
+    onSourceSelect?.(source)
+  }
 
   return (
-    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={revealControls} onKeyDown={(event) => { if (event.key === 'Escape') { if (panelOpen) setPanelOpen(false); else onClose() } }} tabIndex={-1}>
+    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={revealControls} onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); if (sourceChooserOpen) setSourceChooserOpen(false); else if (panelOpen) setPanelOpen(false); else onClose() } }} tabIndex={-1}>
       <div className="player-pager">
         <div className="player-video-wrap">
           <video ref={videoRef} className="player-video" playsInline onClick={togglePlay} />
         </div>
         <div className="player-click-area" onClick={() => { userInteracted.current = true; setShowControls((value) => !value) }} />
-        {loading ? (
+        {loading && !playbackError ? (
           <div className="player-loading">
             <div className="player-pulse" />
           </div>
         ) : null}
-        {error ? (
-          <div className="player-loading">
-            <p style={{ color: '#fff', padding: 24, textAlign: 'center' }}>{error}</p>
+        {playbackError ? (
+          <div className="player-error">
+            <p>{playbackError}</p>
+            {playerSources.length ? (
+              <button type="button" className="player-error-action" onClick={() => setSourceChooserOpen(true)}>
+                <Layers size={18} /> Kaynak değiştir
+              </button>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -420,6 +438,17 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                     </select>
                   </label>
                 ) : null}
+                {!state.isLive && playerSources.length > 0 ? (
+                  <button
+                    className={`player-ctrl-btn ${sourceChooserOpen ? 'active' : ''}`}
+                    aria-label="Kaynaklar"
+                    aria-pressed={sourceChooserOpen}
+                    onClick={() => { userInteracted.current = true; setSourceChooserOpen((value) => !value) }}
+                  >
+                    <Layers size={20} />
+                    <span className="player-ctrl-label">{playerSources[activeSourceIndex]?.name || 'Kaynaklar'}</span>
+                  </button>
+                ) : null}
                 <button className="player-ctrl-btn" aria-label="PiP" onClick={togglePip}>
                   <PipIcon size={20} />
                 </button>
@@ -431,6 +460,36 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
           </div>
         </div>
       )}
+
+      {!state.isLive && sourceChooserOpen ? (
+        <div className="ch-overlay source-overlay" role="dialog" aria-modal="true" aria-label="Kaynaklar" onClick={(event) => { if (event.target === event.currentTarget) setSourceChooserOpen(false) }}>
+          <div className="ch-panel source-panel">
+            <div className="ch-panel-head">
+              <h3>Kaynaklar</h3>
+              <div className="ch-panel-head-actions">
+                <button className="modal-close" aria-label="Kaynak listesini kapat" onClick={() => setSourceChooserOpen(false)}>×</button>
+              </div>
+            </div>
+            <div className="ch-list source-panel-list">
+              {playerSources.map((source, index) => (
+                <button
+                  key={`${source.url}-${index}`}
+                  type="button"
+                  className={`source-row ${index === activeSourceIndex ? 'is-active' : ''}`}
+                  onClick={() => pickSource(source)}
+                >
+                  <span className="source-row-icon">{(source.name || '?').slice(0, 2).toUpperCase()}</span>
+                  <span className="source-row-text">
+                    <span className="source-row-name">{source.name}</span>
+                    <span className="source-row-meta">{source.quality || `Kaynak ${index + 1}`}</span>
+                  </span>
+                  {index === activeSourceIndex ? <span className="source-row-badge">Oynatılıyor</span> : <PlayIcon size={18} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {state.isLive ? (
         <div

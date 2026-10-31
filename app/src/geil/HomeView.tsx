@@ -7,9 +7,9 @@ import { toggleFavorite, isFavorite } from './storage'
 import { HeartIcon } from './icons'
 
 const HERO_TABS = [
-  { key: 'series-trending', title: 'Trend Olan Diziler', type: 'series' as const, sort: 'trendingDay' },
+  { key: 'series-trending', title: 'Diziler', type: 'series' as const, sort: 'trendingDay' },
   { key: 'series-popular', title: 'Popüler Diziler', type: 'series' as const, sort: 'popularity' },
-  { key: 'movie-trending', title: 'Trend Olan Filmler', type: 'video' as const, sort: 'trendingDay' },
+  { key: 'movie-trending', title: 'Filmler', type: 'video' as const, sort: 'trendingDay' },
   { key: 'movie-popular', title: 'Popüler Filmler', type: 'video' as const, sort: 'popularity' },
 ]
 

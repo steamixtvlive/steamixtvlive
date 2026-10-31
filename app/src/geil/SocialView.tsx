@@ -4,7 +4,7 @@ export default function SocialView() {
   return (
     <div className="catalog-view">
       <div className="catalog-head">
-        <h1>Social</h1>
+        <h1>Sosyal</h1>
       </div>
       <div className="empty-lib">
         <div className="empty-card">

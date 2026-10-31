@@ -151,7 +151,7 @@ export default function SearchView() {
           ) : null}
           {vod.length ? (
             <section className="section">
-              <div className="section-head"><h2 className="section-title section-title-static"><span className="section-title-text">VOD</span></h2></div>
+              <div className="section-head"><h2 className="section-title section-title-static"><span className="section-title-text">Arşiv</span></h2></div>
               <CardGrid items={vod} addonId="m3u" loading={false} skeletonCount={0} />
             </section>
           ) : null}

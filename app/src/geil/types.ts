@@ -123,16 +123,26 @@ export interface GeilPlayback {
   subtitles?: GeilSubtitle[]
 }
 
+export interface PlayerSource {
+  name: string
+  url: string
+  id?: string
+  quality?: string | null
+}
+
 export interface PlayerState {
   open: boolean
   title: string
   subtitle?: string
   isLive: boolean
   streamUrl: string
+  sourceUrl?: string
   streamHeaders?: Record<string, string>
   subtitles?: GeilSubtitle[]
-  sources?: Array<{ name: string; url: string; id?: string }>
+  sources?: PlayerSource[]
   sourceIndex?: number
+  pending?: boolean
+  playbackError?: string
   poster?: string
   item?: GeilItem | null
   channels?: GeilItem[]

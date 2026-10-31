@@ -29,17 +29,11 @@ export function useHashRoute(): RouteState {
     }
     window.addEventListener('hashchange', update)
     window.addEventListener('popstate', update)
-    if (route.view === 'item') {
-      const previous = window.sessionStorage.getItem('notflix_geil_previous_route')
-      if (previous && previous !== route.hash) window.sessionStorage.setItem('notflix_geil_previous_route', previous)
-    } else if (route.view !== 'home') {
-      window.sessionStorage.setItem('notflix_geil_previous_route', route.hash)
-    }
     return () => {
       window.removeEventListener('hashchange', update)
       window.removeEventListener('popstate', update)
     }
-  }, [route.view, route.hash])
+  }, [])
   return route
 }
 
@@ -50,17 +44,11 @@ export function navigate(path: string) {
   window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }))
 }
 
-export function goBack(fallback = '#/') {
-  const current = parseHash()
-  if (current.view === 'item') {
-    const previous = window.sessionStorage.getItem('notflix_geil_previous_route')
-    if (previous && previous !== current.hash) {
-      navigate(previous)
-      return
-    }
-  }
-  if (window.history.length > 1 && current.view !== 'home' && current.hash !== '') window.history.back()
-  else navigate(fallback)
+export function replaceRoute(path: string) {
+  const next = path.startsWith('#') ? path : `#${path}`
+  if (window.location.hash === next) return
+  window.history.replaceState({ notflixRoute: next }, '', next)
+  window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }))
 }
 
 export function itemHref(addonId: string, type: string, id: string): string {

@@ -4,12 +4,20 @@ import { fetchTmdbCatalog, mergeFeatures } from './api'
 import { useHashRoute } from './router'
 import { CardGrid, SkeletonCard } from './Cards'
 
+const CATALOG_LABELS: Record<string, string> = {
+  series: 'Diziler',
+  movie: 'Filmler',
+  video: 'Filmler',
+  trending: 'Popüler',
+  popular: 'Popüler Diziler',
+}
+
 export default function CatalogView() {
   const route = useHashRoute()
   const addonId = route.parts[1] || 'tmdb'
   const type = (route.parts[2] === 'series' ? 'series' : 'video') as 'video' | 'series'
   const catalog = route.parts[3] || (type === 'series' ? 'series' : 'movie')
-  const title = route.query.get('title') || catalog.replace(/_/g, ' ')
+  const title = route.query.get('title') || CATALOG_LABELS[catalog] || catalog.replace(/_/g, ' ')
   const [items, setItems] = useState<GeilItem[]>([])
   const [nextCursor, setNextCursor] = useState<string | number | null>(null)
   const [loading, setLoading] = useState(true)

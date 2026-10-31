@@ -127,7 +127,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
               <h2 className="live-stage-name">{selected.name.replace(/\s*\(\d+\)\s*$/, '')}</h2>
               <div className="live-stage-head">
                 {channelQuality(selected.name) ? <span className="ch-chip">{channelQuality(selected.name)}</span> : null}
-                <span className="ch-chip ch-chip-flag">{selected.tags?.[0] || 'Live'}</span>
+                <span className="ch-chip ch-chip-flag">{selected.tags?.[0] || 'Canlı'}</span>
                 {(selected.tags || []).slice(0, 2).map((tag) => (
                   <span className="ch-chip ch-chip-tag" key={tag}>{tag}</span>
                 ))}

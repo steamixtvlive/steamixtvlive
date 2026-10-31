@@ -299,7 +299,7 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
               <div className="ep-strip-wrap geil-horizontal-wrap">
                 <button className="geil-carousel-arrow geil-carousel-arrow-left" type="button" aria-label="Önceki bölümler" disabled={!episodeScroll.left} onClick={() => moveHorizontal(episodeRowRef, -1, setEpisodeScroll)}><span aria-hidden="true">‹</span></button>
                 <div className="ep-strip" ref={episodeRowRef} onScroll={() => updateHorizontalScroll(episodeRowRef, setEpisodeScroll)}>
-                {Array.from({ length: 6 }).map((_, index) => <div className="ep-tile" key={index}><div className="ep-tile-img"><div className="ph" /></div></div>)}
+                  {Array.from({ length: 6 }).map((_, index) => <div className="ep-tile" key={index}><div className="ep-tile-img"><div className="ph" /></div></div>)}
                 </div>
                 <button className="geil-carousel-arrow geil-carousel-arrow-right" type="button" aria-label="Sonraki bölümler" disabled={!episodeScroll.right} onClick={() => moveHorizontal(episodeRowRef, 1, setEpisodeScroll)}><span aria-hidden="true">›</span></button>
               </div>
@@ -307,24 +307,24 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
               <div className="ep-strip-wrap geil-horizontal-wrap">
                 <button className="geil-carousel-arrow geil-carousel-arrow-left" type="button" aria-label="Önceki bölümler" disabled={!episodeScroll.left} onClick={() => moveHorizontal(episodeRowRef, -1, setEpisodeScroll)}><span aria-hidden="true">‹</span></button>
                 <div className="ep-strip" ref={episodeRowRef} onScroll={() => updateHorizontalScroll(episodeRowRef, setEpisodeScroll)}>
-                {episodes.map((episode) => (
-                  <button
-                    key={episode.id}
-                    className={`ep-tile ${selectedEpisode?.id === episode.id ? 'ep-tile-active' : ''}`}
-                    onClick={() => { setSelectedEpisode(episode); onPlay(addonId === 'm3u' ? episode : item, addonId === 'm3u' ? undefined : episode) }}
-                  >
-                    <div className="ep-tile-img">
-                      {episode.images?.thumbnail || episode.images?.poster ? (
-                        <img src={episode.images?.thumbnail || episode.images?.poster} alt="" className="loaded" />
-                      ) : (
-                        <div className="ep-tile-fallback">{episode.episode}</div>
-                      )}
-                      <span className="ep-tile-badge">B{episode.episode}</span>
-                    </div>
-                    <div className="ep-tile-name">{episode.name}</div>
-                    <div className="ep-date">{episode.releaseDate?.slice(0, 10)}</div>
-                  </button>
-                ))}
+                  {episodes.map((episode) => (
+                    <button
+                      key={episode.id}
+                      className={`ep-tile ${selectedEpisode?.id === episode.id ? 'ep-tile-active' : ''}`}
+                      onClick={() => setSelectedEpisode(episode)}
+                    >
+                      <div className="ep-tile-img">
+                        {episode.images?.thumbnail || episode.images?.poster ? (
+                          <img src={episode.images?.thumbnail || episode.images?.poster} alt="" className="loaded" />
+                        ) : (
+                          <div className="ep-tile-fallback">{episode.episode}</div>
+                        )}
+                        <span className="ep-tile-badge">B{episode.episode}</span>
+                      </div>
+                      <div className="ep-tile-name">{episode.name}</div>
+                      <div className="ep-date">{episode.releaseDate?.slice(0, 10)}</div>
+                    </button>
+                  ))}
                 </div>
                 <button className="geil-carousel-arrow geil-carousel-arrow-right" type="button" aria-label="Sonraki bölümler" disabled={!episodeScroll.right} onClick={() => moveHorizontal(episodeRowRef, 1, setEpisodeScroll)}><span aria-hidden="true">›</span></button>
               </div>

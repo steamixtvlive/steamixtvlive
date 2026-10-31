@@ -30,9 +30,9 @@ export default function SettingsView() {
             <div className="s-item-nav">
               <div>
                 <div className="s-label">Tema</div>
-                <div className="s-sub">Koyu</div>
+                <div className="s-sub">Varsayılan görünüm</div>
               </div>
-              <span className="s-value">Dark</span>
+              <span className="s-value">Koyu</span>
             </div>
           </div>
         </section>
