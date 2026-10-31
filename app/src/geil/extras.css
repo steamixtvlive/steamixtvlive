@@ -211,9 +211,18 @@
 
 /* The value on the right repeats the word sitting under the label, so the two have to share a
    line; centring a bare value in a two-row block left it floating between label and copy. The
-   select carries its own padding, so it has to reach past the line to land on the same axis. */
-.s-item-nav > :is(.s-value, .sort-select) { align-self: flex-end; }
-.s-item-nav > .sort-select { margin-bottom: -6px; }
+   select carries its own padding, so it has to reach past the line to land on the same axis.
+   Both also end on one edge: the dropdown arrow is drawn by us and parked in a shared gutter,
+   because the native arrow eats a different amount of room in every browser and the column of
+   values would never line up against it. */
+.s-item-nav > :is(.s-value, .sort-select) {
+  align-self: flex-end; min-width: 118px; padding-right: 22px; text-align: right;
+}
+.s-item-nav > .sort-select {
+  appearance: none; -webkit-appearance: none; margin-right: 0; margin-bottom: -6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 L6 6.5 L11 1.5' fill='none' stroke='%23b8b8b8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 6px center; background-size: 12px 8px;
+}
 .s-confirm {
   margin: 6px 14px 14px; padding: 14px; border-radius: 14px; font-size: 13px;
   display: flex; flex-direction: column; gap: 10px;
