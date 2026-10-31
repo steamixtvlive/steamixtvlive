@@ -8,6 +8,7 @@ import { useHashRoute, parseHash, replaceRoute, navigate, itemHref } from './rou
 import { getContinueEntry, getDeadSourceUrls, getSavedSourceUrl, markDeadSource, clearDeadSource, saveSavedSourceUrl, type ContinueEntry } from './storage'
 import { applyTvMode, moveFocus, readTvMode, setTvMode, activateFocused } from './tv'
 import Sidebar from './Sidebar'
+import SiteFullscreenButton from './SiteFullscreenButton'
 import HomeView from './HomeView'
 import ChannelsView from './ChannelsView'
 import CatalogView from './CatalogView'
@@ -89,8 +90,10 @@ export default function GeilApp() {
 
   const playerRef = useRef(player)
   const modalRef = useRef(sourceModal)
+  const helpRef = useRef(showHelp)
   playerRef.current = player
   modalRef.current = sourceModal
+  helpRef.current = showHelp
 
   const overlayKey = player.open ? 'player' : sourceModal ? 'sources' : ''
   const lastOverlay = useRef('')
@@ -218,10 +221,18 @@ export default function GeilApp() {
   useEffect(() => {
     const handler = (event: Event) => {
       const command = (event as CustomEvent<{ command?: string }>).detail?.command
-      if (!command || playerRef.current.open || modalRef.current) return
+      if (!command) return
+      // The player owns its own surface while it is on screen — but a source picker opened on top
+      // of it owns it back, otherwise the D-pad would steer the picture behind the dialog.
+      if (playerRef.current.open && !modalRef.current) return
       if (command === 'up' || command === 'down' || command === 'left' || command === 'right') { moveFocus(command); return }
       if (command === 'ok' || command === 'playpause') { activateFocused(); return }
-      if (command === 'back') { window.history.back(); return }
+      if (command === 'back') {
+        if (modalRef.current) { closeSourceModal(); return }
+        if (helpRef.current) { setShowHelp(false); return }
+        window.history.back()
+        return
+      }
       if (command === 'home') { navigate('/'); return }
       if (command === 'chup' || command === 'chdown') { navigate('/channels'); return }
     }
@@ -588,6 +599,7 @@ export default function GeilApp() {
   return (
     <div className="app-root">
       <Sidebar route={route} />
+      {player.open || route.view === 'remote' ? null : <SiteFullscreenButton />}
       <main className="main" role="main">
         <div className="main-inner">
           <div className="cached-view view-active view-enter">{renderView()}</div>

@@ -865,7 +865,8 @@ const remoteSessions = new Map()
 const REMOTE_TTL_MS = 15 * 60 * 1000
 const REMOTE_COMMANDS = new Set([
   'up', 'down', 'left', 'right', 'ok', 'back', 'home', 'playpause',
-  'volup', 'voldown', 'mute', 'chup', 'chdown',
+  'volup', 'voldown', 'mute', 'chup', 'chdown', 'rewind', 'forward',
+  'subtitle', 'source', 'ping',
 ])
 
 function cleanupRemoteSessions() {

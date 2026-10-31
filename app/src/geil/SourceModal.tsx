@@ -107,7 +107,7 @@ export default function SourceModal({ item, episode, notice, onClose, onSelect }
 
   return (
     <div className="modal-bg" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <div className="modal modal-sources" role="dialog" aria-modal="true">
+      <div className="modal modal-sources" role="dialog" aria-modal="true" data-focus-scope>
         <div className="modal-head">
           <h2 className="modal-title">{t('sources.title')}</h2>
           <button className="modal-close" aria-label={t('common.close')} onClick={onClose}>

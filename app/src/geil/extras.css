@@ -133,11 +133,11 @@
 .app-root:has(.remote-page) .sidebar,
 .app-root:has(.remote-page) .bnav { display: none; }
 .remote-page {
-  min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  min-height: 100dvh; display: flex; padding: 24px; overflow-y: auto;
   background: radial-gradient(circle at 50% 0%, rgba(229,9,20,.2), transparent 62%), #050506;
 }
 .remote-card {
-  width: min(430px, 100%); display: flex; flex-direction: column; gap: 16px; padding: 22px;
+  width: min(430px, 100%); margin: auto; display: flex; flex-direction: column; gap: 16px; padding: 22px;
   border-radius: 24px; background: #0d0d10; border: 1px solid rgba(255,255,255,.1);
   color: #fff; box-shadow: 0 30px 80px rgba(0,0,0,.55);
 }
@@ -150,7 +150,8 @@
 .remote-status.is-ok { background: rgba(34,197,94,.14); color: #6ee7a0; }
 .remote-status.is-error { background: rgba(229,9,20,.16); color: #ff9aa0; }
 .remote-pad {
-  display: grid; gap: 10px; aspect-ratio: 1 / 1; padding: 14px; border-radius: 22px;
+  display: grid; gap: 10px; aspect-ratio: 1 / 1; width: 100%; max-width: 292px; margin-inline: auto;
+  padding: 14px; border-radius: 22px;
   grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
   background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
 }
@@ -171,6 +172,24 @@
 .remote-dpad-ok { background: rgba(229,9,20,.22); border-color: rgba(229,9,20,.5); font-size: 16px; }
 .remote-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .remote-grid .remote-btn { min-height: 46px; font-size: 11px; border-radius: 12px; }
+.remote-transport { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.remote-transport .remote-btn { min-height: 50px; font-size: 15px; }
+.remote-play { background: rgba(229,9,20,.16); border-color: rgba(229,9,20,.42); }
+
+/* The card is taller than a phone screen once the code row stays on screen, and a centred flex
+   child that overflows its box cannot be scrolled back to. `margin: auto` centres it while it
+   fits and parks it at the top the moment it does not. */
+.remote-pair-row { display: flex; align-items: center; gap: 8px; }
+.remote-pair-row .glass-input { flex: 1 1 auto; min-width: 0; }
+.remote-pair-row .btn { flex: 0 0 auto; }
+.remote-linked {
+  margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 800;
+  letter-spacing: .08em; text-transform: uppercase; color: #6ee7a0; background: rgba(34,197,94,.16);
+}
+.remote-note { display: block; font-size: 11px; color: rgba(255,255,255,.55); }
+.remote-note.is-error { color: #ff9aa0; }
+.remote-unlink { background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; font: inherit; font-size: 11px; }
+.remote-hint { margin: -6px 0 0; font-size: 11px; line-height: 1.45; text-align: center; color: rgba(255,255,255,.45); }
 
 /* ---- Settings additions ---- */
 .s-item-nav {
@@ -215,8 +234,16 @@
    Both also end on one edge: the dropdown arrow is drawn by us and parked in a shared gutter,
    because the native arrow eats a different amount of room in every browser and the column of
    values would never line up against it. */
-.s-item-nav > :is(.s-value, .sort-select) {
+.s-item-nav > :is(.s-value:not(.s-value-btn), .sort-select) {
   align-self: flex-end; min-width: 118px; padding-right: 22px; text-align: right;
+}
+
+/* A pill that runs an action is not a value: it has no second word to line a column against, so
+   the value gutter only starved it of its right side and left the copy leaning left. It also has
+   to hang off the middle of the label-plus-description block; pinned to the bottom line, a row
+   whose description wrapped dropped the button underneath the copy it belongs to. */
+.s-item-nav > .s-value-btn {
+  align-self: center; min-width: 0; padding: 8px 15px; text-align: center; justify-content: center;
 }
 .s-item-nav > .sort-select {
   appearance: none; -webkit-appearance: none; margin-right: 0; margin-bottom: -6px;
@@ -443,10 +470,33 @@ html.tv-mode .card:focus { outline-offset: 4px; }
   /* Episode rails take the skin's own tile width here; cast cards are left untouched. */
   .ep-strip-wrap .ep-tile { flex: 0 0 200px; min-width: 200px; }
 
+  /* Item hero transport: the skin stretches İzle across the whole row. The button hugs its
+     own label instead, so no dead space collects on either side of the glyph. */
+  .item-view .hero-actions { --fav-size: 42px; gap: 8px; }
+  .item-view .btn-hero-play { flex: 0 0 auto; width: auto; min-width: 0; height: 42px; padding: 0 16px; }
+  .item-view .btn-hero-play svg { width: 15px; height: 15px; }
+  .item-view .btn-hero-glass { width: 42px; height: 42px; }
+
   .live-stage-preview { display: none; }
   .item-facts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .shortcuts-head { padding: 14px 16px; }
   .shortcuts-body { padding: 16px; gap: 14px; }
+}
+
+/* ---- Hero slider indicators ----
+   The vendored skin swaps the desktop bars for dots only in portrait. A landscape phone has
+   no vertical room for the thumbnail strip either, so both orientations get the same small
+   dots and the strip goes away. */
+@media (max-width: 599px), (max-width: 768px) and (max-aspect-ratio: 5 / 7), (orientation: landscape) and (max-height: 520px) and (hover: none) {
+  .hero-strip { display: none; }
+  .hero:has(.hero-strip) .hero-dots { display: flex; }
+  .hero .hero-dots { gap: 6px; }
+  .hero .hero-dots .hero-dot,
+  .hero .hero-dots .hero-dot.active { width: 6px; height: 6px; border-radius: 3px; }
+  .hero .hero-dots .hero-dot { background: #ffffff4d; }
+  .hero .hero-dots .hero-dot.active { background: #ffffffe6; }
+  .hero-dot-fill { display: none; }
+  .geil-carousel-arrow { display: none; }
 }
 
 /* Landscape phones keep the broadcast centred and the controls inside the safe area. */
@@ -462,4 +512,42 @@ html.tv-mode .card:focus { outline-offset: 4px; }
   .player-bottom { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
   .player-skip-btn, .player-rate-btn, .player-ctrl-btn { height: 34px; }
   .subtitle-menu { max-height: 60vh; }
+}
+
+/* ---- Site-wide fullscreen ----
+   Browser chrome costs a laptop or a TV box several rows of the rail, so the whole page gets
+   one toggle kept in the same corner. It floats over the content but under modals (z 100) and
+   the player (z 200), and it is hidden on portrait phones where the control would land on the
+   search field. */
+.site-fullscreen {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--t1);
+  background: rgba(16, 18, 24, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 14px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.2s var(--ease), color 0.2s var(--ease);
+}
+.site-fullscreen:hover {
+  color: #fff;
+  background: rgba(30, 33, 42, 0.88);
+  border-color: rgba(255, 255, 255, 0.42);
+  transform: translateY(-1px);
+}
+.site-fullscreen.on { color: var(--accent); border-color: rgba(var(--accent-rgb), 0.55); }
+html.tv-mode .site-fullscreen:focus { box-shadow: 0 0 0 2px var(--accent), 0 0 18px rgba(var(--accent-rgb), 0.35); }
+@media (max-width: 599px), (max-width: 768px) and (max-aspect-ratio: 5 / 7) {
+  .site-fullscreen { display: none; }
 }

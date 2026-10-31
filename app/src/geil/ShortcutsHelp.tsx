@@ -51,7 +51,7 @@ export default function ShortcutsHelp({ onClose }: { onClose: () => void }) {
   }, [onClose])
 
   return (
-    <div className="shortcuts-overlay" role="dialog" aria-modal="true" aria-label={t('shortcuts.title')} onClick={(event) => { if (event.target === event.currentTarget) onClose() }}>
+    <div className="shortcuts-overlay" role="dialog" aria-modal="true" aria-label={t('shortcuts.title')} data-focus-scope onClick={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <div className="shortcuts-panel">
         <div className="shortcuts-head">
           <h2>{t('shortcuts.title')}</h2>

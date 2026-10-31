@@ -4,7 +4,7 @@ import type { GeilItem } from './types'
 import { fetchM3uItem, fetchM3uSeriesEpisodes, fetchTmdbCatalog, fetchTmdbItem, posterUrl, backdropUrl, runtimeLabel, ratingOf, yearOf } from './api'
 import { useHashRoute } from './router'
 import { PosterCard } from './Cards'
-import { StarIcon } from './icons'
+import { FilmIcon, PlayIcon, StarIcon } from './icons'
 import { pushHistory, toggleFavorite, isFavorite } from './storage'
 import { useLang } from '@/lib/language'
 
@@ -262,11 +262,12 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
               </div>
               <div className="hero-actions" data-zone="h">
                 <button className="btn-hero-play" onClick={handlePlay} disabled={!playable}>
-                  <span>▶</span> İzle
+                  <PlayIcon size={15} />İzle
                 </button>
                 {trailerHrefNormalized ? (
                   <a className="btn-hero-glass" href={trailerHrefNormalized} target="_blank" rel="noreferrer">
-                    Fragman
+                    <FilmIcon />
+                    <span className="btn-word">Fragman</span>
                   </a>
                 ) : null}
                 <button className={`btn-hero-fav ${fav ? 'on' : ''}`} onClick={handleFavorite} aria-label="Favori">

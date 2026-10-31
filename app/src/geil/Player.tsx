@@ -8,6 +8,7 @@ import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon,
 import { channelColor, currentEpg, formatClock, initialOf, remainingLabel } from './api'
 import { saveContinueWatching } from './storage'
 import { subtitleLanguageCode, subtitleLanguageLabel } from './subtitle-language'
+import { activateFocused, moveFocus } from './tv'
 import { useLang } from '@/lib/language'
 import ShortcutsHelp from './ShortcutsHelp'
 
@@ -604,21 +605,16 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     const handler = (event: Event) => {
       const command = (event as CustomEvent<{ command?: string }>).detail?.command
       if (!state.open || !command) return
-      const map: Record<string, string> = {
-        up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', ok: 'Enter',
-        back: 'Escape', home: 'Escape', playpause: ' ', mute: 'm', volup: 'ArrowUp', voldown: 'ArrowDown',
-        chup: 'ArrowUp', chdown: 'ArrowDown',
+      // The D-pad is the pointer, not the transport: it walks the controls the way it walks the
+      // catalogue, so subtitles, source picker and exit are reachable from the phone. Seeking has
+      // its own keys for the same reason a real remote has its own transport row.
+      if (command === 'up' || command === 'down' || command === 'left' || command === 'right') {
+        revealControls()
+        moveFocus(command)
+        return
       }
-      if (command === 'ok') { togglePlay(); return }
+      if (command === 'ok') { if (!activateFocused()) togglePlay(); return }
       if (command === 'home') { onClose(); return }
-      const key = map[command]
-      if (!key) return
-      if (command === 'chup') { zapChannel(1); return }
-      if (command === 'chdown') { zapChannel(-1); return }
-      if (command === 'volup') { changeVolume(0.1); return }
-      if (command === 'voldown') { changeVolume(-0.1); return }
-      if (command === 'playpause') { togglePlay(); return }
-      if (command === 'mute') { toggleMute(); return }
       if (command === 'back') {
         if (sourceChooserOpen) setSourceChooserOpen(false)
         else if (subtitleMenuOpen) setSubtitleMenuOpen(false)
@@ -626,12 +622,26 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
         else onClose()
         return
       }
-      actionsRef.current({ key } as KeyboardEvent)
+      if (command === 'playpause') { togglePlay(); return }
+      if (command === 'mute') { toggleMute(); return }
+      if (command === 'volup') { changeVolume(0.1); return }
+      if (command === 'voldown') { changeVolume(-0.1); return }
+      if (command === 'chup') { zapChannel(1); return }
+      if (command === 'chdown') { zapChannel(-1); return }
+      if (command === 'subtitle') { revealControls(); cycleSubtitle(); return }
+      if (command === 'source') {
+        revealControls()
+        if (state.isLive && onChannelSelect) openChannelPanel()
+        else if (!state.isLive && (state.sources?.length || 0) > 0) setSourceChooserOpen(true)
+        return
+      }
+      if (command === 'rewind' && !state.isLive) { revealControls(); seekBy(-10); return }
+      if (command === 'forward' && !state.isLive) { revealControls(); seekBy(10); return }
     }
     window.addEventListener('notflix-remote', handler)
     return () => window.removeEventListener('notflix-remote', handler)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.open, panelOpen, sourceChooserOpen, volume, muted, rate, subtitleIndex])
+  }, [state.open, state.isLive, panelOpen, sourceChooserOpen, subtitleMenuOpen, volume, muted, rate, subtitleIndex])
 
   if (!state.open) return null
 
@@ -665,7 +675,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   }
 
   return (
-    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={revealControls} tabIndex={-1}>
+    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={revealControls} tabIndex={-1} data-focus-scope>
       <div className="player-pager">
         <div className="player-video-wrap">
           <video ref={videoRef} className="player-video" playsInline onClick={togglePlay} />

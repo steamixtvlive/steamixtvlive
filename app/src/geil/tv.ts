@@ -35,22 +35,34 @@ function visible(element: HTMLElement): boolean {
   return style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity) > 0.05
 }
 
+/** An overlay that is on top of the page marks itself as a focus scope, so the D-pad stops at its
+    edge instead of walking out of the player or the source picker into the catalogue behind it.
+    The last scope in the document is the one being shown on top of the others. */
+function scope(): HTMLElement | null {
+  const scopes = Array.from(document.querySelectorAll<HTMLElement>('[data-focus-scope]')).filter(visible)
+  return scopes.length ? scopes[scopes.length - 1] : null
+}
+
+function candidates(): HTMLElement[] {
+  const root = scope() || document
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(visible)
+}
+
 export function focusFirst() {
-  const candidates = Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(visible)
-  candidates[0]?.focus({ preventScroll: true })
+  candidates()[0]?.focus({ preventScroll: true })
 }
 
 export function moveFocus(direction: FocusDirection) {
-  const candidates = Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(visible)
-  if (!candidates.length) return
+  const list = candidates()
+  if (!list.length) return
   const active = document.activeElement as HTMLElement | null
-  const current = active && candidates.includes(active) ? active : null
+  const current = active && list.includes(active) ? active : null
   if (!current) { focusFirst(); return }
   const origin = current.getBoundingClientRect()
   const cx = origin.left + origin.width / 2
   const cy = origin.top + origin.height / 2
   let best: { element: HTMLElement; score: number } | null = null
-  for (const element of candidates) {
+  for (const element of list) {
     if (element === current) continue
     const rect = element.getBoundingClientRect()
     const ex = rect.left + rect.width / 2
@@ -71,6 +83,9 @@ export function moveFocus(direction: FocusDirection) {
 export function activateFocused(): boolean {
   const active = document.activeElement as HTMLElement | null
   if (!active || active === document.body) return false
+  // A focusable wrapper (the player shell takes focus for its own key handling) has nothing to
+  // activate; reporting that lets the caller fall back to a sensible default instead of a no-op.
+  if (!candidates().includes(active)) return false
   active.click()
   return true
 }

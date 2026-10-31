@@ -175,7 +175,11 @@ export async function sendRemoteCommand(code: string, command: string): Promise<
     body: JSON.stringify({ code, command }),
   })
   const data = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null
-  if (!response.ok || data?.ok === false) throw new Error(data?.error || 'Komut gönderilemedi')
+  if (!response.ok || data?.ok === false) {
+    // A 404 means the pairing timed out rather than the code being mistyped, and the remote page
+    // says something different for each.
+    throw Object.assign(new Error(data?.error || 'Komut gönderilemedi'), { status: response.status })
+  }
 }
 
 export async function closeRemoteSession(code: string, token: string): Promise<void> {

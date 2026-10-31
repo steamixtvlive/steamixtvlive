@@ -15,6 +15,26 @@ const STING_LENGTH = 16.4
 let context: AudioContext | null = null
 let live: GainNode | null = null
 
+/**
+ * The full cue schedules a couple of hundred nodes — every voice carries its own vibrato
+ * oscillator and octave doubling, and a stereo convolution hall sits under all of it. A desktop
+ * renders that without blinking; a phone audio thread on Wi-Fi speakers does not, and what comes
+ * out is crackle rather than a quieter ident. On those devices the arrangement keeps its melody,
+ * its build and its hit, and gives up the layers a small speaker cannot show anyway.
+ */
+function isLeanDevice(): boolean {
+  if (/android|iphone|ipad|ipod|mobile|webos|tizen|smarttv|browser tv|bravia/i.test(navigator.userAgent)) return true
+  const cores = navigator.hardwareConcurrency || 0
+  return cores > 0 && cores <= 6
+}
+
+let lean = false
+
+/** Voices are budgeted per device, so a phone never gets the desktop's stack. */
+function voices(list: number[], max: number): number[] {
+  return lean ? list.slice(0, max) : list
+}
+
 function audioContext(): AudioContext | null {
   const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext?: AudioCtor }).webkitAudioContext
   if (!Ctor) return null
@@ -23,9 +43,12 @@ function audioContext(): AudioContext | null {
 }
 
 function reverbBuffer(ctx: AudioContext): AudioBuffer {
-  const length = Math.floor(ctx.sampleRate * 2.8)
-  const buffer = ctx.createBuffer(2, length, ctx.sampleRate)
-  for (let channel = 0; channel < 2; channel += 1) {
+  // A convolution hall is the single most expensive node in the graph, and a phone speaker plays
+  // a stereo tail as one mono smear anyway.
+  const channels = lean ? 1 : 2
+  const length = Math.floor(ctx.sampleRate * (lean ? 1.5 : 2.8))
+  const buffer = ctx.createBuffer(channels, length, ctx.sampleRate)
+  for (let channel = 0; channel < channels; channel += 1) {
     const data = buffer.getChannelData(channel)
     for (let index = 0; index < length; index += 1) {
       const decay = 1 - index / length
@@ -85,7 +108,7 @@ function note(ctx: AudioContext, destination: AudioNode, options: NoteOptions): 
   }
   tail.connect(destination)
 
-  if (options.octaveBelow) {
+  if (options.octaveBelow && !lean) {
     const sub = ctx.createOscillator()
     const subGain = ctx.createGain()
     sub.type = 'sine'
@@ -98,7 +121,7 @@ function note(ctx: AudioContext, destination: AudioNode, options: NoteOptions): 
     sub.stop(options.start + options.duration + 0.1)
   }
 
-  if (options.vibratoHz && options.vibratoDepth) {
+  if (!lean && options.vibratoHz && options.vibratoDepth) {
     const lfo = ctx.createOscillator()
     const depth = ctx.createGain()
     lfo.frequency.value = options.vibratoHz
@@ -129,10 +152,11 @@ function drum(ctx: AudioContext, destination: AudioNode, start: number, peak: nu
 
 /** Bright noise burst that decays like a cymbal — the shimmer a pure low-end hit lacks. */
 function crash(ctx: AudioContext, destination: AudioNode, start: number, peak: number): void {
-  const duration = 1.9
+  const duration = lean ? 1.2 : 1.9
   const frames = Math.floor(ctx.sampleRate * duration)
-  const buffer = ctx.createBuffer(2, frames, ctx.sampleRate)
-  for (let channel = 0; channel < 2; channel += 1) {
+  const channels = lean ? 1 : 2
+  const buffer = ctx.createBuffer(channels, frames, ctx.sampleRate)
+  for (let channel = 0; channel < channels; channel += 1) {
     const data = buffer.getChannelData(channel)
     for (let index = 0; index < frames; index += 1) {
       data[index] = (Math.random() * 2 - 1) * Math.pow(1 - index / frames, 2.8)
@@ -190,15 +214,17 @@ function strings(ctx: AudioContext, destination: AudioNode, frequencies: number[
   warmth.frequency.value = 1500
   warmth.connect(tremolo).connect(destination)
 
-  const lfo = ctx.createOscillator()
-  const lfoDepth = ctx.createGain()
-  lfo.frequency.value = 5.4
-  lfoDepth.gain.value = peak * 0.16
-  lfo.connect(lfoDepth).connect(tremolo.gain)
-  lfo.start(start)
-  lfo.stop(start + duration + 0.1)
+  if (!lean) {
+    const lfo = ctx.createOscillator()
+    const lfoDepth = ctx.createGain()
+    lfo.frequency.value = 5.4
+    lfoDepth.gain.value = peak * 0.16
+    lfo.connect(lfoDepth).connect(tremolo.gain)
+    lfo.start(start)
+    lfo.stop(start + duration + 0.1)
+  }
 
-  frequencies.forEach((frequency, index) => {
+  voices(frequencies, 2).forEach((frequency, index) => {
     note(ctx, warmth, {
       type: index === 0 ? 'triangle' : 'sawtooth',
       frequency,
@@ -228,10 +254,11 @@ function theme(ctx: AudioContext, destination: AudioNode, frequency: number, sta
 /** The ident gesture: drums, a sub drop, a wide brass fanfare and cymbal on one frame. */
 function impact(ctx: AudioContext, destination: AudioNode, at: number): void {
   drum(ctx, destination, at, 0.4)
-  drum(ctx, destination, at + 0.015, 0.26, 30)
+  // A 30 Hz second drum is felt on a good speaker and simply wastes headroom on a phone.
+  if (!lean) drum(ctx, destination, at + 0.015, 0.26, 30)
   note(ctx, destination, { frequency: 65.41, start: at, duration: 3.4, peak: 0.3, attack: 0.008, hold: 0.25 })
   note(ctx, destination, { frequency: 32.7, start: at, duration: 2.4, peak: 0.2, attack: 0.03, hold: 0.3 })
-  ;[261.63, 329.63, 392.0, 523.25, 659.25].forEach((frequency, index) => {
+  voices([261.63, 329.63, 392.0, 523.25, 659.25], 3).forEach((frequency, index) => {
     note(ctx, destination, {
       type: 'sawtooth', frequency, start: at + index * 0.012, duration: 2.4,
       peak: 0.13 - index * 0.014, attack: 0.03, hold: 0.35, cutoff: 2400, resonance: 1.1,
@@ -259,20 +286,22 @@ function schedule(ctx: AudioContext, destination: AudioNode, at: number): void {
     const last = index === LETTER_AT.length - 1
     theme(ctx, destination, frequency, at + offset, last ? 1.0 : 0.62, 0.16, 0.03)
     // A bright pluck on the same frame keeps the sync readable as articulation, not just pitch.
-    note(ctx, destination, { type: 'triangle', frequency: frequency * 2, start: at + offset, duration: 0.45, peak: 0.05, attack: 0.004, hold: 0.06, cutoff: 4200 })
+    if (!lean) note(ctx, destination, { type: 'triangle', frequency: frequency * 2, start: at + offset, duration: 0.45, peak: 0.05, attack: 0.004, hold: 0.06, cutoff: 4200 })
     note(ctx, destination, { frequency: LETTER_BASS[index], start: at + offset, duration: last ? 1.2 : 0.8, peak: 0.14, attack: 0.02, hold: 0.35 })
   })
 
   // The letters hold, and everything left climbs into the light: a long reverse cymbal, a
   // timpani roll that tightens as it goes, and a staccato run stepping up an octave.
   swell(ctx, destination, at + settle, hit - settle, 0.2)
-  ;[1.75, 1.3, 0.95, 0.68, 0.46, 0.3, 0.18, 0.1].forEach((gap, index, roll) => {
+  const roll = lean ? [1.75, 0.95, 0.46, 0.18] : [1.75, 1.3, 0.95, 0.68, 0.46, 0.3, 0.18, 0.1]
+  roll.forEach((gap, index) => {
     drum(ctx, destination, at + hit - gap, 0.07 + (index / roll.length) * 0.11)
   })
-  ;[523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51].forEach((frequency, index) => {
+  const climb = lean ? [523.25, 783.99, 1046.5, 1318.51] : [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51]
+  climb.forEach((frequency, index) => {
     note(ctx, destination, {
-      type: 'triangle', frequency, start: at + hit - 1.5 + index * 0.18, duration: 0.34,
-      peak: 0.045 + index * 0.006, attack: 0.005, hold: 0.12, cutoff: 5200,
+      type: 'triangle', frequency, start: at + hit - 1.5 + (index * 1.5) / climb.length, duration: 0.34,
+      peak: 0.045 + index * (0.05 / climb.length), attack: 0.005, hold: 0.12, cutoff: 5200,
     })
   })
 
@@ -310,21 +339,40 @@ function schedule(ctx: AudioContext, destination: AudioNode, at: number): void {
   })
 
   // High C and E ringing over the last chord while the hall finishes the cue.
-  note(ctx, destination, { frequency: 1046.5, start: at + hit + 5.9, duration: 2.6, peak: 0.055, attack: 0.03, hold: 0.15 })
-  note(ctx, destination, { frequency: 1318.51, start: at + hit + 6.35, duration: 2.2, peak: 0.04, attack: 0.03, hold: 0.15 })
+  if (!lean) {
+    note(ctx, destination, { frequency: 1046.5, start: at + hit + 5.9, duration: 2.6, peak: 0.055, attack: 0.03, hold: 0.15 })
+    note(ctx, destination, { frequency: 1318.51, start: at + hit + 6.35, duration: 2.2, peak: 0.04, attack: 0.03, hold: 0.15 })
+  }
+}
+
+/** The whole cue sums through here. A stack of low sines and a cymbal can push the graph past the
+    device ceiling, and a phone renders that as hard clipping — crackle. tanh rounds the peaks off
+    instead, so the hit stays big and never splits. */
+function softClip(ctx: AudioContext): WaveShaperNode {
+  const shaper = ctx.createWaveShaper()
+  const frames = 1024
+  const curve = new Float32Array(frames)
+  for (let index = 0; index < frames; index += 1) {
+    const x = (index / (frames - 1)) * 2 - 1
+    curve[index] = Math.tanh(x * 1.7) / Math.tanh(1.7)
+  }
+  shaper.curve = curve
+  shaper.oversample = lean ? 'none' : '2x'
+  return shaper
 }
 
 function play(ctx: AudioContext): void {
+  lean = isLeanDevice()
   const master = ctx.createGain()
-  master.gain.value = 0.42
+  master.gain.value = lean ? 0.34 : 0.42
   const silk = ctx.createBiquadFilter()
   silk.type = 'lowpass'
   silk.Q.value = 0.6
-  silk.frequency.value = 6200
+  silk.frequency.value = lean ? 5200 : 6200
   const compressor = ctx.createDynamicsCompressor()
-  compressor.threshold.value = -18
+  compressor.threshold.value = lean ? -22 : -18
   compressor.knee.value = 26
-  compressor.ratio.value = 4
+  compressor.ratio.value = lean ? 8 : 4
   compressor.attack.value = 0.012
   compressor.release.value = 0.28
 
@@ -334,9 +382,10 @@ function play(ctx: AudioContext): void {
   reverbDamp.type = 'lowpass'
   reverbDamp.frequency.value = 3000
   const wet = ctx.createGain()
-  wet.gain.value = 0.3
+  wet.gain.value = lean ? 0.16 : 0.3
 
-  master.connect(silk).connect(compressor).connect(ctx.destination)
+  const limiter = softClip(ctx)
+  master.connect(silk).connect(compressor).connect(limiter).connect(ctx.destination)
   wet.connect(reverb).connect(reverbDamp).connect(compressor)
   const send = ctx.createGain()
   send.gain.value = 1
