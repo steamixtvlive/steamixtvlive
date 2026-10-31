@@ -162,12 +162,12 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem) =
             />
           </div>
           <select className="sort-select" aria-label="Sıralama" value={sort} onChange={(event) => setSort(event.target.value)}>
-            {(features?.sort || [{ id: 'trending', name: 'Trending' }, { id: 'name', name: 'A-Z' }]).map((option: any) => (
-              <option key={option.id} value={option.id}>{option.name === 'Trending' ? 'Trending' : option.name}</option>
+            {(features?.sort || [{ id: 'trending', name: 'Popüler' }, { id: 'name', name: 'A-Z' }]).map((option: any) => (
+              <option key={option.id} value={option.id}>{option.name === 'Trending' || option.name === 'Popular' ? 'Popüler' : option.name}</option>
             ))}
           </select>
           <select className="sort-select" value={group} onChange={(event) => setGroup(event.target.value)}>
-            <option value="">Country: tümü</option>
+            <option value="">Tüm ülkeler</option>
             {groups.map((option: any) => (
               <option key={option.id} value={option.id}>{option.name}</option>
             ))}

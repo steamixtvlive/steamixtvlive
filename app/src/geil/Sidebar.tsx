@@ -1,4 +1,5 @@
 import type { RouteState } from './router'
+import { goBack } from './router'
 import {
   HomeIcon,
   LibraryIcon,
@@ -66,6 +67,7 @@ export default function Sidebar({ route }: { route: RouteState }) {
             <NotflixSidebarMark />
             <span className="brand-text sidebar-notflix-wordmark">NOTFLİX</span>
           </a>
+          {route.view === 'item' ? <button className="geil-detail-back" type="button" onClick={() => goBack()} aria-label="Önceki sayfaya dön">‹ <span>Geri</span></button> : null}
           <nav className="sidebar-nav" aria-label="Main" style={{ '--nav-active': Math.max(0, mainActive) } as React.CSSProperties}>
             <div className={`nav-pill ${mainActive < 0 ? 'is-off' : ''}`} aria-hidden="true" />
             {MAIN_ITEMS.map(({ view, label, href, Icon }) => (

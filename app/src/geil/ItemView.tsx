@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { RefObject } from 'react'
 import type { GeilItem } from './types'
 import { fetchM3uItem, fetchM3uSeriesEpisodes, fetchTmdbCatalog, fetchTmdbItem, posterUrl, backdropUrl, runtimeLabel, ratingOf, yearOf } from './api'
 import { useHashRoute } from './router'
 import { PosterCard } from './Cards'
-import { PlayIcon, PlusIcon, BookmarkIcon, ChevronLeft, ChevronRight, StarIcon, InfoIcon } from './icons'
+import { StarIcon } from './icons'
 import { pushHistory, toggleFavorite, isFavorite } from './storage'
 
 export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?: GeilItem) => void }) {
@@ -22,6 +23,36 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
   const [related, setRelated] = useState<GeilItem[]>([])
   const [trailerUrl, setTrailerUrl] = useState('')
   const [fav, setFav] = useState(false)
+  const episodeRowRef = useRef<HTMLDivElement | null>(null)
+  const castRowRef = useRef<HTMLDivElement | null>(null)
+  const [episodeScroll, setEpisodeScroll] = useState({ left: false, right: false })
+  const [castScroll, setCastScroll] = useState({ left: false, right: false })
+
+  function updateHorizontalScroll(ref: RefObject<HTMLDivElement | null>, setter: (value: { left: boolean; right: boolean }) => void) {
+    const element = ref.current
+    if (!element) return
+    setter({ left: element.scrollLeft > 4, right: element.scrollLeft + element.clientWidth < element.scrollWidth - 4 })
+  }
+
+  function moveHorizontal(ref: RefObject<HTMLDivElement | null>, direction: -1 | 1, setter: (value: { left: boolean; right: boolean }) => void) {
+    const element = ref.current
+    if (!element) return
+    element.scrollBy({ left: direction * Math.max(300, element.clientWidth * 0.8), behavior: 'smooth' })
+    window.setTimeout(() => updateHorizontalScroll(ref, setter), 250)
+  }
+
+  useEffect(() => {
+    const rows = [episodeRowRef.current, castRowRef.current].filter((row): row is HTMLDivElement => Boolean(row))
+    if (!rows.length) return
+    const update = () => {
+      updateHorizontalScroll(episodeRowRef, setEpisodeScroll)
+      updateHorizontalScroll(castRowRef, setCastScroll)
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    rows.forEach((row) => observer.observe(row))
+    return () => observer.disconnect()
+  }, [episodes.length, item?.cast?.length])
 
   useEffect(() => {
     if (!id) return
@@ -36,16 +67,19 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
         setM3uSeasons([])
         setFav(isFavorite(data.id))
         pushHistory(data, addonId)
-        const seasons = (data.catalogs || [])
+      const seasons = (data.catalogs || [])
           .filter((catalog) => /^season_/.test(catalog.id))
           .map((catalog) => {
             const match = catalog.id.match(/season_(?:\d+)_(\d+)/)
             return match ? Number(match[1]) : null
           })
-          .filter((value): value is number => Number.isFinite(value))
+        .filter((value): value is number => Number.isFinite(value))
+        .sort((a, b) => a - b)
         const availableSeasons = addonId === 'm3u' ? [1] : seasons
         const firstSeason = availableSeasons.includes(1) ? 1 : availableSeasons[0] ?? 1
         setSelectedSeason(firstSeason)
+        setEpisodes([])
+        setSelectedEpisode(null)
         if (addonId === 'm3u' && data.type === 'series') {
           fetchM3uSeriesEpisodes(data.id, firstSeason, controller.signal).then((result) => {
             if (!controller.signal.aborted) setM3uSeasons(result.seasons)
@@ -262,11 +296,17 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
               ) : null}
             </div>
             {episodeLoading ? (
-              <div className="ep-strip">
+              <div className="ep-strip-wrap geil-horizontal-wrap">
+                <button className="geil-carousel-arrow geil-carousel-arrow-left" type="button" aria-label="Önceki bölümler" disabled={!episodeScroll.left} onClick={() => moveHorizontal(episodeRowRef, -1, setEpisodeScroll)}><span aria-hidden="true">‹</span></button>
+                <div className="ep-strip" ref={episodeRowRef} onScroll={() => updateHorizontalScroll(episodeRowRef, setEpisodeScroll)}>
                 {Array.from({ length: 6 }).map((_, index) => <div className="ep-tile" key={index}><div className="ep-tile-img"><div className="ph" /></div></div>)}
+                </div>
+                <button className="geil-carousel-arrow geil-carousel-arrow-right" type="button" aria-label="Sonraki bölümler" disabled={!episodeScroll.right} onClick={() => moveHorizontal(episodeRowRef, 1, setEpisodeScroll)}><span aria-hidden="true">›</span></button>
               </div>
             ) : (
-              <div className="ep-strip">
+              <div className="ep-strip-wrap geil-horizontal-wrap">
+                <button className="geil-carousel-arrow geil-carousel-arrow-left" type="button" aria-label="Önceki bölümler" disabled={!episodeScroll.left} onClick={() => moveHorizontal(episodeRowRef, -1, setEpisodeScroll)}><span aria-hidden="true">‹</span></button>
+                <div className="ep-strip" ref={episodeRowRef} onScroll={() => updateHorizontalScroll(episodeRowRef, setEpisodeScroll)}>
                 {episodes.map((episode) => (
                   <button
                     key={episode.id}
@@ -285,6 +325,8 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
                     <div className="ep-date">{episode.releaseDate?.slice(0, 10)}</div>
                   </button>
                 ))}
+                </div>
+                <button className="geil-carousel-arrow geil-carousel-arrow-right" type="button" aria-label="Sonraki bölümler" disabled={!episodeScroll.right} onClick={() => moveHorizontal(episodeRowRef, 1, setEpisodeScroll)}><span aria-hidden="true">›</span></button>
               </div>
             )}
           </section>
@@ -292,8 +334,10 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
 
         {item.cast?.length ? (
           <section className="item-section">
-            <h2 className="item-section-title">OYUNCULAR</h2>
-            <div className="cast-row">
+            <h2 className="item-section-title">Oyuncular</h2>
+            <div className="geil-horizontal-wrap cast-row-wrap">
+              <button className="geil-carousel-arrow geil-carousel-arrow-left" type="button" aria-label="Önceki oyuncular" disabled={!castScroll.left} onClick={() => moveHorizontal(castRowRef, -1, setCastScroll)}><span aria-hidden="true">‹</span></button>
+              <div className="cast-row" ref={castRowRef} onScroll={() => updateHorizontalScroll(castRowRef, setCastScroll)}>
               {item.cast.slice(0, 18).map((member) => (
                 <a
                   key={member.name}
@@ -307,6 +351,8 @@ export default function ItemView({ onPlay }: { onPlay: (item: GeilItem, episode?
                   <div className="cast-role">{member.role}</div>
                 </a>
               ))}
+              </div>
+              <button className="geil-carousel-arrow geil-carousel-arrow-right" type="button" aria-label="Sonraki oyuncular" disabled={!castScroll.right} onClick={() => moveHorizontal(castRowRef, 1, setCastScroll)}><span aria-hidden="true">›</span></button>
             </div>
           </section>
         ) : null}

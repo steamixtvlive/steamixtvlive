@@ -68,12 +68,6 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
     return resolved
   }
 
-  async function playResolved() {
-    if (!playbackReady) return
-    onPlay(playbackReady.playback.url, target.name, playbackReady.playback.headers || undefined, playbackReady.playback.subtitles || [])
-    onClose()
-  }
-
   async function resolveAll() {
     if (resolvingAll || !sources.length) return
     const controller = new AbortController()
@@ -109,7 +103,11 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
     setError('')
     setPlaybackReady(null)
     try {
-      await trySource(source, controller.signal)
+      const playback = await trySource(source, controller.signal)
+      if (!controller.signal.aborted && mountedRef.current) {
+        onPlay(playback.url, target.name, playback.headers || undefined, playback.subtitles || [])
+        onClose()
+      }
     } catch (err) {
       if (!controller.signal.aborted) setError(`${source.name}: ${err instanceof Error ? err.message : 'Kaynak çözümlenemedi'}`)
     } finally {
@@ -136,11 +134,8 @@ export default function SourceModal({ item, episode, onClose, onPlay }: Props) {
           {loading ? (
             <div className="empty"><p>Kaynaklar yükleniyor...</p></div>
           ) : playbackReady ? (
-            <div className="empty source-preview">
-              <h3>Kaynak hazır: {playbackReady.source.name}</h3>
-              <p>{playbackReady.playback.quality || playbackReady.source.quality || 'Oynatılabilir akış çözümlendi'}</p>
-              <button className="btn" onClick={() => void playResolved()}><PlayIcon size={16} /> İzle</button>
-              {playbackReady.playback.subtitles?.length ? <p>{playbackReady.playback.subtitles.length} altyazı bulundu</p> : null}
+            <div className="empty source-preview" role="status">
+              <LoaderIcon size={18} /> Oynatıcı açılıyor: {playbackReady.source.name}
             </div>
           ) : error && sources.length === 0 ? (
             <div className="empty"><h3>Kaynaklar yüklenemedi</h3><p>{error}</p></div>

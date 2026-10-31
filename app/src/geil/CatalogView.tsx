@@ -96,7 +96,7 @@ export default function CatalogView() {
   }, [nextCursor, loadingMore, items.length])
 
   const merged = mergeFeatures(features)
-  const sortOptions = merged.sort?.length ? merged.sort : [{ id: 'popularity', name: 'Popularity' }, { id: 'trendingDay', name: 'Trending today' }]
+  const sortOptions = merged.sort?.length ? merged.sort : [{ id: 'popularity', name: 'Popülerlik' }, { id: 'trendingDay', name: 'Bugün trend olanlar' }]
   const genreOptions = merged.filter?.find((feature: any) => feature.id === 'genre')?.values || []
   const yearOptions = merged.filter?.find((feature: any) => feature.id === 'year')?.values || []
 
@@ -123,7 +123,7 @@ export default function CatalogView() {
           <select className="sort-select" value={sort} onChange={(event) => setSort(event.target.value)}>
             <option value="">Sıralama</option>
             {sortOptions.map((option: any) => (
-              <option key={option.id} value={option.id}>{option.name}</option>
+              <option key={option.id} value={option.id}>{({ Popularity: 'Popülerlik', 'Trending today': 'Bugün trend olanlar', Trending: 'Trend olanlar' } as Record<string, string>)[option.name] || option.name}</option>
             ))}
           </select>
           {genreOptions.length ? (

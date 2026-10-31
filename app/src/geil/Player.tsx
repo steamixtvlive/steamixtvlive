@@ -71,9 +71,6 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
         if (panelSearch.trim().length >= 2) params.set('search', panelSearch.trim())
         if (panelSort) params.set('sort', panelSort)
         if (panelGroup && panelGroup !== '__favorites__') params.set('group', panelGroup)
-        if (panelGroup === '__favorites__' && panelSearch.trim().length < 2) {
-          params.set('sort', 'trending')
-        }
         params.set('limit', '300')
         const response = await fetch(`/api/geil/live/catalog?${params}`, { signal: controller.signal })
         const data = await response.json() as { ok?: boolean; items?: GeilItem[]; features?: GeilFeatures }
@@ -82,7 +79,12 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
         setPanelFeatures(data.features || {})
         // Use the full server-side result when available; fall back to the supplied
         // channel set if the catalog request fails or returns no items.
-        if (Array.isArray(data.items)) setCatalogChannels(data.items)
+        if (Array.isArray(data.items)) {
+          const countryItems = panelGroup && panelGroup !== '__favorites__'
+            ? data.items.filter((channel) => (channel.tags || []).some((tag) => tag.toLowerCase() === panelGroup.toLowerCase()))
+            : data.items
+          setCatalogChannels(countryItems)
+        }
       } catch {
         // Keep the current list available if the optional refresh fails.
       } finally {
@@ -94,7 +96,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
 
   useEffect(() => {
     const merged = [...channels, ...catalogChannels].filter((channel, index, all) => all.findIndex((entry) => entry.id === channel.id) === index)
-    setPanelChannels(panelGroup === '__favorites__' ? merged.filter((channel) => favIds.has(channel.id)) : channels.length ? channels : catalogChannels)
+    setPanelChannels(panelGroup === '__favorites__' ? merged.filter((channel) => favIds.has(channel.id)) : panelGroup ? catalogChannels.filter((channel) => (channel.tags || []).some((tag) => tag.toLowerCase() === panelGroup.toLowerCase())) : channels.length ? channels : catalogChannels)
   }, [channels, catalogChannels, panelGroup, favIds])
 
   function togglePanelFavorite(id: string) {
@@ -288,7 +290,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   }
 
   return (
-    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={revealControls}>
+    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={revealControls} onKeyDown={(event) => { if (event.key === 'Escape') { if (panelOpen) setPanelOpen(false); else onClose() } }} tabIndex={-1}>
       <div className="player-pager">
         <div className="player-video-wrap">
           <video ref={videoRef} className="player-video" playsInline onClick={togglePlay} />
@@ -495,12 +497,12 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
             </div>
             <div className="ch-controls" style={{ display: 'flex', gap: 8, padding: '0 12px 10px', flexShrink: 0 }}>
               <select className="sort-select" aria-label="Sıralama" value={panelSort} onChange={(event) => setPanelSort(event.target.value)}>
-                {(panelFeatures?.sort || [{ id: 'trending', name: 'Trending' }, { id: 'name', name: 'A-Z' }]).map((option) => (
-                  <option key={option.id} value={option.id}>{option.name === 'Trending' ? 'Trending' : option.name}</option>
+                {(panelFeatures?.sort || [{ id: 'trending', name: 'Popüler' }, { id: 'name', name: 'A-Z' }]).map((option) => (
+                  <option key={option.id} value={option.id}>{option.name === 'Trending' || option.name === 'Popular' ? 'Popüler' : option.name}</option>
                 ))}
               </select>
               <select className="sort-select" aria-label="Ülke" value={panelGroup} onChange={(event) => setPanelGroup(event.target.value)}>
-                <option value="">Country: tümü</option>
+                <option value="">Tüm ülkeler</option>
                 {(panelFeatures?.filter?.find((feature) => feature.id === 'group')?.values || []).map((option) => (
                   <option key={option.id} value={option.id}>{option.name}</option>
                 ))}

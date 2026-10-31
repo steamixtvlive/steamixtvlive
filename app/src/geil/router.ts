@@ -23,14 +23,23 @@ export function parseHash(hash = window.location.hash || '#/'): RouteState {
 export function useHashRoute(): RouteState {
   const [route, setRoute] = useState<RouteState>(() => parseHash())
   useEffect(() => {
-    const update = () => setRoute(parseHash())
+    const update = () => {
+      const next = parseHash()
+      setRoute(next)
+    }
     window.addEventListener('hashchange', update)
     window.addEventListener('popstate', update)
+    if (route.view === 'item') {
+      const previous = window.sessionStorage.getItem('notflix_geil_previous_route')
+      if (previous && previous !== route.hash) window.sessionStorage.setItem('notflix_geil_previous_route', previous)
+    } else if (route.view !== 'home') {
+      window.sessionStorage.setItem('notflix_geil_previous_route', route.hash)
+    }
     return () => {
       window.removeEventListener('hashchange', update)
       window.removeEventListener('popstate', update)
     }
-  }, [])
+  }, [route.view, route.hash])
   return route
 }
 
@@ -42,7 +51,15 @@ export function navigate(path: string) {
 }
 
 export function goBack(fallback = '#/') {
-  if (window.history.length > 1 && window.location.hash !== '#/' && window.location.hash !== '') window.history.back()
+  const current = parseHash()
+  if (current.view === 'item') {
+    const previous = window.sessionStorage.getItem('notflix_geil_previous_route')
+    if (previous && previous !== current.hash) {
+      navigate(previous)
+      return
+    }
+  }
+  if (window.history.length > 1 && current.view !== 'home' && current.hash !== '') window.history.back()
   else navigate(fallback)
 }
 

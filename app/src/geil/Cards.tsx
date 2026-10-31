@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { GeilItem } from './types'
 import { imageUrl, posterUrl, ratingOf, yearOf } from './api'
 import { itemHref } from './router'
@@ -129,6 +129,33 @@ export function SectionRow({
   captionOf?: (item: GeilItem) => string | undefined
   seeAllHref?: string
 }) {
+  const rowRef = useRef<HTMLDivElement | null>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  useEffect(() => {
+    const row = rowRef.current
+    if (!row) return
+    updateScrollControls()
+    const observer = new ResizeObserver(updateScrollControls)
+    observer.observe(row)
+    return () => observer.disconnect()
+  }, [items.length, loading])
+
+  function updateScrollControls() {
+    const row = rowRef.current
+    if (!row) return
+    setCanScrollLeft(row.scrollLeft > 4)
+    setCanScrollRight(row.scrollLeft + row.clientWidth < row.scrollWidth - 4)
+  }
+
+  function scrollRow(direction: -1 | 1) {
+    const row = rowRef.current
+    if (!row) return
+    row.scrollBy({ left: direction * Math.max(320, row.clientWidth * 0.78), behavior: 'smooth' })
+    window.setTimeout(updateScrollControls, 250)
+  }
+
   return (
     <section ref={sectionRef} className="section reveal is-in">
       <div className="section-head">
@@ -143,8 +170,9 @@ export function SectionRow({
           </a>
         ) : null}
       </div>
-      <div className="row-wrap row-can-scroll row-at-start">
-        <div className="row" data-zone="h" data-scroll="x">
+      <div className="row-wrap row-can-scroll row-at-start geil-row-wrap">
+        <button className="geil-carousel-arrow geil-carousel-arrow-left" type="button" aria-label={`Önceki ${title} içerikleri`} disabled={!canScrollLeft} onClick={() => scrollRow(-1)}><span aria-hidden="true">‹</span></button>
+        <div className="row" ref={rowRef} data-zone="h" data-scroll="x" onScroll={updateScrollControls}>
           {items.map((item, index) => (
             <PosterCard
               key={`${item.id}-${index}`}
@@ -160,6 +188,7 @@ export function SectionRow({
             ? Array.from({ length: skeletons }).map((_, index) => <SkeletonCard key={`skeleton-${index}`} index={index} />)
             : null}
         </div>
+        <button className="geil-carousel-arrow geil-carousel-arrow-right" type="button" aria-label={`Sonraki ${title} içerikleri`} disabled={!canScrollRight} onClick={() => scrollRow(1)}><span aria-hidden="true">›</span></button>
       </div>
     </section>
   )
