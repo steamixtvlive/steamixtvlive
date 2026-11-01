@@ -54,6 +54,8 @@ const REMOTE_ROWS: ShortcutRow[] = [
   { keys: ['＋', '－', 'MUTE'], icon: <VolumeIcon />, label: 'shortcuts.volume' },
   { keys: ['▶', '❚❚'], icon: <PlayIcon />, label: 'shortcuts.playPause' },
   { keys: ['◀◀', '▶▶'], icon: <SkipIcon />, label: 'shortcuts.skip' },
+  { keys: ['GUIDE', 'INFO'], icon: <GuideIcon />, label: 'shortcuts.tvMode' },
+  { keys: [], icon: <ColorKeysIcon />, label: 'shortcuts.fullscreen' },
 ]
 
 function Glyph({ children }: { children: ReactNode }) {
@@ -72,6 +74,16 @@ function ChannelIcon() { return <Glyph><path d="M8 10.5L12 6l4 4.5" /><path d="M
 function VolumeIcon() { return <Glyph><path d="M4.5 9.5v5h3l4 3.5v-12L7.5 9.5h-3z" /><path d="M16 9a4.2 4.2 0 010 6" /><path d="M18.8 6.4a8 8 0 010 11.2" /></Glyph> }
 function PlayIcon() { return <Glyph><path d="M7.5 5.6l7.6 6.4-7.6 6.4z" /><path d="M18 5.6v12.8" /></Glyph> }
 function SkipIcon() { return <Glyph><path d="M11 7l-4.6 5 4.6 5" /><path d="M15.6 7l4.4 5-4.4 5" /><path d="M6.4 17V7" /><path d="M19.6 7v10" /></Glyph> }
+function GuideIcon() { return <Glyph><rect x="3.6" y="4.6" width="16.8" height="12.2" rx="2.2" /><path d="M3.6 8.8h16.8M9.5 4.6v12.2M14.5 4.6v12.2" /><path d="M8 20h8" /></Glyph> }
+/* The two colour keys carry no letter to print, so the panel paints the buttons themselves. */
+function ColorKeysIcon() {
+  return (
+    <svg className="shortcut-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="2.6" y="8.6" width="8.6" height="6.8" rx="3.4" fill="#e50914" />
+      <rect x="12.8" y="8.6" width="8.6" height="6.8" rx="3.4" fill="#22c55e" />
+    </svg>
+  )
+}
 
 export default function ShortcutsHelp({ onClose }: { onClose: () => void }) {
   const { t } = useLang()
