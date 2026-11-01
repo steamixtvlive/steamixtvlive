@@ -118,6 +118,13 @@ export default function GeilApp() {
   const playbackContext = useRef<PlaybackContext | null>(null)
   const vodQueue = useRef<VodQueue | null>(null)
 
+  // The viewer lands on the provider's own shelf: a bare address opens the site, and our mark in
+  // its corner is the way back into our screens. A link that names a screen still wins.
+  useEffect(() => {
+    if (window.location.hash) return
+    replaceRoute('#/site')
+  }, [])
+
   // A refreshed deep link has no in-app history entry; keep one so back never leaves the site.
   useEffect(() => {
     const initial = parseHash()

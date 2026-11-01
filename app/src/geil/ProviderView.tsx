@@ -3,10 +3,12 @@ import { useLang } from '@/lib/language'
 import { navigate } from './router'
 import { isBackKey } from './tv'
 
-// The provider site, answered from our own origin (see app/geil-site.js). Every stream
-// address inside it has already been turned into a signed media-proxy path, so the frame
-// never asks the browser for an http:// resource it would refuse to load.
-const SITE_PATH = '/api/geil/site/'
+// The provider site, answered from a same-origin path (see app/geil-site.js) or from the
+// Cloudflare worker when one is configured. Either way every stream address inside it has
+// already been turned into a signed media-proxy path, so the frame never asks the browser
+// for an http:// resource it would refuse to load.
+const EDGE = (import.meta.env.VITE_GEIL_EDGE_URL || '').trim().replace(/\/+$/, '')
+const SITE_PATH = EDGE ? `${EDGE}/` : '/api/geil/site/'
 
 export default function ProviderView() {
   const { t } = useLang()
@@ -17,8 +19,9 @@ export default function ProviderView() {
     if (!ready) return
     const frame = frameRef.current
     const doc = frame?.contentDocument
-    // The frame is ours to talk to: its remote keys die inside its own document, so the
-    // back key has to be caught there or there is no way out of the mirrored site.
+    // The frame is ours to talk to while it is on our own address: its remote keys die inside
+    // its own document, so the back key has to be caught there. A worker address is a different
+    // origin and the browser will not let us listen — their site drives its own remote there.
     const onKeyDown = (event: KeyboardEvent) => {
       if (isBackKey(event)) navigate('#/')
     }

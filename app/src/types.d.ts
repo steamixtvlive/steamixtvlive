@@ -35,3 +35,12 @@ declare module 'mux.js' {
 interface Window {
   muxjs: any
 }
+
+// The address the provider site is served from. Set at build time; empty means our own
+// server answers it, which is the fallback when no worker is configured.
+interface ImportMetaEnv {
+  readonly VITE_GEIL_EDGE_URL?: string
+}
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}
