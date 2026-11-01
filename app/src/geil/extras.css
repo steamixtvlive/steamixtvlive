@@ -411,58 +411,6 @@ html.tv-mode .sidebar-bottom .nav-item.active:not(:focus):before { right: 0; }
 }
 html.tv-mode:not(.tv-device) { --sat: env(safe-area-inset-top); --sab: env(safe-area-inset-bottom); }
 
-/* ---- Rail pull ----
-   A closed rail is 64px of icons and nothing on it says that it opens. This is the handle: a clip
-   pinned over the strip's edge, breathing outward, that folds into the rail the moment the drawer is
-   open. It is placed from `--rail-w`, not from the sidebar's own box, because in TV mode that box is
-   the full 244px overlay and only its first 64px are ever painted. */
-.rail-pull {
-  position: absolute;
-  top: 50%;
-  left: calc(var(--rail-w) - var(--rail-gap) - 6px);
-  z-index: 3;
-  display: none;
-  place-items: center;
-  width: 30px;
-  height: 60px;
-  margin-top: -30px;
-  border-radius: 0 18px 18px 0;
-  background: rgba(11, 13, 16, .93);
-  border: 1px solid rgba(255, 255, 255, .13);
-  border-left: 0;
-  color: var(--accent);
-  pointer-events: none;
-  box-shadow: 12px 0 26px -16px #000;
-  transition: opacity .26s var(--ease), transform .34s var(--ease);
-  animation: rail-pull-halo 2.6s var(--ease) infinite;
-}
-.rail-pull svg { width: 16px; height: 16px; animation: rail-pull-point 2.6s var(--ease) infinite; }
-html.tv-mode .rail-pull { display: grid; }
-/* The skin gives every child of a TV rail its pointer back; this one hangs over the picture, so it
-   has to refuse the tap it would otherwise steal from the poster underneath it. */
-html.tv-mode .sidebar > .rail-pull { pointer-events: none; }
-@keyframes rail-pull-halo {
-  0%, 100% { border-color: rgba(255, 255, 255, .13); box-shadow: 12px 0 26px -16px #000; }
-  55% { border-color: rgba(var(--accent-rgb), .55); box-shadow: 12px 0 30px -14px #000, 0 0 0 3px rgba(var(--accent-rgb), .12); }
-}
-@keyframes rail-pull-point {
-  0%, 100% { transform: translateX(-2px); }
-  55% { transform: translateX(3px); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .rail-pull, .rail-pull svg { animation: none; }
-}
-.sidebar[data-menu='open'] .rail-pull,
-html.tv-mode .sidebar:focus-within .rail-pull,
-html.kb-nav .sidebar:focus-within .rail-pull {
-  opacity: 0;
-  transform: translateX(-24px);
-  animation: none;
-}
-@media (hover: hover) {
-  .sidebar:hover .rail-pull { opacity: 0; transform: translateX(-24px); animation: none; }
-}
-
 /* ---- Tablet band ---- */
 @media (max-width: 900px) {
   .hero-body { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }

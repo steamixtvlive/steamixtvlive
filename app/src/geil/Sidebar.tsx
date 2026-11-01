@@ -89,13 +89,6 @@ export default function Sidebar({ route, menuOpen = false }: { route: RouteState
             </a>
           </div>
         </div>
-        {/* A collapsed rail is 64px of icons and nothing on it says whose they are. The pull names
-            the drawer and offers itself as the handle; it is decoration, never a tap target. */}
-        <span className="rail-pull" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 5l7 7-7 7" />
-          </svg>
-        </span>
       </aside>
 
       <nav
