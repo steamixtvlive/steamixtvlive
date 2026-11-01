@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { GeilItem, GeilSource } from './types'
 import { fetchVodSources } from './api'
 import { getDeadSourceUrls } from './storage'
+import { focusFirst, isShellApp, isTvDevice, readTvMode } from './tv'
 import { subtitleLanguageLabel } from './subtitle-language'
 import { XIcon, PlayIcon } from './icons'
 import { useLang } from '@/lib/language'
@@ -81,6 +82,13 @@ export default function SourceModal({ item, episode, notice, onClose, onSelect }
       })
     return () => controller.abort()
   }, [vodId, vodType, target.url, isM3u, reloadToken])
+
+  // A dialog on a TV has to be entered, not merely shown: the D-pad starts on the first source.
+  useEffect(() => {
+    if (loading || !isTvDevice() && !isShellApp() && !readTvMode()) return
+    const timer = window.setTimeout(() => focusFirst({ root: document.querySelector<HTMLElement>('.modal-sources .source-list') }), 150)
+    return () => window.clearTimeout(timer)
+  }, [loading, sources.length])
 
   function select(source: GeilSource) {
     onSelect({ item, episode: episode || null, vodType, vodId, isM3u, title, source, sources })

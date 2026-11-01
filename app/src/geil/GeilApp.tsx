@@ -3,10 +3,10 @@ import './overrides.css'
 import './extras.css'
 import { useEffect, useRef, useState } from 'react'
 import type { GeilItem, GeilSource, PlayerSource, PlayerState, WatchMeta } from './types'
-import { resolveLiveChannel, fetchLiveCatalog, resolveVodSource, posterUrl, pollRemoteCommands, fetchVodSources } from './api'
+import { resolveLiveChannel, fetchLiveCatalog, channelStation, normalizeLiveChannels, resolveVodSource, posterUrl, pollRemoteCommands, fetchVodSources } from './api'
 import { useHashRoute, parseHash, replaceRoute, navigate, itemHref } from './router'
 import { getContinueEntry, getDeadSourceUrls, getSavedSourceUrl, markDeadSource, clearDeadSource, saveSavedSourceUrl, type ContinueEntry } from './storage'
-import { activateFocused, androidKeyCommand, applyTvMode, focusFirst, isShellApp, moveFocus, readTvMode, setTvMode, stepSelect } from './tv'
+import { activateFocused, androidKeyCommand, applyTvMode, focusFirst, isBackKey, isShellApp, isTvDevice, moveFocus, readTvMode, setTvMode, stepSelect } from './tv'
 import type { FocusDirection } from './tv'
 import Sidebar from './Sidebar'
 import SiteFullscreenButton from './SiteFullscreenButton'
@@ -187,6 +187,15 @@ export default function GeilApp() {
     return () => window.removeEventListener('notflix-tv-mode', handler)
   }, [tvMode])
 
+  // A TV has no cursor waiting in the page, so every screen change puts the D-pad onto the first
+  // control instead of leaving the viewer pressing arrows against an unfocused wall.
+  useEffect(() => {
+    if (!(isTvDevice() || isShellApp() || readTvMode())) return
+    if (playerRef.current.open || route.view === 'search') return
+    const timer = window.setTimeout(() => focusFirst({ skipInputs: true }), 350)
+    return () => window.clearTimeout(timer)
+  }, [route.view, route.hash])
+
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
@@ -196,21 +205,51 @@ export default function GeilApp() {
         navigate('/search')
         return
       }
-      if (event.key === 'Escape' && showHelp) {
+      if (isBackKey(event) && showHelp) {
         event.preventDefault()
         setShowHelp(false)
         return
       }
-      if (typing) return
-      // The channel row of an Android TV remote arrives as a bare key code, so it joins the same
-      // command bus the D-pad uses: the player zaps, everywhere else the viewer lands on channels.
-      const channelCommand = androidKeyCommand(event.keyCode)
-      if (channelCommand) {
+      // A viewer typing on a keyboard wants the arrows for the caret; on a TV there is nothing to
+      // type with those arrows, so up/down leave the field for the results instead.
+      if (typing && (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+        if (!readTvMode() || event.key === 'ArrowLeft' || event.key === 'ArrowRight') return
         event.preventDefault()
-        window.dispatchEvent(new CustomEvent('notflix-remote', { detail: { command: channelCommand } }))
+        moveFocus(event.key === 'ArrowUp' ? 'up' : 'down')
         return
       }
-      if (playerRef.current.open || modalRef.current) return
+      if (typing && isBackKey(event) && readTvMode()) {
+        // Back from the field first, and only then from the screen.
+        event.preventDefault()
+        target?.blur()
+        return
+      }
+      // TV boxes send most of their remote as bare key codes or as 'Unidentified' keys, so every
+      // one of those presses joins the same command bus the D-pad uses — typing included.
+      const busCommand = androidKeyCommand(event.keyCode, event.key)
+      if (busCommand) {
+        if (typing && busCommand !== 'ok' && busCommand !== 'back') return
+        event.preventDefault()
+        window.dispatchEvent(new CustomEvent('notflix-remote', { detail: { command: busCommand } }))
+        return
+      }
+      if (typing) return
+      if (playerRef.current.open) return
+      // A modal owns the screen while it is up, and its own focus scope keeps the walk inside it.
+      if (event.key === 'Enter' || event.keyCode === 13 || event.key === 'NumpadEnter') {
+        event.preventDefault()
+        if (!activateFocused()) focusFirst()
+        return
+      }
+      if (isBackKey(event)) {
+        // The overlay closer ran first and took the key when something was on screen.
+        if (event.defaultPrevented) return
+        // Nothing above home to go back to: a remote's Back there is the browser's own, not ours.
+        if (routeRef.current.view === 'home' && !modalRef.current && !helpRef.current) return
+        event.preventDefault()
+        dispatchBack()
+        return
+      }
       if (event.shiftKey && !event.ctrlKey && !event.metaKey && (event.key === 'T' || event.key === 't')) {
         event.preventDefault()
         setTvMode(!readTvMode())
@@ -224,14 +263,19 @@ export default function GeilApp() {
       if (event.key === 'Backspace' && !showHelp) {
         if (route.view !== 'home' && !window.history.state?.geilOverlay) {
           event.preventDefault()
-          window.history.back()
+          dispatchBack()
         }
         return
       }
-      if (!readTvMode()) return
+      // Arrows are the D-pad. They stay live whenever a TV device, the shell app or the viewer
+      // toggled TV mode — a box whose UA the detector has never seen still gets a walkable UI.
+      if (!readTvMode() && !isTvDevice() && !isShellApp()) return
       if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault()
-        moveFocus(event.key === 'ArrowUp' ? 'up' : event.key === 'ArrowDown' ? 'down' : event.key === 'ArrowLeft' ? 'left' : 'right')
+        const direction = event.key === 'ArrowUp' ? 'up' : event.key === 'ArrowDown' ? 'down' : event.key === 'ArrowLeft' ? 'left' : 'right'
+        // A focused dropdown owns left/right: the D-pad picks its value instead of leaving the row.
+        if ((direction === 'left' || direction === 'right') && stepSelect(direction)) return
+        moveFocus(direction)
       }
     }
     window.addEventListener('keydown', handler)
@@ -254,14 +298,10 @@ export default function GeilApp() {
       }
       if (command === 'ok' || command === 'playpause') { if (!activateFocused()) focusFirst(); return }
       if (command === 'back') {
-        if (modalRef.current) { closeSourceModal(); event.preventDefault(); return }
-        if (helpRef.current) { setShowHelp(false); event.preventDefault(); return }
         // Telling the shell whether the page consumed the key is what keeps Android's Back from
         // stepping out of the app while a screen is still there to go back to.
-        if (routeRef.current.view !== 'home') { window.history.back(); event.preventDefault(); return }
-        // In a browser the remote's Back is the browser's Back. In the shell the answer above has
-        // already told Android what to do, so stepping history here would move twice.
-        if (!isShellApp()) window.history.back()
+        if (modalRef.current || helpRef.current || routeRef.current.view !== 'home' || !isShellApp()) event.preventDefault()
+        dispatchBack()
         return
       }
       if (command === 'home') { navigate('/'); return }
@@ -366,7 +406,7 @@ export default function GeilApp() {
     fetchLiveCatalog({ limit: 300 }, controller.signal)
       .then((data) => {
         if (controller.signal.aborted) return
-        setLiveChannels(data.items)
+        setLiveChannels(normalizeLiveChannels(data.items))
       })
       .catch(() => {})
     return () => controller.abort()
@@ -388,6 +428,9 @@ export default function GeilApp() {
     playerRef.current = INITIAL_PLAYER
     setPlayer(INITIAL_PLAYER)
     popOverlayEntry()
+    // The page behind is the surface again, so the remote keeps its footing there rather than
+    // standing on the document body with nothing to walk.
+    if (isTvDevice() || isShellApp() || readTvMode()) window.setTimeout(() => focusFirst({ skipInputs: true }), 120)
   }
 
   function closeSourceModal() {
@@ -395,6 +438,17 @@ export default function GeilApp() {
     modalRef.current = null
     setSourceModal(null)
     popOverlayEntry()
+    if (isTvDevice() || isShellApp() || readTvMode()) window.setTimeout(() => focusFirst({ skipInputs: true }), 120)
+  }
+
+  // The one back ladder every entry point (Enter-less TV keys, the bus, Backspace) walks.
+  function dispatchBack() {
+    if (modalRef.current) { closeSourceModal(); return }
+    if (helpRef.current) { setShowHelp(false); return }
+    if (routeRef.current.view !== 'home') { window.history.back(); return }
+    // In a browser the remote's Back is the browser's Back. In the shell the history probe has
+    // already told Android what to do, so stepping history here would move twice.
+    if (!isShellApp()) window.history.back()
   }
 
   async function playLive(channel: GeilItem, visible?: GeilItem[]) {
@@ -404,7 +458,7 @@ export default function GeilApp() {
     const list = visible?.length ? visible : liveChannels
     setPlayer({
       open: true,
-      title: channel.name,
+      title: channelStation(channel.name),
       subtitle: channel.tags?.join(' · '),
       isLive: true,
       streamUrl: '',
@@ -610,7 +664,7 @@ export default function GeilApp() {
       return {
         ...current,
         open: true,
-        title: channel.name,
+        title: channelStation(channel.name),
         subtitle: channel.tags?.join(' · '),
         isLive: true,
         streamUrl: '',

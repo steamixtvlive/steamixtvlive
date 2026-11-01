@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLang } from '@/lib/language'
 import { clearAllData } from './storage'
+import { readTvMode, setTvMode } from './tv'
 import ShortcutsHelp from './ShortcutsHelp'
 import { ClockIcon, DatabaseIcon, GlobeIcon, InfoIcon, SettingsIcon, TvIcon, TrashIcon } from './icons'
 
@@ -9,6 +10,13 @@ export default function SettingsView() {
   const [confirmClear, setConfirmClear] = useState(false)
   const [notice, setNotice] = useState('')
   const [showHelp, setShowHelp] = useState(false)
+  const [tvMode, setTvModeState] = useState(readTvMode)
+
+  useEffect(() => {
+    const handler = (event: Event) => setTvModeState(Boolean((event as CustomEvent<{ enabled?: boolean }>).detail?.enabled))
+    window.addEventListener('notflix-tv-mode', handler)
+    return () => window.removeEventListener('notflix-tv-mode', handler)
+  }, [])
 
   useEffect(() => {
     if (!notice) return
@@ -95,6 +103,26 @@ export default function SettingsView() {
               </div>
             </div>
           ))}
+          {/* A box whose browser the auto-detector has never met would otherwise be stuck: its
+              remote cannot type the Shift+T chord that turns the D-pad on. */}
+          <div className="s-item">
+            <div className="s-item-nav">
+              <div>
+                <div className="s-label">{t('settings.tvMode')}</div>
+                <div className="s-sub">{t('settings.tvModeDesc')}</div>
+              </div>
+              <button
+                type="button"
+                className={`s-toggle ${tvMode ? 'is-on' : ''}`}
+                role="switch"
+                aria-checked={tvMode}
+                aria-label={t('settings.tvMode')}
+                onClick={() => setTvMode(!tvMode)}
+              >
+                <span />
+              </button>
+            </div>
+          </div>
         </section>
 
         <section className="s-group">

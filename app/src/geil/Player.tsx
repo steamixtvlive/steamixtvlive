@@ -5,10 +5,10 @@ import Hls from 'hls.js'
 import { Captions, List, Layers, Check } from 'lucide-react'
 import type { PlayerState, GeilItem, PlayerSource } from './types'
 import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, HeartIcon, SearchIcon, ArrowLeftIcon } from './icons'
-import { channelColor, currentEpg, formatClock, initialOf, remainingLabel } from './api'
+import { channelColor, channelQuality, channelStation, currentEpg, formatClock, initialOf, normalizeLiveChannels, remainingLabel } from './api'
 import { saveContinueWatching } from './storage'
 import { subtitleLanguageCode, subtitleLanguageLabel } from './subtitle-language'
-import { activateFocused, moveFocus } from './tv'
+import { activateFocused, focusFirst, moveFocus, readTvMode, stepSelect } from './tv'
 import { useLang } from '@/lib/language'
 import ShortcutsHelp from './ShortcutsHelp'
 
@@ -62,6 +62,13 @@ function isHlsSource(url: string): boolean {
   }
 }
 
+function matchesPanelSearch(channel: GeilItem, needle: string): boolean {
+  const query = needle.trim().toLocaleLowerCase('tr')
+  if (!query) return true
+  const name = channel.name.toLocaleLowerCase('tr')
+  return name.includes(query) || channelStation(channel.name).toLocaleLowerCase('tr').includes(query)
+}
+
 export default function Player({ state, onClose, onPrev, onNext, channels = [], onChannelSelect, onSourceSelect, onStreamFailure }: Props) {
   const { t, lang } = useLang()
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -86,8 +93,12 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const [osd, setOsd] = useState<string | null>(null)
   const [zap, setZap] = useState<{ name: string; color: string } | null>(null)
   const [panelSearch, setPanelSearch] = useState('')
-  const [panelSort, setPanelSort] = useState('trending')
-  const [panelGroup, setPanelGroup] = useState('')
+  // The panel defaults to the same order the channels page shows, so zapping never reorders the
+  // list the viewer is already looking at.
+  const [panelSort, setPanelSort] = useState('')
+  // Zapping opens the panel on the viewer's own country, the same default the channels page uses,
+  // so the remote never walks a global list that starts with foreign stations.
+  const [panelGroup, setPanelGroup] = useState('Turkey')
   const [panelFeatures, setPanelFeatures] = useState<GeilFeatures | null>(null)
   const [panelLoading, setPanelLoading] = useState(false)
   const [panelChannels, setPanelChannels] = useState<GeilItem[]>(channels)
@@ -118,7 +129,11 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       return
     }
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
-    hideTimer.current = window.setTimeout(() => setShowControls(false), 2000)
+    hideTimer.current = window.setTimeout(() => {
+      const active = document.activeElement
+      if (active && containerRef.current?.contains(active) && active !== containerRef.current && active.tagName !== 'VIDEO') return
+      setShowControls(false)
+    }, 2000)
     return () => { if (hideTimer.current) window.clearTimeout(hideTimer.current) }
   }, [panelOpen, state.isLive, state.open, state.streamUrl])
 
@@ -139,13 +154,16 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
         if (!response.ok || data?.ok === false) throw new Error('Kanallar yüklenemedi')
         if (controller.signal.aborted) return
         setPanelFeatures(data.features || {})
+        // The catalogue decides which country groups exist, so an unsupported default falls back to all.
+        const groupOptions = (data.features?.filter || []).find((feature) => feature.id === 'group')?.values || []
+        if (panelGroup !== '__favorites__' && groupOptions.length && !groupOptions.some((option) => option.id === panelGroup)) setPanelGroup('')
         // Use the full server-side result when available; fall back to the supplied
         // channel set if the catalog request fails or returns no items.
         if (Array.isArray(data.items)) {
           const countryItems = panelGroup && panelGroup !== '__favorites__'
             ? data.items.filter((channel) => (channel.tags || []).some((tag) => tag.toLowerCase() === panelGroup.toLowerCase()))
             : data.items
-          setCatalogChannels(countryItems)
+          setCatalogChannels(normalizeLiveChannels(countryItems, panelSort))
         }
       } catch {
         // Keep the current list available if the optional refresh fails.
@@ -157,17 +175,38 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   }, [panelOpen, state.isLive, panelSearch, panelSort, panelGroup, favIds])
 
   useEffect(() => {
-    const merged = [...channels, ...catalogChannels].filter((channel, index, all) => all.findIndex((entry) => entry.id === channel.id) === index)
-    setPanelChannels(panelGroup === '__favorites__' ? merged.filter((channel) => favIds.has(channel.id)) : panelGroup ? catalogChannels.filter((channel) => (channel.tags || []).some((tag) => tag.toLowerCase() === panelGroup.toLowerCase())) : channels.length ? channels : catalogChannels)
-  }, [channels, catalogChannels, panelGroup, favIds])
+    const all = [...channels, ...catalogChannels]
+    const merged = normalizeLiveChannels(all, panelSort)
+    // A favourite was stored against one quality variant, so a station matches when any of its
+    // variants is on the list.
+    const variantsOf = new Map<string, string[]>()
+    for (const channel of all) {
+      const key = channelStation(channel.name).toLocaleLowerCase('tr')
+      const ids = variantsOf.get(key) || []
+      ids.push(channel.id)
+      variantsOf.set(key, ids)
+    }
+    const isFavourite = (channel: GeilItem) => favIds.has(channel.id)
+      || (variantsOf.get(channelStation(channel.name).toLocaleLowerCase('tr')) || []).some((id) => favIds.has(id))
+    setPanelChannels(panelGroup === '__favorites__' ? merged.filter(isFavourite) : panelGroup ? (catalogChannels.length ? catalogChannels : merged.filter((channel) => (channel.tags || []).some((tag) => tag.toLowerCase() === panelGroup.toLowerCase()))) : merged)
+  }, [channels, catalogChannels, panelGroup, panelSort, favIds])
 
   useEffect(() => {
     if (!state.open) return
     document.documentElement.classList.add('player-open', 'player-osd')
+    // Take the focus for the player itself: a TV remote has no cursor, and without this its first
+    // arrow press would walk the catalogue page behind the picture.
+    containerRef.current?.focus({ preventScroll: true })
     return () => {
       document.documentElement.classList.remove('player-open', 'player-osd')
     }
   }, [state.open])
+
+  useEffect(() => {
+    if (!sourceChooserOpen) return
+    const timer = window.setTimeout(() => focusFirst({ root: document.querySelector<HTMLElement>('.source-panel .source-panel-list') }), 80)
+    return () => window.clearTimeout(timer)
+  }, [sourceChooserOpen])
 
   function togglePanelFavorite(id: string) {
     const next = new Set(favIds)
@@ -388,7 +427,13 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     userInteracted.current = true
     setShowControls(true)
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
-    hideTimer.current = window.setTimeout(() => setShowControls(false), 2000)
+    hideTimer.current = window.setTimeout(() => {
+      // A D-pad holds a control by focusing it. Hiding the bar under the viewer's focus would
+      // make the remote look dead, so the timeout waits for the focus to leave instead.
+      const active = document.activeElement
+      if (active && containerRef.current?.contains(active) && active !== containerRef.current && active.tagName !== 'VIDEO') return
+      setShowControls(false)
+    }, 2000)
   }
 
   function openChannelPanel() {
@@ -396,6 +441,9 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     setPanelOpen(true)
     setShowControls(false)
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
+    // The panel is the surface now, so the D-pad lands on its first row instead of staying on the
+    // bar that just closed or on the panel's own close button.
+    window.setTimeout(() => focusFirst({ root: document.querySelector<HTMLElement>('.ch-panel .ch-list') }), 80)
   }
 
   function togglePlay() {
@@ -504,13 +552,14 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     if (!state.isLive) return
     // Zap through exactly the list the channel panel is showing, so a country selection
     // and its sort order carry over to the arrow keys instead of jumping back to all.
-    const visiblePanel = panelChannels.filter((channel) => channel.name.toLowerCase().includes(panelSearch.trim().toLowerCase()))
+    const visiblePanel = panelChannels.filter((channel) => matchesPanelSearch(channel, panelSearch))
     const list = visiblePanel.length ? visiblePanel : (state.channels?.length ? state.channels : channels)
     if (!list.length || !onChannelSelect) return
     const index = list.findIndex((entry) => entry.id === state.item?.id)
     const nextChannel = list[(index + direction + list.length) % list.length]
     if (!nextChannel) return
-    setZap({ name: nextChannel.name, color: channelColor(nextChannel.name) })
+    const station = channelStation(nextChannel.name)
+    setZap({ name: station, color: channelColor(station) })
     onChannelSelect(nextChannel, visiblePanel.length ? visiblePanel : undefined)
     revealControls()
   }
@@ -553,9 +602,14 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     if (!state.open) return
     const key = event.key
     const target = (event as KeyboardEvent).target as HTMLElement | null
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+      // A TV remote has no typing to protect, so its arrows and OK leave the search box and the
+      // dropdowns to walk the panel instead of editing it.
+      if (key === 'Escape' || target.tagName !== 'INPUT') return
+    }
     const handled = () => { if ('preventDefault' in event) { event.preventDefault(); event.stopPropagation() } }
-    if (key === 'Escape') {
+    // A WebView's Back is often only ever a key code, so the exit ladder answers it too.
+    if (key === 'Escape' || key === 'GoBack' || (event as KeyboardEvent).keyCode === 10009) {
       handled()
       if (showHelp) { setShowHelp(false); return }
       if (subtitleMenuOpen) { setSubtitleMenuOpen(false); return }
@@ -565,6 +619,27 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       return
     }
     if (showHelp) return
+    // On a TV the D-pad is the pointer everywhere else in the app, so the player honours the same
+    // contract: arrows walk the controls, OK activates. Transport keeps its letters, the AIR
+    // remote's dedicated buttons and, for live, the channel row keys (166/165 → chup/chdown).
+    const dpadArrows = readTvMode() && (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight')
+    if (dpadArrows) {
+      handled()
+      const direction = key === 'ArrowUp' ? 'up' : key === 'ArrowDown' ? 'down' : key === 'ArrowLeft' ? 'left' : 'right'
+      if ((direction === 'left' || direction === 'right') && stepSelect(direction)) return
+      if (panelOpen || sourceChooserOpen || subtitleMenuOpen || showControls) { moveFocus(direction); return }
+      revealControls()
+      if (target !== videoRef.current && document.activeElement !== videoRef.current) moveFocus(direction)
+      return
+    }
+    if (key === 'Enter' || key === 'NumpadEnter') {
+      const active = document.activeElement
+      const bare = !active || active === document.body || active === containerRef.current || active === videoRef.current
+      handled()
+      if (bare) togglePlay()
+      else if (!activateFocused()) togglePlay()
+      return
+    }
     if (key === ' ' || key === 'k' || key === 'K' || key === 'MediaPlayPause') {
       handled(); togglePlay(); return
     }
@@ -847,7 +922,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                     <Captions size={20} />
                   </button>
                   {subtitleMenuOpen ? (
-                    <div className="subtitle-menu" role="dialog" aria-label={t('player.subtitles')} onClick={(event) => event.stopPropagation()}>
+                    <div className="subtitle-menu" role="dialog" aria-label={t('player.subtitles')} data-focus-scope onClick={(event) => event.stopPropagation()}>
                       <div className="subtitle-menu-head">{t('player.subtitles')}</div>
                       <div className="subtitle-switch" role="radiogroup" aria-label={t('player.subtitles')}>
                         <button
@@ -918,7 +993,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
 
       {!state.isLive && sourceChooserOpen ? (
         <div className="ch-overlay source-overlay" role="dialog" aria-modal="true" aria-label={t('sources.title')} onClick={(event) => { if (event.target === event.currentTarget) setSourceChooserOpen(false) }}>
-          <div className="ch-panel source-panel">
+          <div className="ch-panel source-panel" data-focus-scope>
             <div className="ch-panel-head">
               <h3>{t('sources.title')}</h3>
               <div className="ch-panel-head-actions">
@@ -979,7 +1054,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
 
       {state.isLive && panelOpen && onChannelSelect ? (
         <div className="ch-overlay" role="dialog" aria-modal="true" aria-label={t('channels.title')} onClick={(event) => { if (event.target === event.currentTarget) { setPanelOpen(false); revealControls() } }}>
-          <div className="ch-panel">
+          <div className="ch-panel" data-focus-scope>
             <div className="ch-panel-head" data-zone="h">
               <h3>{t('channels.title')}</h3>
               <div className="ch-panel-head-actions">
@@ -1011,6 +1086,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
             </div>
             <div className="ch-controls" style={{ display: 'flex', gap: 8, padding: '0 12px 10px', flexShrink: 0 }}>
               <select className="sort-select" aria-label={t('channels.sortPopular')} value={panelSort} onChange={(event) => setPanelSort(event.target.value)}>
+                <option value="">{t('channels.sortOriginal')}</option>
                 {(panelFeatures?.sort || [{ id: 'trending', name: t('channels.sortPopular') }, { id: 'name', name: 'A-Z' }]).map((option) => (
                   <option key={option.id} value={option.id}>{option.name === 'Trending' || option.name === 'Popular' ? t('channels.sortPopular') : option.name}</option>
                 ))}
@@ -1027,15 +1103,16 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
             </div>
             <div className="ch-list" style={{ maxHeight: 'none', minHeight: 0, overflowY: 'auto', flex: 1 }} aria-busy={panelLoading}>
               {panelChannels
-                .filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase()))
+                .filter((channel) => matchesPanelSearch(channel, panelSearch))
                 .map((channel, index) => (
                   <div className="ch-item" key={channel.id} style={{ position: 'relative', height: 64 }}>
-                    <div className="ch-row" style={{ height: '100%' }} onClick={() => onChannelSelect(channel, panelChannels)}>
+                    <div className="ch-row" tabIndex={0} role="button" aria-label={channelStation(channel.name)} style={{ height: '100%' }} onClick={() => { onChannelSelect(channel, panelChannels); setPanelOpen(false); containerRef.current?.focus({ preventScroll: true }) }}>
                       <span className="ch-num">{index + 1}</span>
-                      <span className="ch-logo ch-logo-ph" style={{ background: channelColor(channel.name) }}>{initialOf(channel.name)}</span>
+                      <span className="ch-logo ch-logo-ph" style={{ background: channelColor(channelStation(channel.name)) }}>{initialOf(channelStation(channel.name))}</span>
                       <div className="ch-main">
                         <div className="ch-head">
-                          <span className="ch-name">{channel.name}</span>
+                          <span className="ch-name">{channelStation(channel.name)}</span>
+                          {channelQuality(channel.name) ? <span className="ch-chip">{channelQuality(channel.name)}</span> : null}
                           {channel.id === state.item?.id ? <span className="ch-now-label">ŞU AN</span> : null}
                         </div>
                         <div className="ch-epg-block">
@@ -1060,7 +1137,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                     </div>
                   </div>
                 ))}
-              {!panelLoading && panelChannels.filter((channel) => channel.name.toLowerCase().includes(panelSearch.toLowerCase())).length === 0 ? (
+              {!panelLoading && panelChannels.filter((channel) => matchesPanelSearch(channel, panelSearch)).length === 0 ? (
                 <div className="empty"><h3>{t('channels.noResults')}</h3><p>{t('channels.noResultsDesc')}</p></div>
               ) : null}
             </div>

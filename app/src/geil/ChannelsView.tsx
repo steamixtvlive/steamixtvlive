@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GeilItem } from './types'
-import { fetchLiveCatalog, channelColor, channelQuality, initialOf, currentEpg, remainingLabel, formatClock } from './api'
+import { fetchLiveCatalog, channelColor, channelQuality, channelStation, initialOf, normalizeLiveChannels, currentEpg, remainingLabel, formatClock } from './api'
 import { HeartIcon } from './icons'
 import { useLang } from '@/lib/language'
 
@@ -21,8 +21,8 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
   const [error, setError] = useState('')
   const [nextCursor, setNextCursor] = useState<string | number | null>(null)
   const [search, setSearch] = useState('')
-  // No sort parameter is the provider's own channel order, which is what its country
-  // lists are built around (Turkey opens with 24 HABER, not the sports block).
+  // No sort parameter keeps the provider's own station order; the client collapses its
+  // quality variants and sorts the result by the station's own alphabet (see normalizeLiveChannels).
   const [sort, setSort] = useState('')
   // Channels open on the viewer's own country; the provider calls it Turkey.
   const [group, setGroup] = useState('Turkey')
@@ -53,10 +53,11 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
           controller.signal,
         )
         if (controller.signal.aborted) return
-        setChannels(data.items)
+        const items = normalizeLiveChannels(data.items, sort)
+        setChannels(items)
         setFeatures(data.features)
         setNextCursor(data.nextCursor ?? null)
-        if (!selectedId && data.items[0]) setSelectedId(data.items[0].id)
+        if (!selectedId && items[0]) setSelectedId(items[0].id)
       } catch (err) {
         if (controller.signal.aborted) return
         setError(err instanceof Error ? err.message : 'Kanallar yüklenemedi')
@@ -71,12 +72,11 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
     let list = channels
     if (tab === 'favorites') list = list.filter((channel) => favIds.has(channel.id))
     if (search.trim().length > 0 && search.trim().length < 2) {
-      const needle = search.trim().toLowerCase()
-      list = list.filter((channel) => channel.name.toLowerCase().includes(needle))
+      const needle = search.trim().toLocaleLowerCase('tr')
+      list = list.filter((channel) => channel.name.toLocaleLowerCase('tr').includes(needle))
     }
-    if (sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'tr'))
     return list
-  }, [channels, tab, favIds, search, sort])
+  }, [channels, tab, favIds, search])
 
   const selected = filtered.find((channel) => channel.id === selectedId) || filtered[0] || channels[0] || null
 
@@ -111,7 +111,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
     setLoadingMore(true)
     try {
       const data = await fetchLiveCatalog({ cursor: nextCursor, search: search.trim().length >= 2 ? search.trim() : '', sort, filter: { group }, limit: 300 })
-      setChannels((current) => [...current, ...data.items])
+      setChannels((current) => normalizeLiveChannels([...current, ...data.items], sort))
       setNextCursor(data.nextCursor ?? null)
     } catch {
       // Keep the current list; the user can retry.
@@ -138,6 +138,18 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
     return () => observer.disconnect()
   }, [nextCursor, loadingMore])
 
+  // A D-pad walks rows faster than an observer notices a sentinel, and on a TV there is no scroll
+  // gesture to fall back on — so hitting the bottom of the walk asks for the next page too.
+  useEffect(() => {
+    const handler = (event: Event) => {
+      if ((event as CustomEvent<{ direction?: string }>).detail?.direction !== 'down') return
+      if (!nextCursor) return
+      void loadMore()
+    }
+    window.addEventListener('notflix-focus-edge', handler)
+    return () => window.removeEventListener('notflix-focus-edge', handler)
+  })
+
   return (
     <div className="catalog-view channels-view">
       {selected ? (
@@ -146,20 +158,20 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
             <div style={{ width: '100%', height: '100%', background: channelColor(selected.name), opacity: 0.35 }} />
           </div>
           <div className="live-stage-body">
-            <div className="live-stage-logo" style={{ background: channelColor(selected.name) }}>
-              {initialOf(selected.name)}
+            <div className="live-stage-logo" style={{ background: channelColor(channelStation(selected.name)) }}>
+              {initialOf(channelStation(selected.name))}
             </div>
             <div className="live-stage-text">
-              <h2 className="live-stage-name">{selected.name.replace(/\s*\(\d+\)\s*$/, '')}</h2>
+              <h2 className="live-stage-name">{channelStation(selected.name)}</h2>
               <div className="live-stage-head">
                 {channelQuality(selected.name) ? <span className="ch-chip">{channelQuality(selected.name)}</span> : null}
                 <span className="ch-chip ch-chip-flag">{selected.tags?.[0] || t('channels.live')}</span>
-                {(selected.tags || []).slice(0, 2).map((tag) => (
+                {(selected.tags || []).slice(1, 3).map((tag) => (
                   <span className="ch-chip ch-chip-tag" key={tag}>{tag}</span>
                 ))}
               </div>
             </div>
-            <div className="live-stage-preview" aria-label="Önizleme" role="button" onClick={() => openChannel(selected)}>
+            <div className="live-stage-preview" aria-label="Önizleme" role="button" tabIndex={0} onClick={() => openChannel(selected)}>
               <div className="live-stage-mount" />
               <div className="live-stage-preview-ph" />
               <span className="live-stage-preview-badge">{t('channels.live')}</span>
@@ -239,16 +251,17 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
                       className="ch-row"
                       tabIndex={0}
                       role="button"
-                      aria-label={channel.name}
+                      aria-label={channelStation(channel.name)}
                       onClick={() => openChannel(channel)}
                     >
                       <span className="ch-num">{index + 1}</span>
-                      <span className="ch-logo ch-logo-ph" style={{ background: channelColor(channel.name) }}>
-                        {initialOf(channel.name)}
+                      <span className="ch-logo ch-logo-ph" style={{ background: channelColor(channelStation(channel.name)) }}>
+                        {initialOf(channelStation(channel.name))}
                       </span>
                       <div className="ch-main">
                         <div className="ch-head">
-                          <span className="ch-name">{channel.name}</span>
+                          <span className="ch-name">{channelStation(channel.name)}</span>
+                          {channelQuality(channel.name) ? <span className="ch-chip">{channelQuality(channel.name)}</span> : null}
                         </div>
                         <div className="ch-epg-block">
                           {epg.entry ? (

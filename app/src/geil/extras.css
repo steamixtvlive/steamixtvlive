@@ -568,3 +568,61 @@ html.tv-mode .site-fullscreen:focus { box-shadow: 0 0 0 2px var(--accent), 0 0 1
   }
   .search-hero .search-big { padding-right: 44px; }
 }
+
+/* ---- D-pad focus: the remote is the only pointer on a TV box, so every walkable control
+   has to announce itself with a glow, a lift and a neon frame on every surface — page,
+   player, modal — not just an outline a viewer on a 55" panel never notices. ---- */
+html.tv-mode :focus-visible,
+html.remote-live :focus-visible,
+html.tv-mode .main :focus,
+html.tv-mode .sidebar :focus,
+html.tv-mode .bnav :focus,
+html.tv-mode .player-root :focus,
+html.tv-mode .modal :focus,
+html.tv-mode .shortcuts-overlay :focus,
+html.remote-live .main :focus,
+html.remote-live .sidebar :focus,
+html.remote-live .bnav :focus,
+html.remote-live .modal :focus,
+html.remote-live .shortcuts-overlay :focus {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 3px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 6px rgba(229, 9, 20, .22), 0 0 26px rgba(229, 9, 20, .5), 0 18px 40px rgba(0, 0, 0, .55) !important;
+}
+html.tv-mode .card:focus img,
+html.remote-live .card:focus img { transform: scale(1.04); }
+html.tv-mode .card:focus,
+html.remote-live .card:focus { transform: scale(1.06); z-index: 5; }
+html.tv-mode .ch-row:focus, html.remote-live .ch-row:focus,
+html.tv-mode .source-item:focus,
+html.remote-live .source-item:focus,
+html.tv-mode .source-row:focus,
+html.remote-live .source-row:focus,
+html.tv-mode .player-ctrl-btn:focus,
+html.remote-live .player-ctrl-btn:focus,
+html.tv-mode .player-skip-btn:focus,
+html.tv-mode .player-rate-btn:focus,
+html.tv-mode .player-exit-btn:focus,
+html.remote-live .player-ctrl-btn:focus,
+html.remote-live .player-skip-btn:focus,
+html.remote-live .player-rate-btn:focus,
+html.remote-live .player-exit-btn:focus,
+html.tv-mode .hero-thumb:focus,
+html.remote-live .hero-thumb:focus,
+html.tv-mode .live-stage-preview:focus,
+html.remote-live .live-stage-preview:focus {
+  transform: scale(1.04);
+}
+html.tv-mode .glass-input:focus,
+html.remote-live .glass-input:focus,
+html.tv-mode .sort-select:focus,
+html.remote-live .sort-select:focus {
+  box-shadow: 0 0 0 6px rgba(229, 9, 20, .18), 0 0 20px rgba(229, 9, 20, .4) !important;
+}
+html.tv-mode .card:focus img, html.remote-live .card:focus img,
+html.tv-mode .card:focus, html.remote-live .card:focus,
+html.tv-mode .ch-row:focus, html.remote-live .ch-row:focus,
+html.tv-mode .hero-thumb:focus, html.remote-live .hero-thumb:focus {
+  transition: transform .16s ease, box-shadow .16s ease;
+}

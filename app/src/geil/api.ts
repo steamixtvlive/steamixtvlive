@@ -259,6 +259,50 @@ export function channelNumber(name: string): string {
   return match ? match[1] : ''
 }
 
+const QUALITY_TOKEN = /\b(4k|uhd|2160p|full\s?hd|fhd|hd\+|hd|sd|hevc|x?265|1080p|720p|hq|lq)\b/gi
+
+/** The station behind a stream name: "4K TR: ATV HD (3)" and "ATV HEVC" are both ATV. */
+export function channelStation(name: string): string {
+  let value = channelName(name)
+  value = value.replace(/^\s*(?:4k|uhd|fhd|hd)?\s*(?:tr|turk|türk)\s*[:\-|]\s*/i, '')
+  // The provider files 'TRT TÜRK' as 'TRT T RK' — the Ü is dropped, not the rest of the word.
+  value = value.replace(/\bT ?RK\b/g, 'TÜRK')
+  value = value.replace(QUALITY_TOKEN, ' ')
+  return value.replace(/\s+/g, ' ').replace(/^[\s.\-_|[\]()]+|[\s.\-_|[\]()]+$/g, '').trim()
+}
+
+function qualityRank(name: string): number {
+  const upper = String(name || '').toUpperCase()
+  if (/4K|UHD|2160P/.test(upper)) return 4
+  if (/FHD|FULL HD|HD\+/.test(upper)) return 3
+  if (/\bHD\b/.test(upper)) return 2
+  if (/\bSD\b/.test(upper)) return 0
+  return 1
+}
+
+/** The live provider lists every station once per quality variant and names them
+    "KANAL (7)", "KANAL (6)"… in a collation that puts the Turkish letters after the English
+    ones, so a country page ends mid-alphabet and the next page jumps back to the first
+    station. This keeps one row per station (its best picture), and, unless the viewer picked
+    an order of their own, reads the list in the station's own alphabet so it starts at the
+    beginning instead of restarting halfway down. */
+export function normalizeLiveChannels(items: GeilItem[], sort = ''): GeilItem[] {
+  const byStation = new Map<string, GeilItem>()
+  for (const channel of items) {
+    const key = channelStation(channel.name).toLocaleLowerCase('tr') || channel.id
+    const held = byStation.get(key)
+    if (!held || qualityRank(channel.name) > qualityRank(held.name)) byStation.set(key, channel)
+  }
+  const unique = [...byStation.values()]
+  if (sort && sort !== 'name') return unique
+  // A provider decorates some stations (".BLACK", "[[ TELEKOM SPORT ]]"); comparing the decorated
+  // string files them under punctuation, so the alphabet is keyed on the first real word.
+  const sortKey = (name: string) => channelStation(name).replace(/^[^\p{L}\p{N}]+/u, '')
+  return unique.sort((a, b) =>
+    sortKey(a.name).localeCompare(sortKey(b.name), 'tr', { numeric: true, sensitivity: 'base' }),
+  )
+}
+
 export function initialOf(name: string): string {
   return (String(name || '?').replace(/^[^\p{L}\p{N}]+/u, '')[0] || '?').toUpperCase()
 }

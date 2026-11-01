@@ -8,6 +8,8 @@ function isTvDevice(): boolean {
   return /smart[-_ ]?tv|internet[-_ ]?tv|browser[-_ ]?tv|tizen|webos|bravia|viera|aquos|hisense|haier|hbbtv|googletv|androidtv|appletv|firetv|samsungbrowser|lgbrowser/i.test(navigator.userAgent)
 }
 
+export { isTvDevice }
+
 export function readTvMode(): boolean {
   try {
     const stored = localStorage.getItem(TV_MODE_KEY)
@@ -34,12 +36,46 @@ export function isShellApp(): boolean {
   return /notflixapp/i.test(navigator.userAgent)
 }
 
-/** Android TVs and TV boxes report their channel row as numeric key codes rather than as named
-    keys, so those presses join the same command bus the D-pad already walks. */
-const ANDROID_KEY_COMMANDS: Record<number, string> = { 166: 'chup', 165: 'chdown' }
+/** Android TVs and TV boxes report most of their remote as bare numeric key codes, often without
+    naming the key at all ('Unidentified'), so those presses join the same command bus the D-pad
+    already walks. The codes are Android's: 4 Back, 23 DPAD-Centre, 66 Enter, 165/166 channel row.
+    They are only read from an unnamed key, because a real keyboard answers the same numbers with
+    printable keys (82 is 'R', 4 is not otherwise seen). */
+const ANDROID_KEY_COMMANDS: Record<number, string> = {
+  4: 'back',
+  13: 'ok',
+  23: 'ok',
+  66: 'ok',
+  165: 'chdown',
+  166: 'chup',
+}
 
-export function androidKeyCommand(keyCode: number): string | null {
-  return ANDROID_KEY_COMMANDS[keyCode] || null
+const NAMED_KEY_COMMANDS: Record<string, string> = {
+  MediaPlayPause: 'playpause',
+  MediaPlay: 'playpause',
+  MediaPause: 'playpause',
+  MediaTrackNext: 'chup',
+  MediaTrackPrevious: 'chdown',
+  MediaFastForward: 'forward',
+  MediaRewind: 'rewind',
+  VolumeUp: 'volup',
+  VolumeDown: 'voldown',
+  VolumeMute: 'mute',
+  ChannelUp: 'chup',
+  ChannelDown: 'chdown',
+  GoBack: 'back',
+  Back: 'back',
+}
+
+export function androidKeyCommand(keyCode: number, key = ''): string | null {
+  if (key === 'Unidentified' || key === '') return ANDROID_KEY_COMMANDS[keyCode] || null
+  return NAMED_KEY_COMMANDS[key] || null
+}
+
+/** The browser's own Back on a TV remote arrives as Escape or Backspace on desktop layouts and as
+    keyCode 10009 in WebViews that never name the key at all. */
+export function isBackKey(event: KeyboardEvent): boolean {
+  return event.key === 'Escape' || event.keyCode === 10009 || event.key === 'GoBack'
 }
 
 /* Custom controls in this skin are plain divs given a role, so a role-based query is part of the
@@ -77,8 +113,22 @@ function focusElement(element: HTMLElement) {
   }
 }
 
-export function focusFirst() {
-  const [first] = candidates()
+/** Where the D-pad lands when it has nothing to walk from: the overlay on screen, else the page
+    content rather than the menu rail, so a remote that is picked up mid-programme starts in the
+    catalogue instead of on the logo. A screen that opens on its own also skips the text fields —
+    a TV would otherwise wake the on-screen keyboard before the viewer wanted it. A caller opening
+    a list passes its container, so the walk starts on the first row instead of the panel chrome. */
+export function focusFirst(options: { skipInputs?: boolean; root?: HTMLElement | null } = {}) {
+  const pooled = options.root
+    ? Array.from(options.root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(visible)
+    : candidates()
+  const main = options.root || scope() || document.querySelector('.main')
+  let inContent = main ? pooled.filter((element) => main.contains(element)) : pooled
+  if (options.skipInputs) {
+    const withoutFields = inContent.filter((element) => !/^(INPUT|TEXTAREA|SELECT)$/.test(element.tagName) && !element.isContentEditable)
+    if (withoutFields.length) inContent = withoutFields
+  }
+  const [first] = inContent.length ? inContent : pooled
   if (first) focusElement(first)
 }
 
@@ -103,6 +153,9 @@ function scrollFrom(current: HTMLElement | null, direction: FocusDirection) {
   const left = direction === 'right' ? step : direction === 'left' ? -step : 0
   const top = direction === 'down' ? step : direction === 'up' ? -step : 0
   container.scrollBy({ left, top, behavior: 'smooth' })
+  // Infinite lists only load their next page when a sentinel scrolls into view, but a D-pad can
+  // run out of rows faster than the observer fires — so the edge of the walk is announced too.
+  window.dispatchEvent(new CustomEvent('notflix-focus-edge', { detail: { direction } }))
 }
 
 export function moveFocus(direction: FocusDirection): boolean {

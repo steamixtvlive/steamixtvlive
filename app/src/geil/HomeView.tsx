@@ -196,6 +196,7 @@ export default function HomeView() {
                 key={item.id}
                 className={`hero-thumb ${index === heroIndex % selectedHeroItems.length ? 'active' : ''}`}
                 role="button"
+                tabIndex={0}
                 aria-label={item.name}
                 aria-current={index === heroIndex % selectedHeroItems.length ? 'true' : undefined}
                 onClick={() => setHeroIndex(index)}

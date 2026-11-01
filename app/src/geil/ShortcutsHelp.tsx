@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useLang } from '@/lib/language'
 
 interface ShortcutRow {
@@ -41,21 +41,28 @@ const PLAYER_ROWS: ShortcutRow[] = [
 
 export default function ShortcutsHelp({ onClose }: { onClose: () => void }) {
   const { t } = useLang()
+  const closeRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); onClose() }
+      if (event.key === 'Escape' || event.keyCode === 10009 || event.key === 'GoBack') { event.preventDefault(); onClose() }
     }
     window.addEventListener('keydown', handler, true)
     return () => window.removeEventListener('keydown', handler, true)
   }, [onClose])
+
+  // The panel has one control; giving it focus is what lets a remote's Back/OK leave it.
+  useEffect(() => {
+    const timer = window.setTimeout(() => closeRef.current?.focus({ preventScroll: true }), 80)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   return (
     <div className="shortcuts-overlay" role="dialog" aria-modal="true" aria-label={t('shortcuts.title')} data-focus-scope onClick={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <div className="shortcuts-panel">
         <div className="shortcuts-head">
           <h2>{t('shortcuts.title')}</h2>
-          <button type="button" className="shortcuts-close" onClick={onClose} aria-label={t('common.close')}>×</button>
+          <button ref={closeRef} type="button" className="shortcuts-close" onClick={onClose} aria-label={t('common.close')}>×</button>
         </div>
         <div className="shortcuts-body">
           <section>
