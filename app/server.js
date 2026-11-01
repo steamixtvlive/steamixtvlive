@@ -870,11 +870,19 @@ footer, section, .text-center.py-8,
   let fullPath = path.normalize(path.join(DIST, filePath))
   if (!fullPath.startsWith(DIST)) { res.writeHead(404); res.end('Not Found'); return }
   fs.readFile(fullPath, (err, data) => {
+    // A TV box browser caches hard and never re-asks. Without this the shell keeps serving the
+    // index.html — and therefore the hashed bundle — it met on the first visit, so a fix that is
+    // built and running reads as "hiçbir şey değişmedi" on the sofa. The hashed assets under
+    // /assets/ carry their content in the filename, so only they are allowed to be immutable.
+    const isHtml = path.extname(fullPath) === '.html' || url === '/'
+    const assetCache = /^\/assets\/[\w.-]+\.(js|css|woff2?|png|jpe?g|svg|webp|mp4)$/.test(url)
+      ? 'public, max-age=31536000, immutable'
+      : 'no-cache'
     if (err) {
       fs.readFile(path.join(DIST, 'index.html'), (err2, data2) => {
         if (err2) { res.writeHead(404); res.end('Not Found'); return }
         const html = data2.toString('utf8').replace('</head>', LOG_SCRIPT + '</head>')
-        res.writeHead(200, { 'Content-Type': 'text/html' })
+        res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' })
         res.end(html)
       })
       return
@@ -882,7 +890,7 @@ footer, section, .text-center.py-8,
     let ext = path.extname(fullPath)
     if (ext === '.html') {
       const html = data.toString('utf8').replace('</head>', LOG_SCRIPT + '</head>')
-      res.writeHead(200, { 'Content-Type': 'text/html' })
+      res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' })
       res.end(html)
     } else if (ext === '.apk') {
       res.writeHead(200, {
@@ -892,7 +900,7 @@ footer, section, .text-center.py-8,
       })
       res.end(data)
     } else {
-      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' })
+      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': isHtml ? 'no-cache' : assetCache })
       res.end(data)
     }
   })

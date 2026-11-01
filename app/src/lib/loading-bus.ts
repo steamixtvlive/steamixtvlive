@@ -17,6 +17,8 @@ export interface LoadingState {
   mode: 'idle' | 'takeover' | 'rail'
   /** How many requests are still unanswered. */
   pending: number
+  /** The shell has painted real content at least once — the splash uses this to say "connected". */
+  delivered: boolean
 }
 
 let pending = 0
@@ -26,7 +28,7 @@ let slowTimer: number | null = null
 const listeners = new Set<Listener>()
 
 function publish() {
-  const state: LoadingState = { mode, pending }
+  const state: LoadingState = { mode, pending, delivered }
   for (const listener of listeners) listener(state)
 }
 
@@ -74,15 +76,14 @@ export function endLoading() {
 export function markDelivered() {
   if (delivered) return
   delivered = true
+  // The splash is showing the connected line from this moment, so say so even when the
+  // mode itself does not change (the intro covers the shell regardless of the bus).
+  publish()
   reschedule()
-}
-
-export function isDelivered() {
-  return delivered
 }
 
 export function subscribeLoading(listener: Listener): () => void {
   listeners.add(listener)
-  listener({ mode, pending })
+  listener({ mode, pending, delivered })
   return () => listeners.delete(listener)
 }

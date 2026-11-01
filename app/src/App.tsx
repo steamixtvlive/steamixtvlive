@@ -21,7 +21,9 @@ function AppContent() {
     return () => window.removeEventListener('notflix-activation-reset', handler)
   }, [])
 
-  if (!activated) return <><NotflixActivation onActivated={() => setActivated(true)} /><NotflixLoading /></>
+  // The ident is a cold-start ritual, not a doorbell: a viewer who has not been given a code yet
+  // must be able to type it, so the shell only takes the screen once the code is in.
+  if (!activated) return <><NotflixActivation onActivated={() => setActivated(true)} /><NotflixLoading intro={false} /></>
 
   return (
     <>

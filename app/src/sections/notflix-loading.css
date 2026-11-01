@@ -171,6 +171,27 @@
   color: rgba(255, 255, 255, 0.32);
 }
 
+/* The way out of the ritual. It sits in the corner the remote reaches first and takes the same
+   thin inset frame as every other focusable surface, so it never reads as a blue box. */
+.nf-load__skip {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+  padding: 9px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.72);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.nf-load__skip:hover { color: #fff; border-color: rgba(255, 255, 255, 0.34); }
+
 /* ---- hairline rail for requests after the first paint ---- */
 .nf-load-rail {
   position: fixed;

@@ -586,8 +586,14 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
 
   function beginSwipe(event: ReactTouchEvent<HTMLDivElement>) {
     const touch = event.touches[0]
+    const from = event.target as HTMLElement | null
+    // The bar, the channel panel and the source picker answer gestures for themselves; only a drag
+    // that starts on the picture is a dial. The centre of that picture carries the play button, so
+    // the rule is read off the surface the finger landed on, not off which element is on top.
+    if (from?.closest('.player-controls, .ch-overlay, .subtitle-menu')) { swipeRef.current = null; return }
     swipeHandledRef.current = false
     swipeRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null
+    revealControls()
   }
 
   function endSwipe(event: ReactTouchEvent<HTMLDivElement>) {
@@ -602,6 +608,10 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     if (Math.abs(dy) < 60 || Math.abs(dy) < Math.abs(dx)) return
     swipeHandledRef.current = true
     zapChannel(dy < 0 ? 1 : -1)
+  }
+
+  function cancelSwipe() {
+    swipeRef.current = null
   }
 
   function copyLink() {
@@ -773,15 +783,13 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   }
 
   return (
-    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={revealControls} tabIndex={-1} data-focus-scope>
+    <div className={`player-root player-renderer-legacy ${isFullscreen ? 'player-renderer-legacy-fullscreen' : ''}`} ref={containerRef} onMouseMove={revealControls} onTouchStart={beginSwipe} onTouchEnd={endSwipe} onTouchCancel={cancelSwipe} tabIndex={-1} data-focus-scope>
       <div className="player-pager">
         <div className="player-video-wrap">
           <video ref={videoRef} className="player-video" playsInline onClick={togglePlay} />
         </div>
         <div
           className="player-click-area"
-          onTouchStart={beginSwipe}
-          onTouchEnd={endSwipe}
           onClick={() => {
             if (swipeHandledRef.current) { swipeHandledRef.current = false; return }
             userInteracted.current = true
@@ -1068,7 +1076,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       ) : null}
 
       {state.isLive ? (
-        <button type="button" className={`player-center-toggle ${showControls ? 'is-visible' : ''}`} onClick={(event) => { event.stopPropagation(); togglePlay(); revealControls() }} aria-label={playing ? t('player.pause') : t('player.play')}>
+        <button type="button" className={`player-center-toggle ${showControls ? 'is-visible' : ''}`} onClick={(event) => { event.stopPropagation(); if (swipeHandledRef.current) { swipeHandledRef.current = false; return } togglePlay(); revealControls() }} aria-label={playing ? t('player.pause') : t('player.play')}>
           {playing ? '❚❚' : <PlayIcon size={28} />}
         </button>
       ) : null}

@@ -69,7 +69,7 @@ const ANDROID_KEY_COMMANDS: Record<number, string> = {
   24: 'volup',
   25: 'voldown',
   66: 'ok',
-  82: 'source',
+  82: 'menu',
   85: 'playpause',
   126: 'playpause',
   127: 'playpause',
@@ -80,6 +80,7 @@ const ANDROID_KEY_COMMANDS: Record<number, string> = {
   164: 'mute',
   166: 'chup',
   167: 'chdown',
+  179: 'source',
 }
 
 const NAMED_KEY_COMMANDS: Record<string, string> = {
@@ -97,6 +98,8 @@ const NAMED_KEY_COMMANDS: Record<string, string> = {
   ChannelDown: 'chdown',
   GoBack: 'back',
   Back: 'back',
+  Menu: 'menu',
+  ContextMenu: 'menu',
 }
 
 export function androidKeyCommand(keyCode: number, key = ''): string | null {

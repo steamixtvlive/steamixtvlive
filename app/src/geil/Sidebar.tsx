@@ -44,7 +44,7 @@ export function BrandMark() {
   )
 }
 
-export default function Sidebar({ route }: { route: RouteState }) {
+export default function Sidebar({ route, menuOpen = false }: { route: RouteState; menuOpen?: boolean }) {
   const { t } = useLang()
   const mainActive = MAIN_ITEMS.findIndex((item) => isActive(route, item.view))
   const settingsActive = isActive(route, 'settings')
@@ -52,9 +52,9 @@ export default function Sidebar({ route }: { route: RouteState }) {
 
   return (
     <>
-      <aside className="sidebar" data-zone="sidebar" role="navigation" aria-label="Main navigation">
+      <aside className="sidebar" data-zone="sidebar" role="navigation" aria-label="Main navigation" data-menu={menuOpen ? 'open' : undefined}>
         <div className="sidebar-dock">
-          <a className="sidebar-brand" href="#/" aria-label="Anasayfa">
+          <a className="sidebar-brand" href="#/" aria-label={t('nav.menu')} aria-expanded={menuOpen}>
             <span className="brand-burger" aria-hidden="true"><i /><i /><i /></span>
             <span className="brand-text">
               <NotflixLogo className="sidebar-notflix-wordmark" />
@@ -89,6 +89,13 @@ export default function Sidebar({ route }: { route: RouteState }) {
             </a>
           </div>
         </div>
+        {/* A collapsed rail is 64px of icons and nothing on it says whose they are. The pull names
+            the drawer and offers itself as the handle; it is decoration, never a tap target. */}
+        <span className="rail-pull" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
       </aside>
 
       <nav

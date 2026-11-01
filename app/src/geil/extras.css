@@ -59,8 +59,11 @@
 .subtitle-row-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .subtitle-empty { padding: 10px 4px; text-align: center; font-size: 13px; color: rgba(255,255,255,.58); }
 
-/* Finger zapping on the live picture: swipe up = next channel, down = previous. */
-.player-root .player-click-area { touch-action: none; }
+/* Finger zapping on the live picture: swipe up = next channel, down = previous. The play button
+   sits in the middle of that picture, so it has to refuse the page scroll as well — a drag that
+   the browser turns into a scroll is cancelled before the dial ever sees it. */
+.player-root .player-click-area,
+.player-root .player-center-toggle { touch-action: none; }
 /* The skin uses `html.player-osd` as a root flag, so the badge needs its own class. */
 .geil-osd {
   position: absolute; left: 50%; bottom: 24%; transform: translateX(-50%); z-index: 240;
@@ -205,7 +208,7 @@
 .s-toggle span { position: absolute; top: 2px; left: 2px; width: 21px; height: 21px; border-radius: 50%; background: #fff; transition: left .2s var(--ease, ease); }
 .s-toggle.is-on { background: var(--accent); border-color: transparent; }
 .s-toggle.is-on span { left: 23px; }
-.s-device-ok { color: #5edc9a; font-weight: 700; }
+.s-value-ok { color: #5edc9a; font-weight: 700; }
 .s-error { color: #ff8b90 !important; }
 .s-value-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px;
@@ -350,23 +353,26 @@
   text-shadow: none;
 }
 
-/* The wordmark is the only thing in flow, so it sits dead centre in the rail while the
-   three-line mark is pinned out of the layout and stays on the same axis in both states. */
+/* The mark is a site mark, so it lives in one place: the top-left corner, open or shut. Shut, the
+   rail is a 64px strip and the three-line handle falls on its own axis (the word fades to 0 but keeps
+   no room); open, the drawer grows to the right and the word appears beside the handle without the
+   handle moving a pixel. Centring the pair made the handle slide sideways on every expand. */
 .sidebar-brand {
-  position: relative;
-  justify-content: center;
-  padding-left: 11px;
+  justify-content: flex-start;
+  padding-left: 10px;
 }
-.sidebar-brand .brand-burger {
-  position: absolute;
-  top: 50%;
-  left: calc(50% - 13px + (24px - 50%) * var(--open, 0));
-  transform: translateY(-50%);
+.sidebar[data-menu='open'] .sidebar-brand,
+html.tv-mode .sidebar:focus-within .sidebar-brand,
+html.kb-nav .sidebar:focus-within .sidebar-brand { justify-content: flex-start; padding-left: 10px; }
+@media (hover: hover) {
+  html.tv-mode .sidebar:hover .sidebar-brand { justify-content: flex-start; padding-left: 10px; }
 }
 
-/* The rail opens with a three-line menu mark instead of the old N tile. */
+/* The rail opens with a three-line menu mark instead of the old N tile. It never shrinks: shut, the
+   brand row is 26px of room and the wordmark is the one that has to vanish, not the handle. */
 .brand-burger {
   display: flex;
+  flex-shrink: 0;
   width: 26px;
   height: 26px;
   flex-direction: column;
@@ -385,36 +391,77 @@
 /* ---- Splash lock ---- */
 html.splash-lock, html.splash-lock body { overflow: hidden !important; }
 
-/* ---- TV mode focus ring ---- */
-/* The vendored TV skin pins the rail permanently open and adds 27px overscan padding,
-   which shifted the whole shell the moment TV mode flipped. The rail is an absolutely
-   positioned overlay, so keeping it driven by --open lets it expand for labels on
-   focus without moving anything else. */
-html.tv-mode .sidebar { width: calc(var(--rail-w) + (var(--rail-open) - var(--rail-w)) * var(--open)); }
-/* The vendored skin disables the rail in TV mode, so hovering never expanded it and
-   the menu looked dead. TV mode must stay usable with a mouse as well as a remote. */
-html.tv-mode .sidebar { pointer-events: auto; }
+/* ---- TV mode rail ---- */
+/* In TV mode the skin stood the rail's box at its full 244px and clipped the dock back to the strip,
+   which is why the drawer never looked like the one every other screen has: the clip, the outline and
+   the active pill are all measured against `--rail-open`, so the strip itself was painted out and the
+   box kept pressing on the picture. TV mode now uses the same drawer as everywhere else — shut it is
+   the icon strip, open it is the menu, and the width animates between the two. */
+html.tv-mode .sidebar {
+  width: calc(var(--rail-w) + (var(--rail-open) - var(--rail-w)) * var(--open));
+  pointer-events: auto;
+  transition: width var(--rail-t) var(--ease), padding var(--rail-t) var(--ease), top .3s var(--ease), bottom .3s var(--ease);
+}
+html.tv-mode .sidebar-dock { clip-path: none; }
+html.tv-mode .sidebar:before { right: var(--rail-gap); }
+html.tv-mode .nav-pill:before,
+html.tv-mode .sidebar-bottom .nav-item.active:not(:focus):before { right: 0; }
 @media (hover: hover) {
   html.tv-mode .sidebar:hover { --open: 1; }
 }
 html.tv-mode:not(.tv-device) { --sat: env(safe-area-inset-top); --sab: env(safe-area-inset-bottom); }
-/* An AIR remote moves focus with no keyboard activity at all, and Chrome then refuses to draw the
-   ring, which reads as "the remote does nothing". While a remote is attached the ring is forced. */
-html.tv-mode .main :focus,
-html.tv-mode .sidebar :focus,
-html.tv-mode .bnav :focus,
-html.remote-live .main :focus,
-html.remote-live .sidebar :focus,
-html.remote-live .bnav :focus,
-html.remote-live .player-root :focus,
-html.remote-live .modal :focus,
-html.remote-live .shortcuts-overlay :focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: 10px;
+
+/* ---- Rail pull ----
+   A closed rail is 64px of icons and nothing on it says that it opens. This is the handle: a clip
+   pinned over the strip's edge, breathing outward, that folds into the rail the moment the drawer is
+   open. It is placed from `--rail-w`, not from the sidebar's own box, because in TV mode that box is
+   the full 244px overlay and only its first 64px are ever painted. */
+.rail-pull {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--rail-w) - var(--rail-gap) - 6px);
+  z-index: 3;
+  display: none;
+  place-items: center;
+  width: 30px;
+  height: 60px;
+  margin-top: -30px;
+  border-radius: 0 18px 18px 0;
+  background: rgba(11, 13, 16, .93);
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-left: 0;
+  color: var(--accent);
+  pointer-events: none;
+  box-shadow: 12px 0 26px -16px #000;
+  transition: opacity .26s var(--ease), transform .34s var(--ease);
+  animation: rail-pull-halo 2.6s var(--ease) infinite;
 }
-html.tv-mode .card:focus,
-html.remote-live .card:focus { outline-offset: 4px; }
+.rail-pull svg { width: 16px; height: 16px; animation: rail-pull-point 2.6s var(--ease) infinite; }
+html.tv-mode .rail-pull { display: grid; }
+/* The skin gives every child of a TV rail its pointer back; this one hangs over the picture, so it
+   has to refuse the tap it would otherwise steal from the poster underneath it. */
+html.tv-mode .sidebar > .rail-pull { pointer-events: none; }
+@keyframes rail-pull-halo {
+  0%, 100% { border-color: rgba(255, 255, 255, .13); box-shadow: 12px 0 26px -16px #000; }
+  55% { border-color: rgba(var(--accent-rgb), .55); box-shadow: 12px 0 30px -14px #000, 0 0 0 3px rgba(var(--accent-rgb), .12); }
+}
+@keyframes rail-pull-point {
+  0%, 100% { transform: translateX(-2px); }
+  55% { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-pull, .rail-pull svg { animation: none; }
+}
+.sidebar[data-menu='open'] .rail-pull,
+html.tv-mode .sidebar:focus-within .rail-pull,
+html.kb-nav .sidebar:focus-within .rail-pull {
+  opacity: 0;
+  transform: translateX(-24px);
+  animation: none;
+}
+@media (hover: hover) {
+  .sidebar:hover .rail-pull { opacity: 0; transform: translateX(-24px); animation: none; }
+}
 
 /* ---- Tablet band ---- */
 @media (max-width: 900px) {
@@ -572,8 +619,12 @@ html.tv-mode .site-fullscreen:focus { box-shadow: 0 0 0 2px var(--accent), 0 0 1
 /* ---- D-pad focus: the remote is the only pointer on a TV box, so the control it rests on has to
    announce itself. It does that with one thin frame drawn inside the control's own box — no glow,
    no lift, nothing outside the box. A ring that grows past the edge overlaps its neighbour, and one
-   that hangs over a container's clipped edge, like the hero's Detaylar button, is drawn in halves. ---- */
+   that hangs over a container's clipped edge, like the hero's Detaylar button, is drawn in halves.
+   The same frame answers a tap or a Tab anywhere else, because the browser's own focus ring is a
+   chunky blue box that reads as a bug on a 55" panel and on a phone — and `:focus-visible` lets that
+   box through the moment the viewer reaches a poster with the mouse instead of the remote. ---- */
 [data-dpad-focus],
+:focus,
 html.tv-mode :focus-visible,
 html.remote-live :focus-visible,
 html.tv-mode .main :focus,
@@ -582,6 +633,7 @@ html.tv-mode .bnav :focus,
 html.tv-mode .player-root :focus,
 html.tv-mode .modal :focus,
 html.tv-mode .shortcuts-overlay :focus,
+html.remote-live .player-root :focus,
 html.remote-live .main :focus,
 html.remote-live .sidebar :focus,
 html.remote-live .bnav :focus,
@@ -603,3 +655,24 @@ html.tv-mode .sort-select:focus,
 html.remote-live .sort-select:focus {
   box-shadow: none !important;
 }
+
+/* ---- The channel dial beside the picture ------------------------------------
+   440px of strip on a 55" panel is a column of half-read names. On a wide screen the dial gets
+   the room a wall deserves, and the list keeps a gutter so a focused row's frame never sits on
+   the scroller's own edge. */
+@media (min-width: 1100px) {
+  .ch-panel { width: min(640px, 34vw); max-width: none; }
+  .ch-panel.source-panel { width: min(560px, 30vw); }
+  .ch-panel .ch-list { padding-left: 12px; padding-right: 12px; }
+}
+
+/* ---- The rail as a menu ------------------------------------------------------
+   A mouse expands the rail by hovering it; a remote has no hover, so it opens and closes it.
+   The skin keeps its own --open switch, so the menu is that switch and nothing else. */
+.sidebar[data-menu='open'] { --open: 1; }
+html.tv-mode .sidebar[data-menu='open'] { pointer-events: auto; }
+html.tv-mode .sidebar[data-menu='open'] .sidebar-dock,
+html.tv-mode .sidebar[data-menu='open'] .sidebar-dock:before,
+html.tv-mode .sidebar[data-menu='open'] .sidebar-brand,
+html.tv-mode .sidebar[data-menu='open'] .nav-item:not(.active),
+html.tv-mode .sidebar[data-menu='open'] .sidebar-bottom:not(:has(.nav-item.active)) { opacity: 1; }

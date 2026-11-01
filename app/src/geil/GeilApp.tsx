@@ -96,16 +96,19 @@ export default function GeilApp() {
   const [liveChannels, setLiveChannels] = useState<GeilItem[]>([])
   const [showHelp, setShowHelp] = useState(false)
   const [tvMode, setTvModeState] = useState(readTvMode)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [remoteSession, setRemoteSession] = useState<RemoteSessionState | null>(readStoredRemoteSession)
 
   const playerRef = useRef(player)
   const modalRef = useRef(sourceModal)
   const helpRef = useRef(showHelp)
   const routeRef = useRef(route)
+  const menuRef = useRef(menuOpen)
   playerRef.current = player
   modalRef.current = sourceModal
   helpRef.current = showHelp
   routeRef.current = route
+  menuRef.current = menuOpen
 
   const overlayKey = player.open ? 'player' : sourceModal ? 'sources' : ''
   const lastOverlay = useRef('')
@@ -213,11 +216,13 @@ export default function GeilApp() {
       // A viewer typing wants the arrows for the caret, and a remote has no caret to move. The two
       // are the same key press, so the field decides by where the cursor already sits: up at the
       // start of the line and down at its end leave the field, anywhere inside it they edit.
+      // A dropdown is not text — its value is picked with left/right — so up/down always leave it.
       if (typing && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+        const select = target?.tagName === 'SELECT'
         const field = target as HTMLInputElement | null
         const caret = field && typeof field.selectionStart === 'number' ? field.selectionStart : null
         const length = field && typeof field.value === 'string' ? field.value.length : 0
-        const atEdge = caret !== null && (event.key === 'ArrowUp' ? caret === 0 : caret === length)
+        const atEdge = select || (caret !== null && (event.key === 'ArrowUp' ? caret === 0 : caret === length))
         if (!remoteDriven() || !atEdge) return
         event.preventDefault()
         moveFocus(event.key === 'ArrowUp' ? 'up' : 'down')
@@ -250,7 +255,7 @@ export default function GeilApp() {
         // The overlay closer ran first and took the key when something was on screen.
         if (event.defaultPrevented) return
         // Nothing above home to go back to: a remote's Back there is the browser's own, not ours.
-        if (routeRef.current.view === 'home' && !modalRef.current && !helpRef.current) return
+        if (routeRef.current.view === 'home' && !menuRef.current && !modalRef.current && !helpRef.current) return
         event.preventDefault()
         dispatchBack()
         return
@@ -266,6 +271,7 @@ export default function GeilApp() {
         return
       }
       if (event.key === 'Backspace' && !showHelp) {
+        if (menuRef.current) { event.preventDefault(); dispatchBack(); return }
         if (route.view !== 'home' && !window.history.state?.geilOverlay) {
           event.preventDefault()
           dispatchBack()
@@ -280,7 +286,7 @@ export default function GeilApp() {
         const direction = event.key === 'ArrowUp' ? 'up' : event.key === 'ArrowDown' ? 'down' : event.key === 'ArrowLeft' ? 'left' : 'right'
         // A focused dropdown owns left/right: the D-pad picks its value instead of leaving the row.
         if ((direction === 'left' || direction === 'right') && stepSelect(direction)) return
-        moveFocus(direction)
+        if (!moveFocus(direction) && direction === 'left' && !menuRef.current) openMenu()
       }
     }
     window.addEventListener('keydown', handler)
@@ -298,14 +304,21 @@ export default function GeilApp() {
         const direction = command as FocusDirection
         // A focused dropdown owns left/right: the D-pad picks its value instead of leaving the row.
         if ((direction === 'left' || direction === 'right') && stepSelect(direction)) return
-        moveFocus(direction)
+        // Nothing left to walk to means the viewer is already at the left edge: that press opens
+        // the rail rather than dying on a wall.
+        if (!moveFocus(direction) && direction === 'left' && !menuRef.current) openMenu()
         return
       }
       if (command === 'ok' || command === 'playpause') { if (!activateFocused()) focusFirst(); return }
+      if (command === 'menu') {
+        if (menuRef.current) closeMenu()
+        else openMenu()
+        return
+      }
       if (command === 'back') {
         // Telling the shell whether the page consumed the key is what keeps Android's Back from
         // stepping out of the app while a screen is still there to go back to.
-        if (modalRef.current || helpRef.current || routeRef.current.view !== 'home' || !isShellApp()) event.preventDefault()
+        if (menuRef.current || modalRef.current || helpRef.current || routeRef.current.view !== 'home' || !isShellApp()) event.preventDefault()
         dispatchBack()
         return
       }
@@ -446,8 +459,21 @@ export default function GeilApp() {
     if (remoteDriven()) window.setTimeout(() => focusFirst({ skipInputs: true }), 120)
   }
 
+  // The rail is the menu a remote opens and closes. A mouse never needs it — it already expands
+  // under the pointer — but a D-pad parked at the left edge has nothing else to lean on.
+  function openMenu() {
+    setMenuOpen(true)
+    window.setTimeout(() => focusFirst({ root: document.querySelector<HTMLElement>('.sidebar') }), 90)
+  }
+
+  function closeMenu() {
+    setMenuOpen(false)
+    if (remoteDriven()) window.setTimeout(() => focusFirst({ skipInputs: true }), 90)
+  }
+
   // The one back ladder every entry point (Enter-less TV keys, the bus, Backspace) walks.
   function dispatchBack() {
+    if (menuRef.current) { closeMenu(); return }
     if (modalRef.current) { closeSourceModal(); return }
     if (helpRef.current) { setShowHelp(false); return }
     if (routeRef.current.view !== 'home') { window.history.back(); return }
@@ -732,7 +758,7 @@ export default function GeilApp() {
 
   return (
     <div className="app-root">
-      <Sidebar route={route} />
+      <Sidebar route={route} menuOpen={menuOpen} />
       {player.open || route.view === 'remote' ? null : <SiteFullscreenButton />}
       <main className="main" role="main">
         <div className="main-inner">

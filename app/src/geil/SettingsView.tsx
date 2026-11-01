@@ -3,7 +3,7 @@ import { useLang } from '@/lib/language'
 import { clearAllData } from './storage'
 import { readTvMode, setTvMode } from './tv'
 import ShortcutsHelp from './ShortcutsHelp'
-import { ClockIcon, DatabaseIcon, GlobeIcon, InfoIcon, SettingsIcon, TvIcon, TrashIcon } from './icons'
+import { ClockIcon, DatabaseIcon, GlobeIcon, InfoIcon, LockIcon, SettingsIcon, TrashIcon } from './icons'
 
 export default function SettingsView() {
   const { t, lang, setLang, languages, langNames } = useLang()
@@ -79,30 +79,6 @@ export default function SettingsView() {
               <span className="s-value">{t('settings.themeDark')}</span>
             </div>
           </div>
-        </section>
-
-        <section className="s-group">
-          <div className="s-group-head">
-            <span className="s-gicon"><TvIcon size={16} /></span>
-            <span className="s-group-title">{t('settings.devices')}</span>
-          </div>
-          <div className="s-item">
-            <div className="s-item-nav">
-              <div>
-                <div className="s-sub">{t('settings.devicesDesc')}</div>
-              </div>
-            </div>
-          </div>
-          {['Google TV', 'Smart TV', 'TV Box', t('settings.devicesPc')].map((name) => (
-            <div className="s-item" key={name}>
-              <div className="s-item-nav">
-                <div>
-                  <div className="s-label">{name}</div>
-                </div>
-                <span className="s-value s-device-ok">{t('settings.devicesOk')}</span>
-              </div>
-            </div>
-          ))}
           {/* A box whose browser the auto-detector has never met would otherwise be stuck: its
               remote cannot type the Shift+T chord that turns the D-pad on. */}
           <div className="s-item">
@@ -121,6 +97,29 @@ export default function SettingsView() {
               >
                 <span />
               </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="s-group">
+          <div className="s-group-head">
+            <span className="s-gicon"><LockIcon size={16} /></span>
+            <span className="s-group-title">{t('settings.location')}</span>
+          </div>
+          <div className="s-item">
+            <div className="s-item-nav">
+              <div>
+                <div className="s-label">{t('settings.region')}</div>
+              </div>
+              <span className="s-value">{t('settings.germany')}</span>
+            </div>
+          </div>
+          <div className="s-item">
+            <div className="s-item-nav">
+              <div>
+                <div className="s-label">{t('settings.tunnel')}</div>
+              </div>
+              <span className="s-value s-value-ok">VypnTunnel</span>
             </div>
           </div>
         </section>
