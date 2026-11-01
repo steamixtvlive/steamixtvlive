@@ -36,18 +36,50 @@ export function isShellApp(): boolean {
   return /notflixapp/i.test(navigator.userAgent)
 }
 
+/** A TV box's Chrome and a smart TV's browser put nothing in their user agent that gives them
+    away, and the viewer cannot flip a setting on with a remote that does not work yet. So the
+    interface asks the one question it can answer by itself: is this session driven by keys? The
+    first press turns the D-pad layer on, a click with the mouse turns it back off. */
+let keyDriven = false
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', () => { keyDriven = true }, true)
+  window.addEventListener('pointerdown', () => { keyDriven = false }, true)
+}
+
+export function remoteDriven(): boolean {
+  return keyDriven || readTvMode() || isTvDevice() || isShellApp()
+}
+
 /** Android TVs and TV boxes report most of their remote as bare numeric key codes, often without
     naming the key at all ('Unidentified'), so those presses join the same command bus the D-pad
-    already walks. The codes are Android's: 4 Back, 23 DPAD-Centre, 66 Enter, 165/166 channel row.
-    They are only read from an unnamed key, because a real keyboard answers the same numbers with
-    printable keys (82 is 'R', 4 is not otherwise seen). */
+    already walks. The numbers are Android's own KeyEvent codes: 3 Home, 4 Back, 19-22 the D-pad,
+    13/23/66 Enter and DPAD-Centre, 24/25/164 the volume row, 85/126/127 play-pause, 128/129 and
+    166/167 the channel row, 133/134 the skip keys and 82 the menu key, which opens whatever list
+    the current screen owns. They are only read from an unnamed key, because
+    a real keyboard answers the same numbers with printable keys (82 is 'R', 19 is 'S'). */
 const ANDROID_KEY_COMMANDS: Record<number, string> = {
+  3: 'home',
   4: 'back',
+  19: 'up',
+  20: 'down',
+  21: 'left',
+  22: 'right',
   13: 'ok',
   23: 'ok',
+  24: 'volup',
+  25: 'voldown',
   66: 'ok',
-  165: 'chdown',
+  82: 'source',
+  85: 'playpause',
+  126: 'playpause',
+  127: 'playpause',
+  128: 'chup',
+  129: 'chdown',
+  133: 'forward',
+  134: 'rewind',
+  164: 'mute',
   166: 'chup',
+  167: 'chdown',
 }
 
 const NAMED_KEY_COMMANDS: Record<string, string> = {
@@ -102,7 +134,14 @@ function candidates(): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(visible)
 }
 
+let walked: HTMLElement | null = null
+
 function focusElement(element: HTMLElement) {
+  // A programmatic focus is not a keyboard focus, so no browser would light the ring on its own.
+  // The walk leaves its own mark for the stylesheet to follow, on any surface, TV mode or not.
+  walked?.removeAttribute('data-dpad-focus')
+  walked = element
+  element.setAttribute('data-dpad-focus', '')
   element.focus({ preventScroll: true })
   // A div that only carries role="button" is not in the tab order, so the first attempt lands on
   // nothing. Giving it a negative tab stop makes it programmatically focusable without letting it
@@ -182,7 +221,7 @@ export function moveFocus(direction: FocusDirection): boolean {
     if (!best || score < best.score) best = { element, score }
   }
   if (!best) { scrollFrom(current, direction); return false }
-  best.element.focus({ preventScroll: true })
+  focusElement(best.element)
   best.element.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
   return true
 }

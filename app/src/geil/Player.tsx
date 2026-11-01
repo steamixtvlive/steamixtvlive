@@ -4,11 +4,11 @@ import type { MouseEvent, TouchEvent as ReactTouchEvent } from 'react'
 import Hls from 'hls.js'
 import { Captions, List, Layers, Check } from 'lucide-react'
 import type { PlayerState, GeilItem, PlayerSource } from './types'
-import { XIcon, ChevronLeft, ChevronRight, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, HeartIcon, SearchIcon, ArrowLeftIcon } from './icons'
+import { XIcon, ChevronUp, ChevronDown, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, HeartIcon, SearchIcon, ArrowLeftIcon } from './icons'
 import { channelColor, channelQuality, channelStation, currentEpg, formatClock, initialOf, normalizeLiveChannels, remainingLabel } from './api'
 import { saveContinueWatching } from './storage'
 import { subtitleLanguageCode, subtitleLanguageLabel } from './subtitle-language'
-import { activateFocused, focusFirst, moveFocus, readTvMode, stepSelect } from './tv'
+import { activateFocused, focusFirst, moveFocus, remoteDriven, stepSelect, type FocusDirection } from './tv'
 import { useLang } from '@/lib/language'
 import ShortcutsHelp from './ShortcutsHelp'
 
@@ -115,6 +115,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   const failureReported = useRef('')
   const userInteracted = useRef(false)
   const actionsRef = useRef<(event: KeyboardEvent | { key: string; remote?: boolean }) => void>(() => {})
+  const busRef = useRef<(event: Event) => void>(() => {})
   const playerStateRef = useRef(state)
   playerStateRef.current = state
   const subtitles = collectSubtitles(state, state.item?.videos)
@@ -436,6 +437,22 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     }, 2000)
   }
 
+  /**
+   * One D-pad, two entrances: the browser's arrow keys and the command bus that the Android key
+   * codes and the phone remote both write to. A box that reports its keys as bare numbers must not
+   * steer differently from one that names them, so both roads meet here.
+   */
+  function driveDirection(direction: FocusDirection) {
+    if (!panelOpen && !sourceChooserOpen && !subtitleMenuOpen && !showControls) {
+      if (state.isLive && (direction === 'up' || direction === 'down')) { zapChannel(direction === 'down' ? 1 : -1); return }
+      if (!state.isLive && (direction === 'left' || direction === 'right')) { seekBy(direction === 'right' ? 10 : -10); return }
+      revealControls()
+      return
+    }
+    if ((direction === 'left' || direction === 'right') && stepSelect(direction)) return
+    moveFocus(direction)
+  }
+
   function openChannelPanel() {
     userInteracted.current = true
     setPanelOpen(true)
@@ -548,6 +565,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     flashOsd(t('player.qualityUnavailable'))
   }
 
+  /** +1 walks down the list the viewer sees, -1 up it, and the ends wrap around. */
   function zapChannel(direction: -1 | 1) {
     if (!state.isLive) return
     // Zap through exactly the list the channel panel is showing, so a country selection
@@ -556,12 +574,14 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     const list = visiblePanel.length ? visiblePanel : (state.channels?.length ? state.channels : channels)
     if (!list.length || !onChannelSelect) return
     const index = list.findIndex((entry) => entry.id === state.item?.id)
-    const nextChannel = list[(index + direction + list.length) % list.length]
+    // A channel that is not on the list — opened from the home rail, say — starts at its end
+    // rather than landing in the middle of nowhere.
+    const nextIndex = index < 0 ? (direction === 1 ? 0 : list.length - 1) : (index + direction + list.length) % list.length
+    const nextChannel = list[nextIndex]
     if (!nextChannel) return
     const station = channelStation(nextChannel.name)
     setZap({ name: station, color: channelColor(station) })
     onChannelSelect(nextChannel, visiblePanel.length ? visiblePanel : undefined)
-    revealControls()
   }
 
   function beginSwipe(event: ReactTouchEvent<HTMLDivElement>) {
@@ -619,17 +639,14 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       return
     }
     if (showHelp) return
-    // On a TV the D-pad is the pointer everywhere else in the app, so the player honours the same
-    // contract: arrows walk the controls, OK activates. Transport keeps its letters, the AIR
-    // remote's dedicated buttons and, for live, the channel row keys (166/165 → chup/chdown).
-    const dpadArrows = readTvMode() && (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight')
-    if (dpadArrows) {
+    // The D-pad is the pointer whenever the viewer drives the app with keys rather than with a
+    // mouse — on a TV box's Chrome, whose user agent never says it is a TV, as much as on a real
+    // smart TV. An open surface owns the arrows; with nothing open the remote is still the channel
+    // dial, so up and down walk the list the viewer is looking at and left and right seek.
+    const arrow = key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight'
+    if (arrow && remoteDriven()) {
       handled()
-      const direction = key === 'ArrowUp' ? 'up' : key === 'ArrowDown' ? 'down' : key === 'ArrowLeft' ? 'left' : 'right'
-      if ((direction === 'left' || direction === 'right') && stepSelect(direction)) return
-      if (panelOpen || sourceChooserOpen || subtitleMenuOpen || showControls) { moveFocus(direction); return }
-      revealControls()
-      if (target !== videoRef.current && document.activeElement !== videoRef.current) moveFocus(direction)
+      driveDirection(key === 'ArrowUp' ? 'up' : key === 'ArrowDown' ? 'down' : key === 'ArrowLeft' ? 'left' : 'right')
       return
     }
     if (key === 'Enter' || key === 'NumpadEnter') {
@@ -647,8 +664,8 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     if (key === 'l' || key === 'L') { handled(); if (state.isLive) { panelOpen ? setPanelOpen(false) : openChannelPanel() } else seekBy(10); return }
     if (key === 'ArrowLeft') { handled(); seekBy(-10); return }
     if (key === 'ArrowRight') { handled(); seekBy(10); return }
-    if (key === 'ArrowUp') { handled(); if (state.isLive) zapChannel(1); else changeVolume(0.1); return }
-    if (key === 'ArrowDown') { handled(); if (state.isLive) zapChannel(-1); else changeVolume(-0.1); return }
+    if (key === 'ArrowUp') { handled(); if (state.isLive) zapChannel(-1); else changeVolume(0.1); return }
+    if (key === 'ArrowDown') { handled(); if (state.isLive) zapChannel(1); else changeVolume(-0.1); return }
     if (key === 'm' || key === 'M') { handled(); toggleMute(); return }
     if (key === 'f' || key === 'F') { handled(); void toggleFullscreen(); return }
     if (key === 'p' || key === 'P') { handled(); void togglePip(); return }
@@ -676,49 +693,53 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     return () => window.removeEventListener('keydown', handler, true)
   }, [])
 
-  useEffect(() => {
-    const handler = (event: Event) => {
-      const command = (event as CustomEvent<{ command?: string }>).detail?.command
-      if (!state.open || !command) return
-      // The D-pad is the pointer, not the transport: it walks the controls the way it walks the
-      // catalogue, so subtitles, source picker and exit are reachable from the phone. Seeking has
-      // its own keys for the same reason a real remote has its own transport row.
-      if (command === 'up' || command === 'down' || command === 'left' || command === 'right') {
-        revealControls()
-        moveFocus(command)
-        return
-      }
-      if (command === 'ok') { if (!activateFocused()) togglePlay(); return }
-      if (command === 'home') { onClose(); return }
-      if (command === 'back') {
-        // Claim the key so the Android shell does not also step out of the page behind the player.
-        event.preventDefault()
-        if (sourceChooserOpen) setSourceChooserOpen(false)
-        else if (subtitleMenuOpen) setSubtitleMenuOpen(false)
-        else if (panelOpen) { setPanelOpen(false); revealControls() }
-        else onClose()
-        return
-      }
-      if (command === 'playpause') { togglePlay(); return }
-      if (command === 'mute') { toggleMute(); return }
-      if (command === 'volup') { changeVolume(0.1); return }
-      if (command === 'voldown') { changeVolume(-0.1); return }
-      if (command === 'chup') { zapChannel(1); return }
-      if (command === 'chdown') { zapChannel(-1); return }
-      if (command === 'subtitle') { revealControls(); cycleSubtitle(); return }
-      if (command === 'source') {
-        revealControls()
-        if (state.isLive && onChannelSelect) openChannelPanel()
-        else if (!state.isLive && (state.sources?.length || 0) > 0) setSourceChooserOpen(true)
-        return
-      }
-      if (command === 'rewind' && !state.isLive) { revealControls(); seekBy(-10); return }
-      if (command === 'forward' && !state.isLive) { revealControls(); seekBy(10); return }
+  // The bus commands are read through a ref, exactly like the keys: the listener mounts once, so a
+  // handler captured in its closure would keep answering with the render it was born in — a stale
+  // `showControls` walks the control bar long after it hid itself, and the channel dial stops turning.
+  busRef.current = (event: Event) => {
+    const command = (event as CustomEvent<{ command?: string }>).detail?.command
+    if (!state.open || !command) return
+    // The D-pad is the pointer, not the transport: it walks the controls the way it walks the
+    // catalogue, so subtitles, source picker and exit are reachable from the phone. Seeking has
+    // its own keys for the same reason a real remote has its own transport row. A box that names
+    // its keys 'Unidentified' reaches this bus instead of the arrow path, so both must agree.
+    if (command === 'up' || command === 'down' || command === 'left' || command === 'right') {
+      driveDirection(command as FocusDirection)
+      return
     }
+    if (command === 'ok') { if (!activateFocused()) togglePlay(); return }
+    if (command === 'home') { onClose(); return }
+    if (command === 'back') {
+      // Claim the key so the Android shell does not also step out of the page behind the player.
+      event.preventDefault()
+      if (sourceChooserOpen) setSourceChooserOpen(false)
+      else if (subtitleMenuOpen) setSubtitleMenuOpen(false)
+      else if (panelOpen) { setPanelOpen(false); revealControls() }
+      else onClose()
+      return
+    }
+    if (command === 'playpause') { togglePlay(); return }
+    if (command === 'mute') { toggleMute(); return }
+    if (command === 'volup') { changeVolume(0.1); return }
+    if (command === 'voldown') { changeVolume(-0.1); return }
+    if (command === 'chup') { zapChannel(1); return }
+    if (command === 'chdown') { zapChannel(-1); return }
+    if (command === 'subtitle') { revealControls(); cycleSubtitle(); return }
+    if (command === 'source') {
+      revealControls()
+      if (state.isLive && onChannelSelect) openChannelPanel()
+      else if (!state.isLive && (state.sources?.length || 0) > 0) setSourceChooserOpen(true)
+      return
+    }
+    if (command === 'rewind' && !state.isLive) { revealControls(); seekBy(-10); return }
+    if (command === 'forward' && !state.isLive) { revealControls(); seekBy(10); return }
+  }
+
+  useEffect(() => {
+    const handler = (event: Event) => busRef.current(event)
     window.addEventListener('notflix-remote', handler)
     return () => window.removeEventListener('notflix-remote', handler)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.open, state.isLive, panelOpen, sourceChooserOpen, subtitleMenuOpen, volume, muted, rate, subtitleIndex])
+  }, [])
 
   if (!state.open) return null
 
@@ -826,11 +847,11 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 <div className="iptv-bar-controls">
                   {onChannelSelect ? (
                     <>
-                      <button className="player-ctrl-btn" aria-label={t('player.channelDown')} onClick={() => zapChannel(-1)}>
-                        <ChevronLeft size={20} />
+                      <button className="player-ctrl-btn" aria-label={t('player.channelUp')} onClick={() => zapChannel(-1)}>
+                        <ChevronUp size={20} />
                       </button>
-                      <button className="player-ctrl-btn" aria-label={t('player.channelUp')} onClick={() => zapChannel(1)}>
-                        <ChevronRight size={20} />
+                      <button className="player-ctrl-btn" aria-label={t('player.channelDown')} onClick={() => zapChannel(1)}>
+                        <ChevronDown size={20} />
                       </button>
                     </>
                   ) : null}

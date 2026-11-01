@@ -6,7 +6,7 @@ import type { GeilItem, GeilSource, PlayerSource, PlayerState, WatchMeta } from 
 import { resolveLiveChannel, fetchLiveCatalog, channelStation, normalizeLiveChannels, resolveVodSource, posterUrl, pollRemoteCommands, fetchVodSources } from './api'
 import { useHashRoute, parseHash, replaceRoute, navigate, itemHref } from './router'
 import { getContinueEntry, getDeadSourceUrls, getSavedSourceUrl, markDeadSource, clearDeadSource, saveSavedSourceUrl, type ContinueEntry } from './storage'
-import { activateFocused, androidKeyCommand, applyTvMode, focusFirst, isBackKey, isShellApp, isTvDevice, moveFocus, readTvMode, setTvMode, stepSelect } from './tv'
+import { activateFocused, androidKeyCommand, applyTvMode, focusFirst, isBackKey, isShellApp, moveFocus, readTvMode, remoteDriven, setTvMode, stepSelect } from './tv'
 import type { FocusDirection } from './tv'
 import Sidebar from './Sidebar'
 import SiteFullscreenButton from './SiteFullscreenButton'
@@ -190,7 +190,7 @@ export default function GeilApp() {
   // A TV has no cursor waiting in the page, so every screen change puts the D-pad onto the first
   // control instead of leaving the viewer pressing arrows against an unfocused wall.
   useEffect(() => {
-    if (!(isTvDevice() || isShellApp() || readTvMode())) return
+    if (!remoteDriven()) return
     if (playerRef.current.open || route.view === 'search') return
     const timer = window.setTimeout(() => focusFirst({ skipInputs: true }), 350)
     return () => window.clearTimeout(timer)
@@ -210,15 +210,20 @@ export default function GeilApp() {
         setShowHelp(false)
         return
       }
-      // A viewer typing on a keyboard wants the arrows for the caret; on a TV there is nothing to
-      // type with those arrows, so up/down leave the field for the results instead.
-      if (typing && (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
-        if (!readTvMode() || event.key === 'ArrowLeft' || event.key === 'ArrowRight') return
+      // A viewer typing wants the arrows for the caret, and a remote has no caret to move. The two
+      // are the same key press, so the field decides by where the cursor already sits: up at the
+      // start of the line and down at its end leave the field, anywhere inside it they edit.
+      if (typing && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+        const field = target as HTMLInputElement | null
+        const caret = field && typeof field.selectionStart === 'number' ? field.selectionStart : null
+        const length = field && typeof field.value === 'string' ? field.value.length : 0
+        const atEdge = caret !== null && (event.key === 'ArrowUp' ? caret === 0 : caret === length)
+        if (!remoteDriven() || !atEdge) return
         event.preventDefault()
         moveFocus(event.key === 'ArrowUp' ? 'up' : 'down')
         return
       }
-      if (typing && isBackKey(event) && readTvMode()) {
+      if (typing && isBackKey(event) && remoteDriven()) {
         // Back from the field first, and only then from the screen.
         event.preventDefault()
         target?.blur()
@@ -267,9 +272,9 @@ export default function GeilApp() {
         }
         return
       }
-      // Arrows are the D-pad. They stay live whenever a TV device, the shell app or the viewer
-      // toggled TV mode — a box whose UA the detector has never seen still gets a walkable UI.
-      if (!readTvMode() && !isTvDevice() && !isShellApp()) return
+      // Arrows are the D-pad. They are live for as long as the session is driven by keys, which a
+      // box whose user agent the detector has never seen still gets, without a setting.
+      if (!remoteDriven()) return
       if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault()
         const direction = event.key === 'ArrowUp' ? 'up' : event.key === 'ArrowDown' ? 'down' : event.key === 'ArrowLeft' ? 'left' : 'right'
@@ -430,7 +435,7 @@ export default function GeilApp() {
     popOverlayEntry()
     // The page behind is the surface again, so the remote keeps its footing there rather than
     // standing on the document body with nothing to walk.
-    if (isTvDevice() || isShellApp() || readTvMode()) window.setTimeout(() => focusFirst({ skipInputs: true }), 120)
+    if (remoteDriven()) window.setTimeout(() => focusFirst({ skipInputs: true }), 120)
   }
 
   function closeSourceModal() {
@@ -438,7 +443,7 @@ export default function GeilApp() {
     modalRef.current = null
     setSourceModal(null)
     popOverlayEntry()
-    if (isTvDevice() || isShellApp() || readTvMode()) window.setTimeout(() => focusFirst({ skipInputs: true }), 120)
+    if (remoteDriven()) window.setTimeout(() => focusFirst({ skipInputs: true }), 120)
   }
 
   // The one back ladder every entry point (Enter-less TV keys, the bus, Backspace) walks.
