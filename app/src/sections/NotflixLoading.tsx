@@ -72,7 +72,7 @@ export default function NotflixLoading({ intro: wantIntro = true }: { intro?: bo
           </div>
           <p className="nf-load__hint" key={hintKey}>{t(hintKey)}</p>
         </div>
-        {intro ? (
+        {intro && hint >= HINT_KEYS.length ? (
           <button type="button" className="nf-load__skip" onClick={() => setIntro(false)}>
             {t('splash.skip')}
           </button>

@@ -171,11 +171,13 @@
   color: rgba(255, 255, 255, 0.32);
 }
 
-/* The way out of the ritual. It sits in the corner the remote reaches first and takes the same
-   thin inset frame as every other focusable surface, so it never reads as a blue box. */
+/* The way out of the ritual, and it only offers itself once the working lines are done and the
+   screen has reached 'connected' — before that there is nothing to skip to yet. It sits low on the
+   right, clear of the centred credit, and takes the same thin inset frame as every other focusable
+   surface, so it never reads as a blue box. */
 .nf-load__skip {
   position: absolute;
-  top: max(18px, env(safe-area-inset-top));
+  bottom: max(20px, env(safe-area-inset-bottom));
   right: max(18px, env(safe-area-inset-right));
   padding: 9px 18px;
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -188,9 +190,15 @@
   letter-spacing: 0.22em;
   text-transform: uppercase;
   cursor: pointer;
+  animation: nfSkipIn 0.5s var(--nf-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 .nf-load__skip:hover { color: #fff; border-color: rgba(255, 255, 255, 0.34); }
+
+@keyframes nfSkipIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
 
 /* ---- hairline rail for requests after the first paint ---- */
 .nf-load-rail {

@@ -67,6 +67,9 @@ export const FullscreenIcon = (props: IconProps) => (
 export const ExitFullscreenIcon = (props: IconProps) => (
   <Icon {...props}><path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3" /></Icon>
 )
+export const RotateIcon = (props: IconProps) => (
+  <Icon {...props}><rect x="9.5" y="6" width="5" height="12" rx="1.5" /><path d="M6.6 8.6A6.6 6.6 0 0112 5.4" /><path d="M17.4 15.4A6.6 6.6 0 0112 18.6" /><path d="M4.3 8.3l2.4.3.3-2.4" /><path d="M19.7 15.7l-2.4-.3-.3 2.4" /></Icon>
+)
 export const PipIcon = (props: IconProps) => (
   <Icon {...props}><rect x="2" y="4" width="20" height="16" rx="2" /><rect x="12" y="12" width="8" height="6" rx="1" /></Icon>
 )
