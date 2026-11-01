@@ -20,6 +20,7 @@ import LibraryView from './LibraryView'
 import SettingsView from './SettingsView'
 import Player from './Player'
 import RemoteView from './RemoteView'
+import ProviderView from './ProviderView'
 import ShortcutsHelp from './ShortcutsHelp'
 import SourceModal, { vodContextOf } from './SourceModal'
 import type { SourceSelection } from './SourceModal'
@@ -194,7 +195,7 @@ export default function GeilApp() {
   // control instead of leaving the viewer pressing arrows against an unfocused wall.
   useEffect(() => {
     if (!remoteDriven()) return
-    if (playerRef.current.open || route.view === 'search') return
+    if (playerRef.current.open || route.view === 'search' || route.view === 'site') return
     const timer = window.setTimeout(() => focusFirst({ skipInputs: true }), 350)
     return () => window.clearTimeout(timer)
   }, [route.view, route.hash])
@@ -788,6 +789,7 @@ export default function GeilApp() {
     if (route.view === 'library') return <LibraryView onResume={resumeContinue} />
     if (route.view === 'settings') return <SettingsView />
     if (route.view === 'remote') return <RemoteView />
+    if (route.view === 'site') return <ProviderView />
     return <HomeView />
   }
 

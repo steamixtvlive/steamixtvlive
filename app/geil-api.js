@@ -13,9 +13,9 @@ import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto'
  * required by some VOD CDNs.
  */
 
-const GEIL = 'https://geil.to'
-const MHUB = 'https://www.mhub.mx'
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+export const GEIL = 'https://geil.to'
+export const MHUB = 'https://www.mhub.mx'
+export const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 const SECRET = process.env.GEIL_PROXY_SECRET || 'notflix-geil-proxy-v1-7c4f2a9e'
 
 const LIVE_TTL = 60 * 1000
@@ -207,6 +207,8 @@ function rewritePlaylist(playlist, baseUrl, inheritedHeaders) {
     })
     .join('\n')
 }
+
+export { proxyUrl, rewritePlaylist }
 
 function allowedSourceHeaders(headers) {
   const result = {}

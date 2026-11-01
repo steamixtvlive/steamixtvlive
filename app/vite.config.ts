@@ -9,6 +9,8 @@ import { inspectAttr } from 'kimi-plugin-inspect-react'
 import { createVodApi } from "./vod-api.js"
 // @ts-expect-error - no declaration file for the shared Node ESM module
 import { createGeilApi } from "./geil-api.js"
+// @ts-expect-error - no declaration file for the shared Node ESM module
+import { createGeilSiteApi } from "./geil-site.js"
 
 function apiPlugin(): Plugin {
   return {
@@ -16,7 +18,12 @@ function apiPlugin(): Plugin {
     configureServer(server) {
       const vodApi = createVodApi()
       const geilApi = createGeilApi()
+      const geilSiteApi = createGeilSiteApi()
       server.middlewares.use((req, res, next) => {
+        if (req.url?.startsWith("/api/geil/site")) {
+          void geilSiteApi(req, res, new URL(req.url, "http://localhost"))
+          return
+        }
         if (req.url?.startsWith("/api/geil/")) {
           void geilApi(req, res)
           return

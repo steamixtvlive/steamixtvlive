@@ -759,3 +759,27 @@ html.low-power .hero-dot-fill {
   padding-left: max(0px, calc(var(--sal, 0px) - var(--rail-w)));
   padding-right: max(0px, calc(var(--sar, 0px) - var(--rail-w)));
 }
+
+/* ---- Provider site (mirrored) ----------------------------------------------
+   The provider's own player, answered from our origin: every http:// stream address
+   inside it has already been turned into a signed media-proxy path by app/geil-site.js,
+   so the frame never asks for a resource the https page would refuse. */
+.app-root:has(.provider-page) .sidebar,
+.app-root:has(.provider-page) .bnav { display: none; }
+.provider-page {
+  position: fixed; inset: 0; z-index: 90; display: block; background: #050506;
+}
+.provider-frame { display: block; width: 100%; height: 100%; border: 0; background: #1a1f26; }
+.provider-wait {
+  position: absolute; inset: 0; display: grid; place-content: center;
+  font-size: 13px; letter-spacing: .04em; color: rgb(255 255 255 / 60%); pointer-events: none;
+}
+.provider-bar { position: absolute; right: 14px; bottom: 14px; display: flex; gap: 8px; }
+.provider-btn {
+  padding: 8px 14px; border-radius: 999px; border: 1px solid rgb(255 255 255 / 16%);
+  background: rgb(10 10 12 / 78%); color: #fff; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.provider-btn:hover { background: rgb(34 34 38 / 88%); }
+@media (max-width: 720px) {
+  .provider-bar { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+}

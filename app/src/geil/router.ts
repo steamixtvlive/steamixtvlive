@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 export interface RouteState {
   hash: string
-  view: 'home' | 'library' | 'channels' | 'search' | 'settings' | 'catalog' | 'item' | 'remote'
+  view: 'home' | 'library' | 'channels' | 'search' | 'settings' | 'catalog' | 'item' | 'remote' | 'site'
   parts: string[]
   query: URLSearchParams
 }
@@ -14,7 +14,7 @@ export function parseHash(hash = window.location.hash || '#/'): RouteState {
   const view = (parts[0] || 'home') as RouteState['view']
   return {
     hash,
-    view: ['home', 'library', 'channels', 'search', 'settings', 'catalog', 'item', 'remote'].includes(view) ? view : 'home',
+    view: ['home', 'library', 'channels', 'search', 'settings', 'catalog', 'item', 'remote', 'site'].includes(view) ? view : 'home',
     parts,
     query: new URLSearchParams(queryPart || ''),
   }

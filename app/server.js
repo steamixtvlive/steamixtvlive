@@ -8,9 +8,11 @@ import { spawn, execSync } from 'node:child_process'
 import ffmpegPathStatic from 'ffmpeg-static'
 import { createVodApi } from './vod-api.js'
 import { createGeilApi } from './geil-api.js'
+import { createGeilSiteApi } from './geil-site.js'
 
 const vodApi = createVodApi()
 const geilApi = createGeilApi()
+const geilSiteApi = createGeilSiteApi()
 
 // Try to find ffmpeg: first check static, then system PATH, then common locations
 let ffmpegPath = null
@@ -376,6 +378,10 @@ http.createServer((req, res) => {
   // NOTFLIX GEIL bridge (mHub live catalog/resolve, TMDB metadata, VOD sources
   // and the same-origin HTTPS media proxy)
   if ((req.url || '').startsWith('/api/geil/')) {
+    if ((req.url || '').startsWith('/api/geil/site')) {
+      void geilSiteApi(req, res, new URL(req.url, 'http://localhost'))
+      return
+    }
     void geilApi(req, res)
     return
   }

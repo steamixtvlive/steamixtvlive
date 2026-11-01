@@ -11,6 +11,7 @@ export const LANG_NAMES: Record<GeilLang, string> = {
 const tr = {
   'settings.location': 'Lokasyon / Bölge', 'settings.region': 'Bölge',
   'settings.germany': 'Almanya', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Sağlayıcı sitesi', 'settings.providerOpen': 'Aç', 'site.reload': 'Yenile',
   'nav.home': 'Ana Sayfa', 'nav.library': 'Kitaplık', 'nav.channels': 'Kanallar', 'nav.search': 'Ara', 'nav.menu': 'Menü', 'nav.settings': 'Ayarlar',
   'common.play': 'İzle', 'common.details': 'Detaylar', 'common.close': 'Kapat', 'common.retry': 'Yeniden dene', 'common.back': 'Geri',
   'common.cancel': 'Vazgeç', 'common.yes': 'Evet', 'common.delete': 'Sil', 'common.clear': 'Temizle', 'loading.line1': 'Sunucuya bağlanılıyor…', 'loading.line2': 'Katalog hazırlanıyor…', 'loading.line3': 'Yayın çizgileri denetleniyor…', 'loading.connected': 'Bağlanıldı', 'common.loading': 'Yükleniyor...', 'common.all': 'Tümü',
@@ -68,6 +69,7 @@ const tr = {
 const en: Record<string, string> = {
   'settings.location': 'Location / Region', 'settings.region': 'Region',
   'settings.germany': 'Germany', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Provider site', 'settings.providerOpen': 'Open', 'site.reload': 'Reload',
   'nav.home': 'Home', 'nav.library': 'Library', 'nav.channels': 'Channels', 'nav.search': 'Search', 'nav.menu': 'Menu', 'nav.settings': 'Settings',
   'common.play': 'Watch', 'common.details': 'Details', 'common.close': 'Close', 'common.retry': 'Retry', 'common.back': 'Back',
   'common.cancel': 'Cancel', 'common.yes': 'Yes', 'common.delete': 'Delete', 'common.clear': 'Clear', 'loading.line1': 'Connecting to the server…', 'loading.line2': 'Preparing the catalog…', 'loading.line3': 'Checking the streams…', 'loading.connected': 'Connected', 'common.loading': 'Loading...', 'common.all': 'All',
@@ -120,6 +122,7 @@ const en: Record<string, string> = {
 const de: Record<string, string> = {
   'settings.location': 'Standort / Region', 'settings.region': 'Region',
   'settings.germany': 'Deutschland', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Anbieter-Website', 'settings.providerOpen': 'Öffnen', 'site.reload': 'Neu laden',
   'nav.home': 'Startseite', 'nav.library': 'Mediathek', 'nav.channels': 'Sender', 'nav.search': 'Suche', 'nav.menu': 'Menü', 'nav.settings': 'Einstellungen',
   'common.play': 'Ansehen', 'common.details': 'Details', 'common.close': 'Schließen', 'common.retry': 'Erneut versuchen', 'common.back': 'Zurück',
   'common.cancel': 'Abbrechen', 'common.yes': 'Ja', 'common.delete': 'Löschen', 'common.clear': 'Leeren', 'loading.line1': 'Verbindung zum Server…', 'loading.line2': 'Katalog wird vorbereitet…', 'loading.line3': 'Streams werden geprüft…', 'loading.connected': 'Verbunden', 'common.loading': 'Wird geladen...', 'common.all': 'Alle',
@@ -171,6 +174,7 @@ const de: Record<string, string> = {
 const fr: Record<string, string> = {
   'settings.location': 'Emplacement / Région', 'settings.region': 'Région',
   'settings.germany': 'Allemagne', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Site du fournisseur', 'settings.providerOpen': 'Ouvrir', 'site.reload': 'Recharger',
   'nav.home': 'Accueil', 'nav.library': 'Bibliothèque', 'nav.channels': 'Chaînes', 'nav.search': 'Recherche', 'nav.menu': 'Menu', 'nav.settings': 'Paramètres',
   'common.play': 'Regarder', 'common.details': 'Détails', 'common.close': 'Fermer', 'common.retry': 'Réessayer', 'common.back': 'Retour',
   'common.cancel': 'Annuler', 'common.yes': 'Oui', 'common.delete': 'Supprimer', 'common.clear': 'Effacer', 'loading.line1': 'Connexion au serveur…', 'loading.line2': 'Préparation du catalogue…', 'loading.line3': 'Vérification des flux…', 'loading.connected': 'Connecté', 'common.loading': 'Chargement...', 'common.all': 'Tous',
@@ -222,6 +226,7 @@ const fr: Record<string, string> = {
 const es: Record<string, string> = {
   'settings.location': 'Ubicación / Región', 'settings.region': 'Región',
   'settings.germany': 'Alemania', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Sitio del proveedor', 'settings.providerOpen': 'Abrir', 'site.reload': 'Recargar',
   'nav.home': 'Inicio', 'nav.library': 'Biblioteca', 'nav.channels': 'Canales', 'nav.search': 'Buscar', 'nav.menu': 'Menú', 'nav.settings': 'Ajustes',
   'common.play': 'Ver', 'common.details': 'Detalles', 'common.close': 'Cerrar', 'common.retry': 'Reintentar', 'common.back': 'Volver',
   'common.cancel': 'Cancelar', 'common.yes': 'Sí', 'common.delete': 'Eliminar', 'common.clear': 'Borrar', 'loading.line1': 'Conectando con el servidor…', 'loading.line2': 'Preparando el catálogo…', 'loading.line3': 'Comprobando las fuentes…', 'loading.connected': 'Conectado', 'common.loading': 'Cargando...', 'common.all': 'Todo',
@@ -272,6 +277,7 @@ const es: Record<string, string> = {
 const it: Record<string, string> = {
   'settings.location': 'Localizzazione / Regione', 'settings.region': 'Regione',
   'settings.germany': 'Germania', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Sito del provider', 'settings.providerOpen': 'Apri', 'site.reload': 'Ricarica',
   'nav.home': 'Home', 'nav.library': 'Libreria', 'nav.channels': 'Canali', 'nav.search': 'Cerca', 'nav.menu': 'Menu', 'nav.settings': 'Impostazioni',
   'common.play': 'Guarda', 'common.details': 'Dettagli', 'common.close': 'Chiudi', 'common.retry': 'Riprova', 'common.back': 'Indietro',
   'common.cancel': 'Annulla', 'common.yes': 'Sì', 'common.delete': 'Elimina', 'common.clear': 'Cancella', 'loading.line1': 'Connessione al server…', 'loading.line2': 'Preparazione del catalogo…', 'loading.line3': 'Verifica dei flussi…', 'loading.connected': 'Connesso', 'common.loading': 'Caricamento...', 'common.all': 'Tutti',
@@ -322,6 +328,7 @@ const it: Record<string, string> = {
 const pt: Record<string, string> = {
   'settings.location': 'Localização / Região', 'settings.region': 'Região',
   'settings.germany': 'Alemanha', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Site do provedor', 'settings.providerOpen': 'Abrir', 'site.reload': 'Recarregar',
   'nav.home': 'Início', 'nav.library': 'Biblioteca', 'nav.channels': 'Canais', 'nav.search': 'Pesquisar', 'nav.menu': 'Menu', 'nav.settings': 'Definições',
   'common.play': 'Ver', 'common.details': 'Detalhes', 'common.close': 'Fechar', 'common.retry': 'Tentar novamente', 'common.back': 'Voltar',
   'common.cancel': 'Cancelar', 'common.yes': 'Sim', 'common.delete': 'Eliminar', 'common.clear': 'Limpar', 'loading.line1': 'Conectando ao servidor…', 'loading.line2': 'Preparando o catálogo…', 'loading.line3': 'Verificando as fontes…', 'loading.connected': 'Conectado', 'common.loading': 'A carregar...', 'common.all': 'Tudo',
@@ -372,6 +379,7 @@ const pt: Record<string, string> = {
 const nl: Record<string, string> = {
   'settings.location': 'Locatie / Regio', 'settings.region': 'Regio',
   'settings.germany': 'Duitsland', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Aanbiederwebsite', 'settings.providerOpen': 'Openen', 'site.reload': 'Opnieuw laden',
   'nav.home': 'Home', 'nav.library': 'Bibliotheek', 'nav.channels': 'Zenders', 'nav.search': 'Zoeken', 'nav.menu': 'Menu', 'nav.settings': 'Instellingen',
   'common.play': 'Kijken', 'common.details': 'Details', 'common.close': 'Sluiten', 'common.retry': 'Opnieuw proberen', 'common.back': 'Terug',
   'common.cancel': 'Annuleren', 'common.yes': 'Ja', 'common.delete': 'Verwijderen', 'common.clear': 'Wissen', 'loading.line1': 'Verbinding maken…', 'loading.line2': 'Catalogus wordt voorbereid…', 'loading.line3': 'Streams worden gecontroleerd…', 'loading.connected': 'Verbonden', 'common.loading': 'Laden...', 'common.all': 'Alles',
@@ -422,6 +430,7 @@ const nl: Record<string, string> = {
 const pl: Record<string, string> = {
   'settings.location': 'Lokalizacja / Region', 'settings.region': 'Region',
   'settings.germany': 'Niemcy', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Witryna dostawcy', 'settings.providerOpen': 'Otwórz', 'site.reload': 'Odśwież',
   'nav.home': 'Strona główna', 'nav.library': 'Biblioteka', 'nav.channels': 'Kanały', 'nav.search': 'Szukaj', 'nav.menu': 'Menu', 'nav.settings': 'Ustawienia',
   'common.play': 'Oglądaj', 'common.details': 'Szczegóły', 'common.close': 'Zamknij', 'common.retry': 'Ponów', 'common.back': 'Wstecz',
   'common.cancel': 'Anuluj', 'common.yes': 'Tak', 'common.delete': 'Usuń', 'common.clear': 'Wyczyść', 'loading.line1': 'Łączenie z serwerem…', 'loading.line2': 'Przygotowywanie katalogu…', 'loading.line3': 'Sprawdzanie strumieni…', 'loading.connected': 'Połączono', 'common.loading': 'Ładowanie...', 'common.all': 'Wszystko',
@@ -472,6 +481,7 @@ const pl: Record<string, string> = {
 const cs: Record<string, string> = {
   'settings.location': 'Poloha / Oblast', 'settings.region': 'Oblast',
   'settings.germany': 'Německo', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Web poskytovatele', 'settings.providerOpen': 'Otevřít', 'site.reload': 'Obnovit',
   'nav.home': 'Domů', 'nav.library': 'Knihovna', 'nav.channels': 'Kanály', 'nav.search': 'Hledat', 'nav.menu': 'Nabídka', 'nav.settings': 'Nastavení',
   'common.play': 'Přehrát', 'common.details': 'Podrobnosti', 'common.close': 'Zavřít', 'common.retry': 'Zkusit znovu', 'common.back': 'Zpět',
   'common.cancel': 'Zrušit', 'common.yes': 'Ano', 'common.delete': 'Smazat', 'common.clear': 'Vymazat', 'loading.line1': 'Připojování k serveru…', 'loading.line2': 'Připravuje se katalog…', 'loading.line3': 'Kontrola streamů…', 'loading.connected': 'Připojeno', 'common.loading': 'Načítání...', 'common.all': 'Vše',
@@ -522,6 +532,7 @@ const cs: Record<string, string> = {
 const sv: Record<string, string> = {
   'settings.location': 'Plats / Region', 'settings.region': 'Region',
   'settings.germany': 'Tyskland', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Leverantörswebbplats', 'settings.providerOpen': 'Öppna', 'site.reload': 'Ladda om',
   'nav.home': 'Hem', 'nav.library': 'Bibliotek', 'nav.channels': 'Kanaler', 'nav.search': 'Sök', 'nav.menu': 'Meny', 'nav.settings': 'Inställningar',
   'common.play': 'Titta', 'common.details': 'Detaljer', 'common.close': 'Stäng', 'common.retry': 'Försök igen', 'common.back': 'Tillbaka',
   'common.cancel': 'Avbryt', 'common.yes': 'Ja', 'common.delete': 'Ta bort', 'common.clear': 'Rensa', 'loading.line1': 'Ansluter till servern…', 'loading.line2': 'Katalogen förbereds…', 'loading.line3': 'Kontrollerar strömmar…', 'loading.connected': 'Ansluten', 'common.loading': 'Laddar...', 'common.all': 'Alla',
@@ -572,6 +583,7 @@ const sv: Record<string, string> = {
 const da: Record<string, string> = {
   'settings.location': 'Placering / Region', 'settings.region': 'Region',
   'settings.germany': 'Tyskland', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Udbyderwebsted', 'settings.providerOpen': 'Åbn', 'site.reload': 'Genindlæs',
   'nav.home': 'Hjem', 'nav.library': 'Bibliotek', 'nav.channels': 'Kanaler', 'nav.search': 'Søg', 'nav.menu': 'Menu', 'nav.settings': 'Indstillinger',
   'common.play': 'Se', 'common.details': 'Detaljer', 'common.close': 'Luk', 'common.retry': 'Prøv igen', 'common.back': 'Tilbage',
   'common.cancel': 'Annuller', 'common.yes': 'Ja', 'common.delete': 'Slet', 'common.clear': 'Ryd', 'loading.line1': 'Opretter forbindelse…', 'loading.line2': 'Kataloget forberedes…', 'loading.line3': 'Tjekter streams…', 'loading.connected': 'Forbundet', 'common.loading': 'Indlæser...', 'common.all': 'Alle',
@@ -622,6 +634,7 @@ const da: Record<string, string> = {
 const no: Record<string, string> = {
   'settings.location': 'Plassering / Region', 'settings.region': 'Region',
   'settings.germany': 'Tyskland', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Leverandørnettsted', 'settings.providerOpen': 'Åpne', 'site.reload': 'Last inn på nytt',
   'nav.home': 'Hjem', 'nav.library': 'Bibliotek', 'nav.channels': 'Kanaler', 'nav.search': 'Søk', 'nav.menu': 'Meny', 'nav.settings': 'Innstillinger',
   'common.play': 'Se', 'common.details': 'Detaljer', 'common.close': 'Lukk', 'common.retry': 'Prøv igjen', 'common.back': 'Tilbake',
   'common.cancel': 'Avbryt', 'common.yes': 'Ja', 'common.delete': 'Slett', 'common.clear': 'Tøm', 'loading.line1': 'Kobler til serveren…', 'loading.line2': 'Katalogen forberedes…', 'loading.line3': 'Sjekker strømmene…', 'loading.connected': 'Tilkoblet', 'common.loading': 'Laster...', 'common.all': 'Alle',
@@ -672,6 +685,7 @@ const no: Record<string, string> = {
 const fi: Record<string, string> = {
   'settings.location': 'Sijainti / Alue', 'settings.region': 'Alue',
   'settings.germany': 'Saksa', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Palveluntarjoajan sivusto', 'settings.providerOpen': 'Avaa', 'site.reload': 'Päivitä',
   'nav.home': 'Koti', 'nav.library': 'Kirjasto', 'nav.channels': 'Kanavat', 'nav.search': 'Haku', 'nav.menu': 'Valikko', 'nav.settings': 'Asetukset',
   'common.play': 'Katso', 'common.details': 'Tiedot', 'common.close': 'Sulje', 'common.retry': 'Yritä uudelleen', 'common.back': 'Takaisin',
   'common.cancel': 'Peruuta', 'common.yes': 'Kyllä', 'common.delete': 'Poista', 'common.clear': 'Tyhjennä', 'loading.line1': 'Yhdistetään palvelimeen…', 'loading.line2': 'Luetteloa valmistellaan…', 'loading.line3': 'Suoratoistot tarkistetaan…', 'loading.connected': 'Yhdistetty', 'common.loading': 'Ladataan...', 'common.all': 'Kaikki',
@@ -722,6 +736,7 @@ const fi: Record<string, string> = {
 const el: Record<string, string> = {
   'settings.location': 'Τοποθεσία / Περιοχή', 'settings.region': 'Περιοχή',
   'settings.germany': 'Γερμανία', 'settings.tunnel': 'Tunnel',
+  'settings.providerSite': 'Ιστότοπος παρόχου', 'settings.providerOpen': 'Άνοιγμα', 'site.reload': 'Επαναφόρτωση',
   'nav.home': 'Αρχική', 'nav.library': 'Βιβλιοθήκη', 'nav.channels': 'Κανάλια', 'nav.search': 'Αναζήτηση', 'nav.menu': 'Μενού', 'nav.settings': 'Ρυθμίσεις',
   'common.play': 'Παρακολούθηση', 'common.details': 'Λεπτομέρειες', 'common.close': 'Κλείσιμο', 'common.retry': 'Δοκιμή ξανά', 'common.back': 'Πίσω',
   'common.cancel': 'Ακύρωση', 'common.yes': 'Ναι', 'common.delete': 'Διαγραφή', 'common.clear': 'Καθαρισμός', 'loading.line1': 'Σύνδεση στον διακομιστή…', 'loading.line2': 'Ετοιμάζεται ο κατάλογος…', 'loading.line3': 'Έλεγχος ροών…', 'loading.connected': 'Συνδέθηκε', 'common.loading': 'Φόρτωση...', 'common.all': 'Όλα',

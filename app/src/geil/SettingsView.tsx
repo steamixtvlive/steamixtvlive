@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLang } from '@/lib/language'
 import { clearAllData } from './storage'
+import { navigate } from './router'
 import { readTvMode, setTvMode } from './tv'
 import ShortcutsHelp from './ShortcutsHelp'
 import { ClockIcon, DatabaseIcon, GlobeIcon, InfoIcon, LockIcon, SettingsIcon, TrashIcon } from './icons'
@@ -120,6 +121,14 @@ export default function SettingsView() {
                 <div className="s-label">{t('settings.tunnel')}</div>
               </div>
               <span className="s-value s-value-ok">VypnTunnel</span>
+            </div>
+          </div>
+          <div className="s-item">
+            <div className="s-item-nav">
+              <div>
+                <div className="s-label">{t('settings.providerSite')}</div>
+              </div>
+              <button type="button" className="s-value s-value-btn" onClick={() => navigate('/site')}>{t('settings.providerOpen')}</button>
             </div>
           </div>
         </section>
