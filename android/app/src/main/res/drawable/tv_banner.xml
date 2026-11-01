@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android TV reads this banner on the home row: 320x180, dark, with the mark and nothing else. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path android:fillColor="#07080C" android:pathData="M0,0h320v180h-320z" />
+    <path android:fillColor="#15090E" android:pathData="M0,128h320v52h-320z" />
+    <path
+        android:fillColor="#E50914"
+        android:pathData="M140,54H152L168,96V54H180V126H168L152,84V126H140Z" />
+</vector>

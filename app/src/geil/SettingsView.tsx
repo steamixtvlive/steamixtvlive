@@ -1,41 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useLang } from '@/lib/language'
-import { createRemoteSession, closeRemoteSession } from './api'
 import { clearAllData } from './storage'
 import ShortcutsHelp from './ShortcutsHelp'
-import { ClockIcon, DatabaseIcon, GlobeIcon, InfoIcon, SettingsIcon, InviteIcon, TvIcon, TrashIcon } from './icons'
-
-const SESSION_KEY = 'notflix_remote_session'
-
-interface StoredSession {
-  code: string
-  token: string
-  at: number
-}
-
-function readSession(): StoredSession | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as StoredSession
-    if (!parsed?.code || !parsed?.token) return null
-    return parsed
-  } catch { return null }
-}
-
-function storeSession(session: StoredSession | null) {
-  try {
-    if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-    else localStorage.removeItem(SESSION_KEY)
-  } catch { /* storage may be unavailable */ }
-  window.dispatchEvent(new CustomEvent('notflix-remote-session', { detail: { session: session ? { code: session.code, token: session.token } : null } }))
-}
+import { ClockIcon, DatabaseIcon, GlobeIcon, InfoIcon, SettingsIcon, TvIcon, TrashIcon } from './icons'
 
 export default function SettingsView() {
   const { t, lang, setLang, languages, langNames } = useLang()
-  const [session, setSession] = useState<StoredSession | null>(readSession)
-  const [remoteBusy, setRemoteBusy] = useState(false)
-  const [remoteError, setRemoteError] = useState('')
   const [confirmClear, setConfirmClear] = useState(false)
   const [notice, setNotice] = useState('')
   const [showHelp, setShowHelp] = useState(false)
@@ -45,34 +15,6 @@ export default function SettingsView() {
     const timer = window.setTimeout(() => setNotice(''), 2600)
     return () => window.clearTimeout(timer)
   }, [notice])
-
-  async function pairRemote() {
-    if (remoteBusy) return
-    setRemoteBusy(true)
-    setRemoteError('')
-    try {
-      const created = await createRemoteSession()
-      const next = { code: created.code, token: created.token, at: Date.now() }
-      setSession(next)
-      storeSession(next)
-    } catch {
-      setRemoteError(t('remote.invalid'))
-    } finally {
-      setRemoteBusy(false)
-    }
-  }
-
-  async function stopRemote() {
-    if (session) await closeRemoteSession(session.code, session.token)
-    setSession(null)
-    storeSession(null)
-  }
-
-  function openRemote() {
-    if (!session) return
-    const base = `${window.location.origin}${window.location.pathname}`
-    window.open(`${base}#/remote?code=${encodeURIComponent(session.code)}`, '_blank', 'noopener')
-  }
 
   async function clearCache() {
     try {
@@ -87,7 +29,6 @@ export default function SettingsView() {
 
   function clearData() {
     clearAllData()
-    void stopRemote()
     setConfirmClear(false)
     setNotice(t('settings.cleared'))
     setLang('tr')
@@ -135,32 +76,25 @@ export default function SettingsView() {
         <section className="s-group">
           <div className="s-group-head">
             <span className="s-gicon"><TvIcon size={16} /></span>
-            <span className="s-group-title">{t('settings.remote')}</span>
+            <span className="s-group-title">{t('settings.devices')}</span>
           </div>
           <div className="s-item">
             <div className="s-item-nav">
               <div>
-                <div className="s-sub">{session ? `${t('settings.remoteCode')}: ${session.code}` : t('settings.remoteDesc')}</div>
+                <div className="s-sub">{t('settings.devicesDesc')}</div>
               </div>
-              {session ? (
-                <div className="s-remote-actions">
-                  <button type="button" className="btn btn-primary" onClick={openRemote}>{t('settings.remoteOpen')}</button>
-                  <button type="button" className="btn" onClick={() => { void stopRemote() }}>{t('settings.remoteStop')}</button>
-                </div>
-              ) : (
-                <button type="button" className="btn btn-primary" onClick={() => { void pairRemote() }} disabled={remoteBusy}>
-                  <InviteIcon size={16} /> {remoteBusy ? t('common.loading') : t('settings.remoteCreate')}
-                </button>
-              )}
             </div>
           </div>
-          {session ? (
-            <div className="s-item s-remote-hint">
-              <div className="s-remote-code">{session.code}</div>
-              <div className="s-sub">{t('settings.remoteHint')}</div>
+          {['Google TV', 'Smart TV', 'TV Box', t('settings.devicesPc')].map((name) => (
+            <div className="s-item" key={name}>
+              <div className="s-item-nav">
+                <div>
+                  <div className="s-label">{name}</div>
+                </div>
+                <span className="s-value s-device-ok">{t('settings.devicesOk')}</span>
+              </div>
             </div>
-          ) : null}
-          {remoteError ? <div className="s-item"><div className="s-sub s-error">{remoteError}</div></div> : null}
+          ))}
         </section>
 
         <section className="s-group">

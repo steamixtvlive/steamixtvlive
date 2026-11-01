@@ -1,0 +1,210 @@
+/* ------------------------------------------------------------------ *
+ * Premium loading surface
+ *
+ * The first answer from the catalog box is the only moment the viewer sees
+ * nothing, so that gap gets a proper stage: the wordmark rises letter by
+ * letter, a light bar sweeps across it, and a single rail runs underneath.
+ * Every request after that is content already on screen, so it earns only
+ * the hairline rail pinned to the top edge.
+ * ------------------------------------------------------------------ */
+
+.nf-load {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #04050a;
+  animation: nfLoadIn 0.42s ease both;
+}
+
+@keyframes nfLoadIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.nf-load__bloom {
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 46% 38% at 50% 44%, rgba(229, 9, 20, 0.30) 0%, rgba(229, 9, 20, 0.07) 42%, transparent 70%),
+    radial-gradient(ellipse 70% 55% at 50% 112%, rgba(120, 12, 30, 0.34) 0%, transparent 66%);
+  animation: nfBloom 11s ease-in-out infinite alternate;
+}
+
+@keyframes nfBloom {
+  from { opacity: 0.62; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1.05); }
+}
+
+/* Two hairline cones give the dark the same engineered feel as the player chrome. */
+.nf-load__grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 92px);
+  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 48%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 48%, #000 0%, transparent 78%);
+  opacity: 0.5;
+}
+
+.nf-load__inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 6vw;
+}
+
+.nf-load__mark {
+  position: relative;
+  --notflix-logo-size: clamp(54px, 12.5vw, 148px);
+}
+
+.nf-load__mark .notflix-logo {
+  overflow: visible;
+}
+
+.nf-load__mark .notflix-logo__letter {
+  animation: nfLetterIn 0.78s cubic-bezier(0.18, 0.86, 0.24, 1) both;
+}
+
+.nf-load__mark .notflix-logo__letter:nth-child(1) { animation-delay: 0.04s; }
+.nf-load__mark .notflix-logo__letter:nth-child(2) { animation-delay: 0.10s; }
+.nf-load__mark .notflix-logo__letter:nth-child(3) { animation-delay: 0.16s; }
+.nf-load__mark .notflix-logo__letter:nth-child(4) { animation-delay: 0.22s; }
+.nf-load__mark .notflix-logo__letter:nth-child(5) { animation-delay: 0.28s; }
+.nf-load__mark .notflix-logo__letter:nth-child(6) { animation-delay: 0.34s; }
+.nf-load__mark .notflix-logo__letter:nth-child(7) { animation-delay: 0.40s; }
+
+@keyframes nfLetterIn {
+  0% { opacity: 0; transform: translateY(0.34em) scale(1.16); filter: blur(14px); }
+  60% { opacity: 0.9; filter: blur(2px); }
+  100% { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* The sweep rides over the wordmark in screen mode, so the letters brighten as it crosses. */
+.nf-load__bar {
+  position: absolute;
+  top: -14%;
+  bottom: -14%;
+  left: -34%;
+  width: 28%;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 122, 128, 0.55) 38%,
+    rgba(255, 240, 240, 0.92) 50%,
+    rgba(255, 122, 128, 0.55) 62%,
+    transparent 100%
+  );
+  filter: blur(10px);
+  mix-blend-mode: screen;
+  animation: nfSweep 2.5s cubic-bezier(0.55, 0, 0.45, 1) infinite;
+}
+
+@keyframes nfSweep {
+  0% { transform: translateX(0); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateX(480%); opacity: 0; }
+}
+
+.nf-load__rail {
+  position: relative;
+  width: min(320px, 62vw);
+  height: 3px;
+  margin-top: clamp(26px, 4.4vh, 48px);
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.nf-load__rail-run {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 44%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, #e50914 35%, #ff6b72 55%, transparent);
+  box-shadow: 0 0 14px rgba(229, 9, 20, 0.55);
+  animation: nfRail 1.5s cubic-bezier(0.6, 0.05, 0.4, 0.95) infinite;
+}
+
+@keyframes nfRail {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(255%); }
+}
+
+.nf-load__hint {
+  margin: clamp(18px, 3vh, 30px) 0 0;
+  min-height: 1.2em;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(10px, 1.15vw, 12px);
+  font-weight: 500;
+  letter-spacing: 0.30em;
+  text-transform: uppercase;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.60);
+  animation: nfHintIn 0.6s ease both;
+}
+
+@keyframes nfHintIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.nf-load__credit {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: max(20px, env(safe-area-inset-bottom));
+  font-family: 'Inter', sans-serif;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.44em;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+/* ---- hairline rail for requests after the first paint ---- */
+.nf-load-rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 150;
+  height: 2px;
+  overflow: hidden;
+  background: rgba(229, 9, 20, 0.18);
+  pointer-events: none;
+}
+
+.nf-load-rail__run {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 32%;
+  background: linear-gradient(90deg, transparent, #e50914 45%, #ff7b82 60%, transparent);
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.7);
+  animation: nfRail 1.15s cubic-bezier(0.6, 0.05, 0.4, 0.95) infinite;
+}
+
+@media (max-width: 599px) {
+  .nf-load__mark { --notflix-logo-size: clamp(46px, 17vw, 84px); }
+  .nf-load__rail { width: min(240px, 70vw); }
+  .nf-load__hint { letter-spacing: 0.22em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nf-load,
+  .nf-load__mark .notflix-logo__letter,
+  .nf-load__hint { animation: none; }
+  .nf-load__bloom { animation: none; opacity: 0.9; }
+  .nf-load__bar { animation: none; opacity: 0; }
+  .nf-load__rail-run,
+  .nf-load-rail__run { animation: none; width: 100%; opacity: 0.75; }
+}

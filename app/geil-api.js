@@ -863,6 +863,9 @@ async function handleM3uEpisodes(reqUrl, res) {
 
 const remoteSessions = new Map()
 const REMOTE_TTL_MS = 15 * 60 * 1000
+// A poll is held open this long so a keypress travels to the screen the moment it is posted
+// instead of waiting for the next round of a fixed-interval poll.
+const REMOTE_POLL_HOLD_MS = 15000
 const REMOTE_COMMANDS = new Set([
   'up', 'down', 'left', 'right', 'ok', 'back', 'home', 'playpause',
   'volup', 'voldown', 'mute', 'chup', 'chdown', 'rewind', 'forward',
@@ -901,6 +904,28 @@ function remoteSession(reqUrl) {
   return session
 }
 
+/** The screen holds this request open until the phone posts something, so a keypress arrives in
+    the same breath rather than on the next tick of an interval. */
+function holdRemotePoll(session, cursor, res) {
+  let finished = false
+  let waiter
+  const timer = setTimeout(() => finish([]), REMOTE_POLL_HOLD_MS)
+  function finish(commands) {
+    if (finished) return
+    finished = true
+    clearTimeout(timer)
+    session.waiters.delete(waiter)
+    if (!res.writableEnded) sendJson(res, 200, { ok: true, commands, cursor: commands.length ? session.seq : cursor, expires: session.expires })
+  }
+  waiter = () => {
+    const commands = session.commands.filter((entry) => entry.seq > cursor)
+    if (commands.length) finish(commands)
+  }
+  session.waiters.add(waiter)
+  res.on('close', () => { finished = true; clearTimeout(timer); session.waiters.delete(waiter) })
+  waiter()
+}
+
 async function handleRemote(req, res, reqUrl) {
   cleanupRemoteSessions()
   const action = reqUrl.searchParams.get('action') || ''
@@ -908,7 +933,7 @@ async function handleRemote(req, res, reqUrl) {
   if (action === 'session' && req.method === 'POST') {
     const code = String(Math.floor(100000 + Math.random() * 900000))
     const token = randomBytes(16).toString('hex')
-    remoteSessions.set(code, { code, token, expires: Date.now() + REMOTE_TTL_MS, commands: [], seq: 0 })
+    remoteSessions.set(code, { code, token, expires: Date.now() + REMOTE_TTL_MS, commands: [], seq: 0, waiters: new Set() })
     sendJson(res, 200, { ok: true, code, token, expiresIn: REMOTE_TTL_MS })
     return
   }
@@ -917,8 +942,10 @@ async function handleRemote(req, res, reqUrl) {
     const session = remoteSession(reqUrl)
     if (!session) { sendJson(res, 404, { ok: false, error: 'Oturum bulunamadı' }); return }
     const cursor = Number(reqUrl.searchParams.get('cursor') || 0)
-    const commands = session.commands.filter((entry) => entry.seq > cursor)
-    sendJson(res, 200, { ok: true, commands, cursor: session.seq, expires: session.expires })
+    // A screen that keeps polling is a screen that is still in use, so the pairing rides out an
+    // evening of watching instead of quietly expiring while nobody presses a key.
+    session.expires = Date.now() + REMOTE_TTL_MS
+    holdRemotePoll(session, cursor, res)
     return
   }
 
@@ -933,6 +960,9 @@ async function handleRemote(req, res, reqUrl) {
     session.commands.push({ seq: session.seq, command })
     if (session.commands.length > 80) session.commands.splice(0, session.commands.length - 80)
     session.expires = Date.now() + REMOTE_TTL_MS
+    // Deliver before answering the phone: the two ends of the room should not have to wait for
+    // each other's round trip for the picture to react.
+    for (const waiter of [...session.waiters]) waiter()
     sendJson(res, 200, { ok: true })
     return
   }

@@ -9,9 +9,11 @@ export const LANG_NAMES: Record<GeilLang, string> = {
 }
 
 const tr = {
+  'settings.devices': 'Desteklenen cihazlar', 'settings.devicesDesc': 'Dokunmatik ekran ve TV kumandası ile tam uyumlu çalışır.',
+  'settings.devicesPc': 'PC masaüstü (site)', 'settings.devicesOk': 'Uyumlu',
   'nav.home': 'Ana Sayfa', 'nav.library': 'Kitaplık', 'nav.channels': 'Kanallar', 'nav.search': 'Ara', 'nav.settings': 'Ayarlar',
   'common.play': 'İzle', 'common.details': 'Detaylar', 'common.close': 'Kapat', 'common.retry': 'Yeniden dene', 'common.back': 'Geri',
-  'common.cancel': 'Vazgeç', 'common.yes': 'Evet', 'common.delete': 'Sil', 'common.clear': 'Temizle', 'common.loading': 'Yükleniyor...', 'common.all': 'Tümü',
+  'common.cancel': 'Vazgeç', 'common.yes': 'Evet', 'common.delete': 'Sil', 'common.clear': 'Temizle', 'loading.line1': 'Sunucuya bağlanılıyor…', 'loading.line2': 'Katalog hazırlanıyor…', 'loading.line3': 'Yayın çizgileri denetleniyor…', 'common.loading': 'Yükleniyor...', 'common.all': 'Tümü',
   'home.trendingSeries': 'Trend Olan Diziler', 'home.popularSeries': 'Popüler Diziler',
   'home.trendingMovies': 'Trend Olan Filmler', 'home.popularMovies': 'Popüler Filmler', 'home.upNext': 'Sıradaki',
   'channels.title': 'Kanallar', 'channels.search': 'Kanallarda ara...', 'channels.favorites': 'Favoriler', 'channels.allCountries': 'Tüm ülkeler',
@@ -64,9 +66,11 @@ const tr = {
 }
 
 const en: Record<string, string> = {
+  'settings.devices': 'Supported devices', 'settings.devicesDesc': 'Works fully with touchscreens and TV remotes.',
+  'settings.devicesPc': 'Desktop PC (site)', 'settings.devicesOk': 'Compatible',
   'nav.home': 'Home', 'nav.library': 'Library', 'nav.channels': 'Channels', 'nav.search': 'Search', 'nav.settings': 'Settings',
   'common.play': 'Watch', 'common.details': 'Details', 'common.close': 'Close', 'common.retry': 'Retry', 'common.back': 'Back',
-  'common.cancel': 'Cancel', 'common.yes': 'Yes', 'common.delete': 'Delete', 'common.clear': 'Clear', 'common.loading': 'Loading...', 'common.all': 'All',
+  'common.cancel': 'Cancel', 'common.yes': 'Yes', 'common.delete': 'Delete', 'common.clear': 'Clear', 'loading.line1': 'Connecting to the server…', 'loading.line2': 'Preparing the catalog…', 'loading.line3': 'Checking the streams…', 'common.loading': 'Loading...', 'common.all': 'All',
   'home.trendingSeries': 'Trending Series', 'home.popularSeries': 'Popular Series', 'home.trendingMovies': 'Trending Movies', 'home.popularMovies': 'Popular Movies', 'home.upNext': 'Up next',
   'channels.title': 'Channels', 'channels.search': 'Search channels...', 'channels.favorites': 'Favorites', 'channels.allCountries': 'All countries',
   'channels.live': 'LIVE', 'channels.noResults': 'No results found', 'channels.noResultsDesc': 'Try a different search or filter.', 'channels.sortPopular': 'Popular',
@@ -114,9 +118,11 @@ const en: Record<string, string> = {
 }
 
 const de: Record<string, string> = {
+  'settings.devices': 'Unterstützte Geräte', 'settings.devicesDesc': 'Funktioniert vollständig mit Touchscreen und TV-Fernbedienung.',
+  'settings.devicesPc': 'Desktop-PC (Site)', 'settings.devicesOk': 'Kompatibel',
   'nav.home': 'Startseite', 'nav.library': 'Mediathek', 'nav.channels': 'Sender', 'nav.search': 'Suche', 'nav.settings': 'Einstellungen',
   'common.play': 'Ansehen', 'common.details': 'Details', 'common.close': 'Schließen', 'common.retry': 'Erneut versuchen', 'common.back': 'Zurück',
-  'common.cancel': 'Abbrechen', 'common.yes': 'Ja', 'common.delete': 'Löschen', 'common.clear': 'Leeren', 'common.loading': 'Wird geladen...', 'common.all': 'Alle',
+  'common.cancel': 'Abbrechen', 'common.yes': 'Ja', 'common.delete': 'Löschen', 'common.clear': 'Leeren', 'loading.line1': 'Verbindung zum Server…', 'loading.line2': 'Katalog wird vorbereitet…', 'loading.line3': 'Streams werden geprüft…', 'common.loading': 'Wird geladen...', 'common.all': 'Alle',
   'home.trendingSeries': 'Trend-Serien', 'home.popularSeries': 'Beliebte Serien', 'home.trendingMovies': 'Trend-Filme', 'home.popularMovies': 'Beliebte Filme',
   'channels.title': 'Sender', 'channels.search': 'Sender suchen...', 'channels.favorites': 'Favoriten', 'channels.allCountries': 'Alle Länder',
   'channels.live': 'LIVE', 'channels.noResults': 'Keine Ergebnisse', 'channels.noResultsDesc': 'Versuchen Sie eine andere Suche oder einen anderen Filter.', 'channels.sortPopular': 'Beliebt',
@@ -163,9 +169,11 @@ const de: Record<string, string> = {
 }
 
 const fr: Record<string, string> = {
+  'settings.devices': 'Appareils pris en charge', 'settings.devicesDesc': 'Fonctionne parfaitement avec écran tactile et télécommande TV.',
+  'settings.devicesPc': 'PC de bureau (site)', 'settings.devicesOk': 'Compatible',
   'nav.home': 'Accueil', 'nav.library': 'Bibliothèque', 'nav.channels': 'Chaînes', 'nav.search': 'Recherche', 'nav.settings': 'Paramètres',
   'common.play': 'Regarder', 'common.details': 'Détails', 'common.close': 'Fermer', 'common.retry': 'Réessayer', 'common.back': 'Retour',
-  'common.cancel': 'Annuler', 'common.yes': 'Oui', 'common.delete': 'Supprimer', 'common.clear': 'Effacer', 'common.loading': 'Chargement...', 'common.all': 'Tous',
+  'common.cancel': 'Annuler', 'common.yes': 'Oui', 'common.delete': 'Supprimer', 'common.clear': 'Effacer', 'loading.line1': 'Connexion au serveur…', 'loading.line2': 'Préparation du catalogue…', 'loading.line3': 'Vérification des flux…', 'common.loading': 'Chargement...', 'common.all': 'Tous',
   'home.trendingSeries': 'Séries tendances', 'home.popularSeries': 'Séries populaires', 'home.trendingMovies': 'Films tendances', 'home.popularMovies': 'Films populaires',
   'channels.title': 'Chaînes', 'channels.search': 'Rechercher une chaîne...', 'channels.favorites': 'Favoris', 'channels.allCountries': 'Tous les pays',
   'channels.live': 'DIRECT', 'channels.noResults': 'Aucun résultat', 'channels.noResultsDesc': 'Essayez une autre recherche ou un autre filtre.', 'channels.sortPopular': 'Populaire',
@@ -212,9 +220,11 @@ const fr: Record<string, string> = {
 }
 
 const es: Record<string, string> = {
+  'settings.devices': 'Dispositivos compatibles', 'settings.devicesDesc': 'Funciona por completo con pantalla táctil y mando de TV.',
+  'settings.devicesPc': 'PC de escritorio (sitio)', 'settings.devicesOk': 'Compatible',
   'nav.home': 'Inicio', 'nav.library': 'Biblioteca', 'nav.channels': 'Canales', 'nav.search': 'Buscar', 'nav.settings': 'Ajustes',
   'common.play': 'Ver', 'common.details': 'Detalles', 'common.close': 'Cerrar', 'common.retry': 'Reintentar', 'common.back': 'Volver',
-  'common.cancel': 'Cancelar', 'common.yes': 'Sí', 'common.delete': 'Eliminar', 'common.clear': 'Borrar', 'common.loading': 'Cargando...', 'common.all': 'Todo',
+  'common.cancel': 'Cancelar', 'common.yes': 'Sí', 'common.delete': 'Eliminar', 'common.clear': 'Borrar', 'loading.line1': 'Conectando con el servidor…', 'loading.line2': 'Preparando el catálogo…', 'loading.line3': 'Comprobando las fuentes…', 'common.loading': 'Cargando...', 'common.all': 'Todo',
   'home.trendingSeries': 'Series en tendencia', 'home.popularSeries': 'Series populares', 'home.trendingMovies': 'Películas en tendencia', 'home.popularMovies': 'Películas populares',
   'channels.title': 'Canales', 'channels.search': 'Buscar canales...', 'channels.favorites': 'Favoritos', 'channels.allCountries': 'Todos los países',
   'channels.live': 'EN VIVO', 'channels.noResults': 'Sin resultados', 'channels.noResultsDesc': 'Prueba otra búsqueda o filtro.', 'channels.sortPopular': 'Popular',
@@ -260,9 +270,11 @@ const es: Record<string, string> = {
 }
 
 const it: Record<string, string> = {
+  'settings.devices': 'Dispositivi supportati', 'settings.devicesDesc': 'Funziona completamente con touchscreen e telecomando TV.',
+  'settings.devicesPc': 'PC desktop (sito)', 'settings.devicesOk': 'Compatibile',
   'nav.home': 'Home', 'nav.library': 'Libreria', 'nav.channels': 'Canali', 'nav.search': 'Cerca', 'nav.settings': 'Impostazioni',
   'common.play': 'Guarda', 'common.details': 'Dettagli', 'common.close': 'Chiudi', 'common.retry': 'Riprova', 'common.back': 'Indietro',
-  'common.cancel': 'Annulla', 'common.yes': 'Sì', 'common.delete': 'Elimina', 'common.clear': 'Cancella', 'common.loading': 'Caricamento...', 'common.all': 'Tutti',
+  'common.cancel': 'Annulla', 'common.yes': 'Sì', 'common.delete': 'Elimina', 'common.clear': 'Cancella', 'loading.line1': 'Connessione al server…', 'loading.line2': 'Preparazione del catalogo…', 'loading.line3': 'Verifica dei flussi…', 'common.loading': 'Caricamento...', 'common.all': 'Tutti',
   'home.trendingSeries': 'Serie di tendenza', 'home.popularSeries': 'Serie popolari', 'home.trendingMovies': 'Film di tendenza', 'home.popularMovies': 'Film popolari',
   'channels.title': 'Canali', 'channels.search': 'Cerca canali...', 'channels.favorites': 'Preferiti', 'channels.allCountries': 'Tutti i paesi',
   'channels.live': 'LIVE', 'channels.noResults': 'Nessun risultato', 'channels.noResultsDesc': 'Prova una ricerca o un filtro diverso.', 'channels.sortPopular': 'Popolari',
@@ -308,9 +320,11 @@ const it: Record<string, string> = {
 }
 
 const pt: Record<string, string> = {
+  'settings.devices': 'Dispositivos compatíveis', 'settings.devicesDesc': 'Funciona totalmente com tela de toque e controle da TV.',
+  'settings.devicesPc': 'PC de mesa (site)', 'settings.devicesOk': 'Compatível',
   'nav.home': 'Início', 'nav.library': 'Biblioteca', 'nav.channels': 'Canais', 'nav.search': 'Pesquisar', 'nav.settings': 'Definições',
   'common.play': 'Ver', 'common.details': 'Detalhes', 'common.close': 'Fechar', 'common.retry': 'Tentar novamente', 'common.back': 'Voltar',
-  'common.cancel': 'Cancelar', 'common.yes': 'Sim', 'common.delete': 'Eliminar', 'common.clear': 'Limpar', 'common.loading': 'A carregar...', 'common.all': 'Tudo',
+  'common.cancel': 'Cancelar', 'common.yes': 'Sim', 'common.delete': 'Eliminar', 'common.clear': 'Limpar', 'loading.line1': 'Conectando ao servidor…', 'loading.line2': 'Preparando o catálogo…', 'loading.line3': 'Verificando as fontes…', 'common.loading': 'A carregar...', 'common.all': 'Tudo',
   'home.trendingSeries': 'Séries em destaque', 'home.popularSeries': 'Séries populares', 'home.trendingMovies': 'Filmes em destaque', 'home.popularMovies': 'Filmes populares',
   'channels.title': 'Canais', 'channels.search': 'Pesquisar canais...', 'channels.favorites': 'Favoritos', 'channels.allCountries': 'Todos os países',
   'channels.live': 'EM DIRETO', 'channels.noResults': 'Sem resultados', 'channels.noResultsDesc': 'Tente outra pesquisa ou filtro.', 'channels.sortPopular': 'Popular',
@@ -356,9 +370,11 @@ const pt: Record<string, string> = {
 }
 
 const nl: Record<string, string> = {
+  'settings.devices': 'Ondersteunde apparaten', 'settings.devicesDesc': 'Werkt volledig met touchscreen en tv-afstandsbediening.',
+  'settings.devicesPc': 'Desktop-pc (site)', 'settings.devicesOk': 'Compatibel',
   'nav.home': 'Home', 'nav.library': 'Bibliotheek', 'nav.channels': 'Zenders', 'nav.search': 'Zoeken', 'nav.settings': 'Instellingen',
   'common.play': 'Kijken', 'common.details': 'Details', 'common.close': 'Sluiten', 'common.retry': 'Opnieuw proberen', 'common.back': 'Terug',
-  'common.cancel': 'Annuleren', 'common.yes': 'Ja', 'common.delete': 'Verwijderen', 'common.clear': 'Wissen', 'common.loading': 'Laden...', 'common.all': 'Alles',
+  'common.cancel': 'Annuleren', 'common.yes': 'Ja', 'common.delete': 'Verwijderen', 'common.clear': 'Wissen', 'loading.line1': 'Verbinding maken…', 'loading.line2': 'Catalogus wordt voorbereid…', 'loading.line3': 'Streams worden gecontroleerd…', 'common.loading': 'Laden...', 'common.all': 'Alles',
   'home.trendingSeries': 'Trending series', 'home.popularSeries': 'Populaire series', 'home.trendingMovies': 'Trending films', 'home.popularMovies': 'Populaire films',
   'channels.title': 'Zenders', 'channels.search': 'Zenders zoeken...', 'channels.favorites': 'Favorieten', 'channels.allCountries': 'Alle landen',
   'channels.live': 'LIVE', 'channels.noResults': 'Geen resultaten', 'channels.noResultsDesc': 'Probeer een andere zoekopdracht of filter.', 'channels.sortPopular': 'Populair',
@@ -404,9 +420,11 @@ const nl: Record<string, string> = {
 }
 
 const pl: Record<string, string> = {
+  'settings.devices': 'Obsługiwane urządzenia', 'settings.devicesDesc': 'Działa w pełni z ekranem dotykowym i pilotem TV.',
+  'settings.devicesPc': 'PC stacjonarny (witryna)', 'settings.devicesOk': 'Kompatybilny',
   'nav.home': 'Strona główna', 'nav.library': 'Biblioteka', 'nav.channels': 'Kanały', 'nav.search': 'Szukaj', 'nav.settings': 'Ustawienia',
   'common.play': 'Oglądaj', 'common.details': 'Szczegóły', 'common.close': 'Zamknij', 'common.retry': 'Ponów', 'common.back': 'Wstecz',
-  'common.cancel': 'Anuluj', 'common.yes': 'Tak', 'common.delete': 'Usuń', 'common.clear': 'Wyczyść', 'common.loading': 'Ładowanie...', 'common.all': 'Wszystko',
+  'common.cancel': 'Anuluj', 'common.yes': 'Tak', 'common.delete': 'Usuń', 'common.clear': 'Wyczyść', 'loading.line1': 'Łączenie z serwerem…', 'loading.line2': 'Przygotowywanie katalogu…', 'loading.line3': 'Sprawdzanie strumieni…', 'common.loading': 'Ładowanie...', 'common.all': 'Wszystko',
   'home.trendingSeries': 'Trendy — seriale', 'home.popularSeries': 'Popularne seriale', 'home.trendingMovies': 'Trendy — filmy', 'home.popularMovies': 'Popularne filmy',
   'channels.title': 'Kanały', 'channels.search': 'Szukaj kanałów...', 'channels.favorites': 'Ulubione', 'channels.allCountries': 'Wszystkie kraje',
   'channels.live': 'NA ŻYWO', 'channels.noResults': 'Brak wyników', 'channels.noResultsDesc': 'Spróbuj innego wyszukiwania lub filtra.', 'channels.sortPopular': 'Popularne',
@@ -452,9 +470,11 @@ const pl: Record<string, string> = {
 }
 
 const cs: Record<string, string> = {
+  'settings.devices': 'Podporovaná zařízení', 'settings.devicesDesc': 'Plně funguje s dotykovou obrazovkou a dálkovým ovladačem TV.',
+  'settings.devicesPc': 'Stolní PC (web)', 'settings.devicesOk': 'Kompatibilní',
   'nav.home': 'Domů', 'nav.library': 'Knihovna', 'nav.channels': 'Kanály', 'nav.search': 'Hledat', 'nav.settings': 'Nastavení',
   'common.play': 'Přehrát', 'common.details': 'Podrobnosti', 'common.close': 'Zavřít', 'common.retry': 'Zkusit znovu', 'common.back': 'Zpět',
-  'common.cancel': 'Zrušit', 'common.yes': 'Ano', 'common.delete': 'Smazat', 'common.clear': 'Vymazat', 'common.loading': 'Načítání...', 'common.all': 'Vše',
+  'common.cancel': 'Zrušit', 'common.yes': 'Ano', 'common.delete': 'Smazat', 'common.clear': 'Vymazat', 'loading.line1': 'Připojování k serveru…', 'loading.line2': 'Připravuje se katalog…', 'loading.line3': 'Kontrola streamů…', 'common.loading': 'Načítání...', 'common.all': 'Vše',
   'home.trendingSeries': 'Trendující seriály', 'home.popularSeries': 'Populární seriály', 'home.trendingMovies': 'Trendující filmy', 'home.popularMovies': 'Populární filmy',
   'channels.title': 'Kanály', 'channels.search': 'Hledat kanály...', 'channels.favorites': 'Oblíbené', 'channels.allCountries': 'Všechny země',
   'channels.live': 'ŽIVĚ', 'channels.noResults': 'Žádné výsledky', 'channels.noResultsDesc': 'Zkuste jiné hledání nebo filtr.', 'channels.sortPopular': 'Populární',
@@ -500,9 +520,11 @@ const cs: Record<string, string> = {
 }
 
 const sv: Record<string, string> = {
+  'settings.devices': 'Enheter som stöds', 'settings.devicesDesc': 'Fungerar fullt ut med pekskärm och TV-fjärrkontroll.',
+  'settings.devicesPc': 'Desktop-PC (webb)', 'settings.devicesOk': 'Kompatibel',
   'nav.home': 'Hem', 'nav.library': 'Bibliotek', 'nav.channels': 'Kanaler', 'nav.search': 'Sök', 'nav.settings': 'Inställningar',
   'common.play': 'Titta', 'common.details': 'Detaljer', 'common.close': 'Stäng', 'common.retry': 'Försök igen', 'common.back': 'Tillbaka',
-  'common.cancel': 'Avbryt', 'common.yes': 'Ja', 'common.delete': 'Ta bort', 'common.clear': 'Rensa', 'common.loading': 'Laddar...', 'common.all': 'Alla',
+  'common.cancel': 'Avbryt', 'common.yes': 'Ja', 'common.delete': 'Ta bort', 'common.clear': 'Rensa', 'loading.line1': 'Ansluter till servern…', 'loading.line2': 'Katalogen förbereds…', 'loading.line3': 'Kontrollerar strömmar…', 'common.loading': 'Laddar...', 'common.all': 'Alla',
   'home.trendingSeries': 'Trendande serier', 'home.popularSeries': 'Populära serier', 'home.trendingMovies': 'Trendande filmer', 'home.popularMovies': 'Populära filmer',
   'channels.title': 'Kanaler', 'channels.search': 'Sök kanaler...', 'channels.favorites': 'Favoriter', 'channels.allCountries': 'Alla länder',
   'channels.live': 'LIVE', 'channels.noResults': 'Inga resultat', 'channels.noResultsDesc': 'Prova en annan sökning eller filter.', 'channels.sortPopular': 'Populärt',
@@ -548,9 +570,11 @@ const sv: Record<string, string> = {
 }
 
 const da: Record<string, string> = {
+  'settings.devices': 'Understøttede enheder', 'settings.devicesDesc': 'Fungerer fuldt ud med touchskærm og TV-fjernbetjening.',
+  'settings.devicesPc': 'Desktop-PC (web)', 'settings.devicesOk': 'Kompatibel',
   'nav.home': 'Hjem', 'nav.library': 'Bibliotek', 'nav.channels': 'Kanaler', 'nav.search': 'Søg', 'nav.settings': 'Indstillinger',
   'common.play': 'Se', 'common.details': 'Detaljer', 'common.close': 'Luk', 'common.retry': 'Prøv igen', 'common.back': 'Tilbage',
-  'common.cancel': 'Annuller', 'common.yes': 'Ja', 'common.delete': 'Slet', 'common.clear': 'Ryd', 'common.loading': 'Indlæser...', 'common.all': 'Alle',
+  'common.cancel': 'Annuller', 'common.yes': 'Ja', 'common.delete': 'Slet', 'common.clear': 'Ryd', 'loading.line1': 'Opretter forbindelse…', 'loading.line2': 'Kataloget forberedes…', 'loading.line3': 'Tjekter streams…', 'common.loading': 'Indlæser...', 'common.all': 'Alle',
   'home.trendingSeries': 'Trending-serier', 'home.popularSeries': 'Populære serier', 'home.trendingMovies': 'Trending-film', 'home.popularMovies': 'Populære film',
   'channels.title': 'Kanaler', 'channels.search': 'Søg kanaler...', 'channels.favorites': 'Favoritter', 'channels.allCountries': 'Alle lande',
   'channels.live': 'LIVE', 'channels.noResults': 'Ingen resultater', 'channels.noResultsDesc': 'Prøv en anden søgning eller filter.', 'channels.sortPopular': 'Populært',
@@ -596,9 +620,11 @@ const da: Record<string, string> = {
 }
 
 const no: Record<string, string> = {
+  'settings.devices': 'Støttede enheter', 'settings.devicesDesc': 'Fungerer fullt med touchskjerm og TV-fjernkontroll.',
+  'settings.devicesPc': 'Desktop-PC (nett)', 'settings.devicesOk': 'Kompatibel',
   'nav.home': 'Hjem', 'nav.library': 'Bibliotek', 'nav.channels': 'Kanaler', 'nav.search': 'Søk', 'nav.settings': 'Innstillinger',
   'common.play': 'Se', 'common.details': 'Detaljer', 'common.close': 'Lukk', 'common.retry': 'Prøv igjen', 'common.back': 'Tilbake',
-  'common.cancel': 'Avbryt', 'common.yes': 'Ja', 'common.delete': 'Slett', 'common.clear': 'Tøm', 'common.loading': 'Laster...', 'common.all': 'Alle',
+  'common.cancel': 'Avbryt', 'common.yes': 'Ja', 'common.delete': 'Slett', 'common.clear': 'Tøm', 'loading.line1': 'Kobler til serveren…', 'loading.line2': 'Katalogen forberedes…', 'loading.line3': 'Sjekker strømmene…', 'common.loading': 'Laster...', 'common.all': 'Alle',
   'home.trendingSeries': 'Trendende serier', 'home.popularSeries': 'Populære serier', 'home.trendingMovies': 'Trendende filmer', 'home.popularMovies': 'Populære filmer',
   'channels.title': 'Kanaler', 'channels.search': 'Søk kanaler...', 'channels.favorites': 'Favoritter', 'channels.allCountries': 'Alle land',
   'channels.live': 'LIVE', 'channels.noResults': 'Ingen resultater', 'channels.noResultsDesc': 'Prøv et annet søk eller filter.', 'channels.sortPopular': 'Populært',
@@ -644,9 +670,11 @@ const no: Record<string, string> = {
 }
 
 const fi: Record<string, string> = {
+  'settings.devices': 'Tuetut laitteet', 'settings.devicesDesc': 'Toimii täysin kosketusnäytön ja TV-kaukosäätimen kanssa.',
+  'settings.devicesPc': 'Työpöätietokone (sivusto)', 'settings.devicesOk': 'Yhteensopiva',
   'nav.home': 'Koti', 'nav.library': 'Kirjasto', 'nav.channels': 'Kanavat', 'nav.search': 'Haku', 'nav.settings': 'Asetukset',
   'common.play': 'Katso', 'common.details': 'Tiedot', 'common.close': 'Sulje', 'common.retry': 'Yritä uudelleen', 'common.back': 'Takaisin',
-  'common.cancel': 'Peruuta', 'common.yes': 'Kyllä', 'common.delete': 'Poista', 'common.clear': 'Tyhjennä', 'common.loading': 'Ladataan...', 'common.all': 'Kaikki',
+  'common.cancel': 'Peruuta', 'common.yes': 'Kyllä', 'common.delete': 'Poista', 'common.clear': 'Tyhjennä', 'loading.line1': 'Yhdistetään palvelimeen…', 'loading.line2': 'Luetteloa valmistellaan…', 'loading.line3': 'Suoratoistot tarkistetaan…', 'common.loading': 'Ladataan...', 'common.all': 'Kaikki',
   'home.trendingSeries': 'Trendaavat sarjat', 'home.popularSeries': 'Suositut sarjat', 'home.trendingMovies': 'Trendaavat elokuvat', 'home.popularMovies': 'Suositut elokuvat',
   'channels.title': 'Kanavat', 'channels.search': 'Hae kanavia...', 'channels.favorites': 'Suosikit', 'channels.allCountries': 'Kaikki maat',
   'channels.live': 'LIVE', 'channels.noResults': 'Ei tuloksia', 'channels.noResultsDesc': 'Kokeile toista hakua tai suodatinta.', 'channels.sortPopular': 'Suosittu',
@@ -692,9 +720,11 @@ const fi: Record<string, string> = {
 }
 
 const el: Record<string, string> = {
+  'settings.devices': 'Υποστηριζόμενες συσκευές', 'settings.devicesDesc': 'Λειτουργεί πλήρως με οθόνη αφής και τηλεχειριστήριο TV.',
+  'settings.devicesPc': 'Επιτραπέζιος υπολογιστής (ιστότοπος)', 'settings.devicesOk': 'Συμβατό',
   'nav.home': 'Αρχική', 'nav.library': 'Βιβλιοθήκη', 'nav.channels': 'Κανάλια', 'nav.search': 'Αναζήτηση', 'nav.settings': 'Ρυθμίσεις',
   'common.play': 'Παρακολούθηση', 'common.details': 'Λεπτομέρειες', 'common.close': 'Κλείσιμο', 'common.retry': 'Δοκιμή ξανά', 'common.back': 'Πίσω',
-  'common.cancel': 'Ακύρωση', 'common.yes': 'Ναι', 'common.delete': 'Διαγραφή', 'common.clear': 'Καθαρισμός', 'common.loading': 'Φόρτωση...', 'common.all': 'Όλα',
+  'common.cancel': 'Ακύρωση', 'common.yes': 'Ναι', 'common.delete': 'Διαγραφή', 'common.clear': 'Καθαρισμός', 'loading.line1': 'Σύνδεση στον διακομιστή…', 'loading.line2': 'Ετοιμάζεται ο κατάλογος…', 'loading.line3': 'Έλεγχος ροών…', 'common.loading': 'Φόρτωση...', 'common.all': 'Όλα',
   'home.trendingSeries': 'Τάσεις σειρών', 'home.popularSeries': 'Δημοφιλείς σειρές', 'home.trendingMovies': 'Τάσεις ταινιών', 'home.popularMovies': 'Δημοφιλείς ταινίες',
   'channels.title': 'Κανάλια', 'channels.search': 'Αναζήτηση καναλιών...', 'channels.favorites': 'Αγαπημένα', 'channels.allCountries': 'Όλες οι χώρες',
   'channels.live': 'ΖΩΝΤΑΝΑ', 'channels.noResults': 'Δεν βρέθηκαν αποτελέσματα', 'channels.noResultsDesc': 'Δοκιμάστε άλλη αναζήτηση ή φίλτρο.', 'channels.sortPopular': 'Δημοφιλή',

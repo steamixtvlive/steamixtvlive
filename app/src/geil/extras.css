@@ -197,7 +197,7 @@
   gap: 14px; flex-wrap: wrap;
 }
 .s-item-nav > div:first-child { min-width: 0; flex: 1 1 180px; }
-.s-item-nav :is(.s-toggle, .s-value, .s-value-btn, .sort-select, .s-remote-actions) { flex: 0 0 auto; }
+.s-item-nav :is(.s-toggle, .s-value, .s-value-btn, .sort-select) { flex: 0 0 auto; }
 .s-toggle {
   position: relative; width: 48px; height: 27px; flex: 0 0 auto; border-radius: 999px; cursor: pointer;
   border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.12); transition: background .2s ease, border-color .2s ease;
@@ -205,9 +205,7 @@
 .s-toggle span { position: absolute; top: 2px; left: 2px; width: 21px; height: 21px; border-radius: 50%; background: #fff; transition: left .2s var(--ease, ease); }
 .s-toggle.is-on { background: var(--accent); border-color: transparent; }
 .s-toggle.is-on span { left: 23px; }
-.s-remote-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.s-remote-hint { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
-.s-remote-code { font-size: 34px; font-weight: 800; letter-spacing: .3em; color: var(--accent); }
+.s-device-ok { color: #5edc9a; font-weight: 700; }
 .s-error { color: #ff8b90 !important; }
 .s-value-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px;
@@ -400,14 +398,23 @@ html.tv-mode .sidebar { pointer-events: auto; }
   html.tv-mode .sidebar:hover { --open: 1; }
 }
 html.tv-mode:not(.tv-device) { --sat: env(safe-area-inset-top); --sab: env(safe-area-inset-bottom); }
+/* An AIR remote moves focus with no keyboard activity at all, and Chrome then refuses to draw the
+   ring, which reads as "the remote does nothing". While a remote is attached the ring is forced. */
 html.tv-mode .main :focus,
 html.tv-mode .sidebar :focus,
-html.tv-mode .bnav :focus {
+html.tv-mode .bnav :focus,
+html.remote-live .main :focus,
+html.remote-live .sidebar :focus,
+html.remote-live .bnav :focus,
+html.remote-live .player-root :focus,
+html.remote-live .modal :focus,
+html.remote-live .shortcuts-overlay :focus {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: 10px;
 }
-html.tv-mode .card:focus { outline-offset: 4px; }
+html.tv-mode .card:focus,
+html.remote-live .card:focus { outline-offset: 4px; }
 
 /* ---- Tablet band ---- */
 @media (max-width: 900px) {
@@ -470,9 +477,10 @@ html.tv-mode .card:focus { outline-offset: 4px; }
   /* Episode rails take the skin's own tile width here; cast cards are left untouched. */
   .ep-strip-wrap .ep-tile { flex: 0 0 200px; min-width: 200px; }
 
-  /* Item hero transport: the skin stretches İzle across the whole row. The button hugs its
-     own label instead, so no dead space collects on either side of the glyph. */
-  .item-view .hero-actions { --fav-size: 42px; gap: 8px; }
+  /* Item hero transport: the skin stretches İzle across the whole row and centres the group.
+     The buttons belong under the title they were chosen from, so they sit at the text edge and
+     hug their own labels. */
+  .item-view .hero-actions { --fav-size: 42px; gap: 8px; justify-content: flex-start; }
   .item-view .btn-hero-play { flex: 0 0 auto; width: auto; min-width: 0; height: 42px; padding: 0 16px; }
   .item-view .btn-hero-play svg { width: 15px; height: 15px; }
   .item-view .btn-hero-glass { width: 42px; height: 42px; }
@@ -549,5 +557,14 @@ html.tv-mode .card:focus { outline-offset: 4px; }
 .site-fullscreen.on { color: var(--accent); border-color: rgba(var(--accent-rgb), 0.55); }
 html.tv-mode .site-fullscreen:focus { box-shadow: 0 0 0 2px var(--accent), 0 0 18px rgba(var(--accent-rgb), 0.35); }
 @media (max-width: 599px), (max-width: 768px) and (max-aspect-ratio: 5 / 7) {
-  .site-fullscreen { display: none; }
+  /* Portrait keeps the toggle too — a phone in portrait gains the browser bar back as well.
+     It shrinks and the search field steps out of its way. */
+  .site-fullscreen {
+    width: 38px;
+    height: 38px;
+    top: max(9px, env(safe-area-inset-top));
+    right: max(9px, env(safe-area-inset-right));
+    border-radius: 12px;
+  }
+  .search-hero .search-big { padding-right: 44px; }
 }

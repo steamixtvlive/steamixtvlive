@@ -8,19 +8,27 @@ import type {
   GeilSource,
 } from './types'
 
+import { beginLoading, endLoading, markDelivered } from '@/lib/loading-bus'
+
 async function requestJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(url, { signal })
-  let data: unknown = null
+  beginLoading()
   try {
-    data = await response.json()
-  } catch {
-    throw new Error(`Sunucu yanıtı okunamadı (${response.status})`)
+    const response = await fetch(url, { signal })
+    let data: unknown = null
+    try {
+      data = await response.json()
+    } catch {
+      throw new Error(`Sunucu yanıtı okunamadı (${response.status})`)
+    }
+    const payload = data as { ok?: boolean; error?: string }
+    if (!response.ok || payload?.ok === false) {
+      throw new Error(payload?.error || `İstek başarısız (${response.status})`)
+    }
+    markDelivered()
+    return data as T
+  } finally {
+    endLoading()
   }
-  const payload = data as { ok?: boolean; error?: string }
-  if (!response.ok || payload?.ok === false) {
-    throw new Error(payload?.error || `İstek başarısız (${response.status})`)
-  }
-  return data as T
 }
 
 export interface CatalogQuery {
@@ -163,9 +171,21 @@ export async function createRemoteSession(): Promise<RemoteSession> {
   return data
 }
 
-export async function pollRemoteCommands(code: string, token: string, cursor: number): Promise<{ commands: Array<{ seq: number; command: string }>; cursor: number }> {
+export async function pollRemoteCommands(code: string, token: string, cursor: number, signal?: AbortSignal): Promise<{ commands: Array<{ seq: number; command: string }>; cursor: number }> {
   const params = new URLSearchParams({ action: 'poll', code, token, cursor: String(cursor) })
-  return requestJson(`/api/geil/remote?${params}`)
+  const response = await fetch(`/api/geil/remote?${params}`, { signal })
+  let data: unknown = null
+  try {
+    data = await response.json()
+  } catch {
+    throw new Error('Kumanda yanıtı okunamadı')
+  }
+  if (!response.ok) {
+    const error = new Error((data as { error?: string })?.error || 'Kumanda oturumu kapalı') as Error & { status?: number }
+    error.status = response.status
+    throw error
+  }
+  return data as { commands: Array<{ seq: number; command: string }>; cursor: number }
 }
 
 export async function sendRemoteCommand(code: string, command: string): Promise<void> {

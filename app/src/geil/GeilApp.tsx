@@ -6,7 +6,8 @@ import type { GeilItem, GeilSource, PlayerSource, PlayerState, WatchMeta } from 
 import { resolveLiveChannel, fetchLiveCatalog, resolveVodSource, posterUrl, pollRemoteCommands, fetchVodSources } from './api'
 import { useHashRoute, parseHash, replaceRoute, navigate, itemHref } from './router'
 import { getContinueEntry, getDeadSourceUrls, getSavedSourceUrl, markDeadSource, clearDeadSource, saveSavedSourceUrl, type ContinueEntry } from './storage'
-import { applyTvMode, moveFocus, readTvMode, setTvMode, activateFocused } from './tv'
+import { activateFocused, androidKeyCommand, applyTvMode, focusFirst, isShellApp, moveFocus, readTvMode, setTvMode, stepSelect } from './tv'
+import type { FocusDirection } from './tv'
 import Sidebar from './Sidebar'
 import SiteFullscreenButton from './SiteFullscreenButton'
 import HomeView from './HomeView'
@@ -74,9 +75,18 @@ function readStoredRemoteSession(): RemoteSessionState | null {
     if (!raw) return null
     const parsed = JSON.parse(raw) as { code?: string; token?: string; at?: number }
     if (!parsed.code || !parsed.token) return null
-    if (Date.now() - Number(parsed.at || 0) > 14 * 60 * 1000) return null
+    // The server keeps a pairing alive for as long as this page polls it, so a reload of the TV
+    // keeps the same code instead of asking somebody to type six digits across the room.
+    if (Date.now() - Number(parsed.at || 0) > 12 * 60 * 60 * 1000) return null
     return { code: parsed.code, token: parsed.token }
   } catch { return null }
+}
+
+function forgetStoredRemoteSession(code: string) {
+  try {
+    const raw = localStorage.getItem('notflix_remote_session')
+    if (raw && (JSON.parse(raw) as { code?: string }).code === code) localStorage.removeItem('notflix_remote_session')
+  } catch { /* storage may be blocked */ }
 }
 
 export default function GeilApp() {
@@ -91,9 +101,11 @@ export default function GeilApp() {
   const playerRef = useRef(player)
   const modalRef = useRef(sourceModal)
   const helpRef = useRef(showHelp)
+  const routeRef = useRef(route)
   playerRef.current = player
   modalRef.current = sourceModal
   helpRef.current = showHelp
+  routeRef.current = route
 
   const overlayKey = player.open ? 'player' : sourceModal ? 'sources' : ''
   const lastOverlay = useRef('')
@@ -190,6 +202,14 @@ export default function GeilApp() {
         return
       }
       if (typing) return
+      // The channel row of an Android TV remote arrives as a bare key code, so it joins the same
+      // command bus the D-pad uses: the player zaps, everywhere else the viewer lands on channels.
+      const channelCommand = androidKeyCommand(event.keyCode)
+      if (channelCommand) {
+        event.preventDefault()
+        window.dispatchEvent(new CustomEvent('notflix-remote', { detail: { command: channelCommand } }))
+        return
+      }
       if (playerRef.current.open || modalRef.current) return
       if (event.shiftKey && !event.ctrlKey && !event.metaKey && (event.key === 'T' || event.key === 't')) {
         event.preventDefault()
@@ -225,16 +245,27 @@ export default function GeilApp() {
       // The player owns its own surface while it is on screen — but a source picker opened on top
       // of it owns it back, otherwise the D-pad would steer the picture behind the dialog.
       if (playerRef.current.open && !modalRef.current) return
-      if (command === 'up' || command === 'down' || command === 'left' || command === 'right') { moveFocus(command); return }
-      if (command === 'ok' || command === 'playpause') { activateFocused(); return }
+      if (command === 'up' || command === 'down' || command === 'left' || command === 'right') {
+        const direction = command as FocusDirection
+        // A focused dropdown owns left/right: the D-pad picks its value instead of leaving the row.
+        if ((direction === 'left' || direction === 'right') && stepSelect(direction)) return
+        moveFocus(direction)
+        return
+      }
+      if (command === 'ok' || command === 'playpause') { if (!activateFocused()) focusFirst(); return }
       if (command === 'back') {
-        if (modalRef.current) { closeSourceModal(); return }
-        if (helpRef.current) { setShowHelp(false); return }
-        window.history.back()
+        if (modalRef.current) { closeSourceModal(); event.preventDefault(); return }
+        if (helpRef.current) { setShowHelp(false); event.preventDefault(); return }
+        // Telling the shell whether the page consumed the key is what keeps Android's Back from
+        // stepping out of the app while a screen is still there to go back to.
+        if (routeRef.current.view !== 'home') { window.history.back(); event.preventDefault(); return }
+        // In a browser the remote's Back is the browser's Back. In the shell the answer above has
+        // already told Android what to do, so stepping history here would move twice.
+        if (!isShellApp()) window.history.back()
         return
       }
       if (command === 'home') { navigate('/'); return }
-      if (command === 'chup' || command === 'chdown') { navigate('/channels'); return }
+      if (command === 'chup' || command === 'chdown') { navigate('/channels'); window.setTimeout(focusFirst, 150); return }
     }
     window.addEventListener('notflix-remote', handler)
     return () => window.removeEventListener('notflix-remote', handler)
@@ -251,24 +282,68 @@ export default function GeilApp() {
 
   useEffect(() => {
     if (!remoteSession) return
+    // A phone-driven D-pad moves focus without any keyboard activity, and browsers suppress the
+    // focus ring in exactly that case — so while a remote is attached the ring is forced back on.
+    document.documentElement.classList.add('remote-live')
     let cursor = readRemoteCursor(remoteSession.code)
-    let cancelled = false
-    const tick = async () => {
-      try {
-        const data = await pollRemoteCommands(remoteSession.code, remoteSession.token, cursor)
-        if (cancelled) return
-        cursor = Number(data.cursor) || cursor
-        writeRemoteCursor(remoteSession.code, cursor)
-        for (const entry of data.commands || []) {
-          window.dispatchEvent(new CustomEvent('notflix-remote', { detail: { command: entry.command } }))
+    let stopped = false
+    let controller: AbortController | null = null
+    let wake: (() => void) | null = null
+    let waitTimer = 0
+
+    const pause = (ms: number) => new Promise<void>((resolve) => {
+      wake = resolve
+      waitTimer = window.setTimeout(() => { wake = null; resolve() }, ms)
+    })
+
+    const loop = async () => {
+      while (!stopped) {
+        const startedAt = Date.now()
+        controller = new AbortController()
+        const giveUp = window.setTimeout(() => controller?.abort(), 30000)
+        try {
+          const data = await pollRemoteCommands(remoteSession.code, remoteSession.token, cursor, controller.signal)
+          if (stopped) break
+          const next = Number(data.cursor) || cursor
+          if (next !== cursor) { cursor = next; writeRemoteCursor(remoteSession.code, cursor) }
+          for (const entry of data.commands || []) {
+            window.dispatchEvent(new CustomEvent('notflix-remote', { detail: { command: entry.command } }))
+          }
+          // An endpoint that answers immediately with nothing means this build of the API has no
+          // long-poll, so back off instead of spinning. A held poll never reaches this branch.
+          if (!(data.commands || []).length && Date.now() - startedAt < 500) await pause(400)
+        } catch (error) {
+          if (stopped) break
+          // A 404 is the server saying this pairing is gone (it restarted or the code aged out).
+          // Keep retrying would only spam it, so forget the session and let the viewer re-pair.
+          if ((error as { status?: number }).status === 404) {
+            stopped = true
+            forgetStoredRemoteSession(remoteSession.code)
+            break
+          }
+          // An abort is our own restart (a stuck request or the tab coming back), so retry at once;
+          // only a real network failure deserves a breath before the next attempt.
+          if (!controller.signal.aborted) await pause(1200)
+        } finally {
+          window.clearTimeout(giveUp)
+          controller = null
         }
-      } catch {
-        // A missing session means pairing expired; the TV keeps working locally.
       }
     }
-    const timer = window.setInterval(tick, 2000)
-    void tick()
-    return () => { cancelled = true; window.clearInterval(timer) }
+    void loop()
+
+    // A tab that was kept in the background can miss a held response, so the first poll after it is
+    // shown again goes out straight away rather than after the current request settles.
+    const onVisible = () => { if (document.visibilityState === 'visible') { wake?.(); controller?.abort() } }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      stopped = true
+      document.documentElement.classList.remove('remote-live')
+      document.removeEventListener('visibilitychange', onVisible)
+      window.clearTimeout(waitTimer)
+      wake?.()
+      controller?.abort()
+    }
   }, [remoteSession])
 
   useEffect(() => {

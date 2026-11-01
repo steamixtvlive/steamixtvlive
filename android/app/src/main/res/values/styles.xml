@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A plain DeviceDefault keeps the shell free of AndroidX: no appcompat, no material, no
+         Kotlin runtime. The only surface the viewer sees is the web page. -->
+    <style name="Theme.Notflix" parent="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+        <item name="android:windowDisablePreview">false</item>
+    </style>
+</resources>

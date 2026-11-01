@@ -616,6 +616,8 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       if (command === 'ok') { if (!activateFocused()) togglePlay(); return }
       if (command === 'home') { onClose(); return }
       if (command === 'back') {
+        // Claim the key so the Android shell does not also step out of the page behind the player.
+        event.preventDefault()
         if (sourceChooserOpen) setSourceChooserOpen(false)
         else if (subtitleMenuOpen) setSubtitleMenuOpen(false)
         else if (panelOpen) { setPanelOpen(false); revealControls() }
