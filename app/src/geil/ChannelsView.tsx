@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GeilItem } from './types'
-import { fetchLiveCatalog, channelColor, channelQuality, channelStation, initialOf, normalizeLiveChannels, currentEpg, remainingLabel, formatClock } from './api'
+import { fetchLiveCatalog, fetchAllLiveChannels, channelColor, channelQuality, channelStation, initialOf, normalizeLiveChannels, currentEpg, remainingLabel, formatClock } from './api'
+import { NATIONAL_GROUP_ID, NATIONAL_GROUP_NAME, nationalChannels } from './national'
 import { HeartIcon } from './icons'
 import { useLang } from '@/lib/language'
 
@@ -48,6 +49,20 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
       setLoading(true)
       setError('')
       try {
+        if (group === NATIONAL_GROUP_ID) {
+          // The line-up is the viewer's own order, so the whole country group is read at once and
+          // rearranged by hand; the provider's pagination and its A–Z have nothing to say about it.
+          const sourceGroup = (features?.filter || []).find((f: any) => f.id === 'group')
+            ?.values?.find((o: any) => /turk/i.test(o.id))?.id || 'Turkey'
+          const { items, features: meta } = await fetchAllLiveChannels(sourceGroup, controller.signal)
+          if (controller.signal.aborted) return
+          const ordered = nationalChannels(items)
+          setChannels(ordered)
+          setFeatures(meta)
+          setNextCursor(null)
+          if (!selectedId && ordered[0]) setSelectedId(ordered[0].id)
+          return
+        }
         const data = await fetchLiveCatalog(
           { search: search.trim().length >= 2 ? search.trim() : '', sort, filter: { group }, limit: 300 },
           controller.signal,
@@ -123,8 +138,10 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
   const groups = features?.filter?.find((feature: any) => feature.id === 'group')?.values || []
 
   // The catalogue decides which country groups exist, so an unsupported default falls back to all.
+  // The viewer's own line-up is not a catalogue group, so it is never reset away.
   useEffect(() => {
     if (!features) return
+    if (group === NATIONAL_GROUP_ID) return
     if (group && !groups.some((option: any) => option.id === group)) setGroup('')
   }, [features])
 
@@ -205,6 +222,7 @@ export default function ChannelsView({ onPlay }: { onPlay: (channel: GeilItem, v
             {groups.map((option: any) => (
               <option key={option.id} value={option.id}>{option.name}</option>
             ))}
+            <option value={NATIONAL_GROUP_ID}>{NATIONAL_GROUP_NAME}</option>
           </select>
           <button
             type="button"

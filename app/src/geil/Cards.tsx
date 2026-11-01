@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { GeilItem } from './types'
 import { imageUrl, posterUrl, ratingOf, yearOf } from './api'
 import { itemHref } from './router'
+import { isLowPower } from './tv'
 import { StarIcon } from './icons'
 
 export function PosterCard({
@@ -37,7 +38,8 @@ export function PosterCard({
           <img
             src={poster}
             alt=""
-            loading="eager"
+            loading={isLowPower() ? 'lazy' : 'eager'}
+            decoding={isLowPower() ? 'async' : 'auto'}
             className={loaded ? 'loaded' : ''}
             onLoad={() => setLoaded(true)}
           />

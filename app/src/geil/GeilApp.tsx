@@ -6,7 +6,7 @@ import type { GeilItem, GeilSource, PlayerSource, PlayerState, WatchMeta } from 
 import { resolveLiveChannel, fetchLiveCatalog, channelStation, normalizeLiveChannels, resolveVodSource, posterUrl, pollRemoteCommands, fetchVodSources } from './api'
 import { useHashRoute, parseHash, replaceRoute, navigate, itemHref } from './router'
 import { getContinueEntry, getDeadSourceUrls, getSavedSourceUrl, markDeadSource, clearDeadSource, saveSavedSourceUrl, type ContinueEntry } from './storage'
-import { activateFocused, androidKeyCommand, applyTvMode, focusFirst, isBackKey, isShellApp, moveFocus, readTvMode, remoteDriven, setTvMode, stepSelect } from './tv'
+import { activateFocused, androidKeyCommand, applyTvMode, focusCorner, focusFirst, isBackKey, isShellApp, moveFocus, readTvMode, remoteDriven, setTvMode, stepSelect } from './tv'
 import type { FocusDirection } from './tv'
 import Sidebar from './Sidebar'
 import SiteFullscreenButton from './SiteFullscreenButton'
@@ -265,6 +265,18 @@ export default function GeilApp() {
         setTvMode(!readTvMode())
         return
       }
+      // Two letters stand in for the two remote keys a viewer has no keyboard for: the page's own
+      // fullscreen, and the switch between the touch and the remote face of the interface.
+      if (!event.shiftKey && !event.ctrlKey && !event.metaKey && (event.key === 'F' || event.key === 'f')) {
+        event.preventDefault()
+        window.dispatchEvent(new CustomEvent('notflix-site-fullscreen'))
+        return
+      }
+      if (!event.shiftKey && !event.ctrlKey && !event.metaKey && (event.key === 'T' || event.key === 't')) {
+        event.preventDefault()
+        setTvMode(!readTvMode())
+        return
+      }
       if (event.key === '?' || event.key === 'h' || event.key === 'H') {
         event.preventDefault()
         setShowHelp((value) => !value)
@@ -286,12 +298,27 @@ export default function GeilApp() {
         const direction = event.key === 'ArrowUp' ? 'up' : event.key === 'ArrowDown' ? 'down' : event.key === 'ArrowLeft' ? 'left' : 'right'
         // A focused dropdown owns left/right: the D-pad picks its value instead of leaving the row.
         if ((direction === 'left' || direction === 'right') && stepSelect(direction)) return
-        if (!moveFocus(direction) && direction === 'left' && !menuRef.current) openMenu()
+        if (!moveFocus(direction)) {
+          if (direction === 'left' && !menuRef.current) openMenu()
+          else if (direction === 'up') focusCorner('up')
+        }
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [showHelp, route.view])
+
+  /* A remote's Menu key is a context-menu key as far as a TV browser is concerned, so the viewer who
+     presses it to open the rail gets the engine's own settings panel dropped over the picture
+     instead — and there is no cursor on a set to dismiss it with. While keys drive the page the menu
+     belongs to the rail, and the browser's copy of it is refused. */
+  useEffect(() => {
+    const onContextMenu = (event: MouseEvent) => {
+      if (remoteDriven()) event.preventDefault()
+    }
+    window.addEventListener('contextmenu', onContextMenu)
+    return () => window.removeEventListener('contextmenu', onContextMenu)
+  }, [])
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -304,9 +331,13 @@ export default function GeilApp() {
         const direction = command as FocusDirection
         // A focused dropdown owns left/right: the D-pad picks its value instead of leaving the row.
         if ((direction === 'left' || direction === 'right') && stepSelect(direction)) return
-        // Nothing left to walk to means the viewer is already at the left edge: that press opens
-        // the rail rather than dying on a wall.
-        if (!moveFocus(direction) && direction === 'left' && !menuRef.current) openMenu()
+        // Nothing left to walk to means the viewer is already at an edge: that press opens the rail
+        // on the left and hands the remote to the page's own corner on the top, rather than dying
+        // against a wall the viewer would have to climb round by clicking something first.
+        if (!moveFocus(direction)) {
+          if (direction === 'left' && !menuRef.current) openMenu()
+          else if (direction === 'up') focusCorner('up')
+        }
         return
       }
       if (command === 'ok' || command === 'playpause') { if (!activateFocused()) focusFirst(); return }
@@ -315,6 +346,10 @@ export default function GeilApp() {
         else openMenu()
         return
       }
+      // The corner controls float above the catalogue, so the colour keys and the info key reach them
+      // without a walk at all: fullscreen in one press, the touch/remote face in one press.
+      if (command === 'fullscreen') { window.dispatchEvent(new CustomEvent('notflix-site-fullscreen')); return }
+      if (command === 'tvmode') { setTvMode(!readTvMode()); return }
       if (command === 'back') {
         // Telling the shell whether the page consumed the key is what keeps Android's Back from
         // stepping out of the app while a screen is still there to go back to.

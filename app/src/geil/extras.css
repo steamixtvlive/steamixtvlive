@@ -680,3 +680,82 @@ html.tv-mode .sidebar[data-menu='open'] .sidebar-dock:before,
 html.tv-mode .sidebar[data-menu='open'] .sidebar-brand,
 html.tv-mode .sidebar[data-menu='open'] .nav-item:not(.active),
 html.tv-mode .sidebar[data-menu='open'] .sidebar-bottom:not(:has(.nav-item.active)) { opacity: 1; }
+
+/* ---- Weak hardware ---------------------------------------------------------
+   A 2 GB TV box and a mid-range phone are asked to composite the same page a desktop does, and the
+   bill arrives every time the remote moves: two hundred and forty posters painted at once because
+   only the catalogue grid was ever told to skip what the eye cannot reach, eight frosted arrows
+   re-blurring the rail behind them on every scroll frame, a title panel that blurs the picture
+   under it each time the focus lands, and a progress bar drawn by changing an element's width —
+   which relayouts the page sixty times a second for eight seconds, on repeat, forever.
+   The skin has always had a tier for this (`html.tv-device`); tv.ts now hands it to the sets that
+   announce themselves, and `html.low-power` extends the same thinking to a touch device. A desktop
+   with a mouse is neither, and nothing below reaches it. */
+html.low-power .row .card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px;
+}
+html.low-power .geil-carousel-arrow {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgba(14, 17, 22, .88);
+}
+html.low-power .geil-carousel-arrow:disabled { display: none; }
+html.low-power .card:hover .card-overlay,
+html.low-power .card:focus .card-overlay,
+html.low-power .card[data-dpad-focus] .card-overlay {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: linear-gradient(0deg, rgba(8, 10, 14, .95) 0%, rgba(8, 10, 14, .55) 46%, rgba(8, 10, 14, .04) 100%);
+}
+html.low-power .hero-thumb-fill,
+html.low-power .hero-dot-fill {
+  width: 100%;
+  transform-origin: left center;
+  animation-name: heroFillRun;
+}
+@keyframes heroFillRun {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* ---- The same frame, at arm's length ---------------------------------------
+   Two pixels of accent is a hairline on a 55" panel seen from a sofa and a slab on a phone held at
+   thirty centimetres — and a phone lights it on every control a finger merely leaves behind, which
+   is not a highlight but a pile of boxes. On a narrow touch screen the frame belongs to the remote
+   alone, and it is one pixel deep inside the control's own edge. */
+@media (pointer: coarse) and (orientation: portrait) {
+  :focus,
+  html.tv-mode :focus-visible,
+  html.remote-live :focus-visible,
+  html.tv-mode .main :focus,
+  html.tv-mode .sidebar :focus,
+  html.tv-mode .bnav :focus,
+  html.tv-mode .player-root :focus,
+  html.tv-mode .modal :focus,
+  html.tv-mode .shortcuts-overlay :focus,
+  html.remote-live .main :focus,
+  html.remote-live .sidebar :focus,
+  html.remote-live .bnav :focus,
+  html.remote-live .player-root :focus,
+  html.remote-live .modal :focus,
+  html.remote-live .shortcuts-overlay :focus {
+    outline: none !important;
+  }
+  [data-dpad-focus],
+  html.tv-mode [data-dpad-focus],
+  html.remote-live [data-dpad-focus] {
+    outline: 1px solid var(--accent) !important;
+    outline-offset: -1px !important;
+  }
+}
+
+/* ---- The cutout and the rail ----------------------------------------------
+   A phone turned sideways in the browser's own fullscreen reports its camera cutout as a left safe
+   area, and the page paid for both that inset and the width the rail already reserves — so the
+   catalogue started a rail's width past the rail. The content now begins at whichever is further:
+   the edge of the cutout, or the edge of the menu. Nothing changes where there is no cutout. */
+.main-inner {
+  padding-left: max(0px, calc(var(--sal, 0px) - var(--rail-w)));
+  padding-right: max(0px, calc(var(--sar, 0px) - var(--rail-w)));
+}

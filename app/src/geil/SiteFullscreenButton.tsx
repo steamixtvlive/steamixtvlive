@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ExitFullscreenIcon, FullscreenIcon, RotateIcon } from './icons'
 import { useLang } from '@/lib/language'
 
@@ -22,17 +22,27 @@ export default function SiteFullscreenButton() {
   const [active, setActive] = useState(false)
   const [portrait, setPortrait] = useState(false)
   const [rolled, setRolled] = useState(false)
+  const [finger, setFinger] = useState(false)
+  const toggleRef = useRef<() => void>(() => {})
 
   useEffect(() => {
     setAvailable(isSupported())
+    // A phone or a tablet in its browser has no fullscreen control to press and no keyboard to
+    // type on, so the corner buttons answer a page-level command as well as a click.
+    const onCommand = () => toggleRef.current()
+    window.addEventListener('notflix-site-fullscreen', onCommand)
     const onChange = () => setActive(Boolean(currentFullscreenElement()))
-    const onResize = () => setPortrait(window.innerHeight > window.innerWidth)
+    const onResize = () => {
+      setPortrait(window.innerHeight > window.innerWidth)
+      setFinger(Boolean(window.matchMedia?.('(pointer: coarse)').matches))
+    }
     onChange()
     onResize()
     document.addEventListener('fullscreenchange', onChange)
     document.addEventListener('webkitfullscreenchange', onChange)
     window.addEventListener('resize', onResize)
     return () => {
+      window.removeEventListener('notflix-site-fullscreen', onCommand)
       document.removeEventListener('fullscreenchange', onChange)
       document.removeEventListener('webkitfullscreenchange', onChange)
       window.removeEventListener('resize', onResize)
@@ -55,7 +65,9 @@ export default function SiteFullscreenButton() {
 
   /* Turning the page sideways. Android lets a fullscreen page ask for landscape and the whole
      window follows; everywhere else that call is refused, so the page rolls itself instead and
-     the viewer reads the same layout on its side. One press out, the next press back. */
+     the viewer reads the same layout on its side. One press out, the next press back. A touch
+     device gets the control in portrait even without the fullscreen API — its browser keeps the
+     address bar to itself, and the page can still be turned. */
   const roll = () => {
     const orientation = screen.orientation as (ScreenOrientation & { lock?: (o: string) => Promise<void>; unlock?: () => void }) | undefined
     if (rolled) {
@@ -74,10 +86,11 @@ export default function SiteFullscreenButton() {
     document.documentElement.classList.add('site-landscape')
     setRolled(true)
   }
+  toggleRef.current = toggle
 
   return (
     <>
-      {active && portrait ? (
+      {(active || finger) && portrait ? (
         <button
           type="button"
           className={`site-rotate ${rolled ? 'on' : ''}`}

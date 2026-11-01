@@ -10,6 +10,29 @@ function isTvDevice(): boolean {
 
 export { isTvDevice }
 
+/** The skin carries its own weak-hardware tier behind `html.tv-device`, and the reference site
+    turns it on for every set it detects. Nothing in this app ever wrote that class, so all forty
+    of those rules — the animations that never restart, the ambient blur that never convolves, the
+    rail that paints itself flat instead of blurring the page behind it — have been dead code, and
+    a 2 GB box has been drawing a desktop the whole time. Phones and tablets join the lighter tier:
+    their pointer is coarse, their memory is short, and they are the other half of the complaint. */
+function isCoarseDevice(): boolean {
+  return Boolean(window.matchMedia?.('(pointer: coarse)').matches)
+}
+
+export function applyDeviceTier() {
+  const tv = isTvDevice()
+  document.documentElement.classList.toggle('tv-device', tv)
+  document.documentElement.classList.toggle('low-power', tv || isCoarseDevice())
+}
+
+if (typeof document !== 'undefined') applyDeviceTier()
+
+/** Whether this page is running on hardware that has to be told what not to paint. */
+export function isLowPower(): boolean {
+  return typeof document !== 'undefined' && document.documentElement.classList.contains('low-power')
+}
+
 export function readTvMode(): boolean {
   try {
     const stored = localStorage.getItem(TV_MODE_KEY)
@@ -55,7 +78,9 @@ export function remoteDriven(): boolean {
     already walks. The numbers are Android's own KeyEvent codes: 3 Home, 4 Back, 19-22 the D-pad,
     13/23/66 Enter and DPAD-Centre, 24/25/164 the volume row, 85/126/127 play-pause, 128/129 and
     166/167 the channel row, 133/134 the skip keys and 82 the menu key, which opens whatever list
-    the current screen owns. They are only read from an unnamed key, because
+    the current screen owns, while 172 Guide, 358 Info and the yellow 192 switch the interface
+    between its touch and remote faces and the red and green 190/191 put the page in its own
+    fullscreen. They are only read from an unnamed key, because
     a real keyboard answers the same numbers with printable keys (82 is 'R', 19 is 'S'). */
 const ANDROID_KEY_COMMANDS: Record<number, string> = {
   3: 'home',
@@ -80,7 +105,12 @@ const ANDROID_KEY_COMMANDS: Record<number, string> = {
   164: 'mute',
   166: 'chup',
   167: 'chdown',
+  172: 'tvmode',
   179: 'source',
+  190: 'fullscreen',
+  191: 'fullscreen',
+  192: 'tvmode',
+  358: 'tvmode',
 }
 
 const NAMED_KEY_COMMANDS: Record<string, string> = {
@@ -120,6 +150,10 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
 function visible(element: HTMLElement): boolean {
   const rect = element.getBoundingClientRect()
   if (rect.width < 4 || rect.height < 4) return false
+  // One native call answers what a style resolution used to answer per control, per press.
+  if (element.checkVisibility) {
+    return element.checkVisibility({ visibilityProperty: true, opacityProperty: true })
+  }
   const style = window.getComputedStyle(element)
   return style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity) > 0.05
 }
@@ -132,9 +166,31 @@ function scope(): HTMLElement | null {
   return scopes.length ? scopes[scopes.length - 1] : null
 }
 
+let pool: { root: HTMLElement | Document; list: HTMLElement[] } | null = null
+
 function candidates(): HTMLElement[] {
   const root = scope() || document
-  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(visible)
+  // One press used to resolve the style of every control on the page twice over — some four
+  // hundred of them on a home screen — so a weak box spent the press measuring instead of moving
+  // the frame. The list is kept until the page itself changes: the observer below drops it, so a
+  // new row, an opened panel or a fresh focus scope is walked from the next press.
+  if (pool && pool.root === root) return pool.list
+  const list = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(visible)
+  pool = { root, list }
+  return list
+}
+
+if (typeof document !== 'undefined' && typeof MutationObserver === 'function') {
+  // Only the shape of the page invalidates the walk. Scrolling does not: the positions are read
+  // again on every press anyway, and the focus mark itself is deliberately not watched, or every
+  // move would throw away the list it is about to read.
+  const observer = new MutationObserver(() => { pool = null })
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class', 'style', 'hidden', 'disabled', 'open', 'aria-hidden', 'data-focus-scope'],
+  })
 }
 
 let walked: HTMLElement | null = null
@@ -172,6 +228,20 @@ export function focusFirst(options: { skipInputs?: boolean; root?: HTMLElement |
   }
   const [first] = inContent.length ? inContent : pooled
   if (first) focusElement(first)
+}
+
+/** The page's own controls in the top-right corner — the fullscreen toggle and the button that
+    turns the site sideways — float above the catalogue in a fixed layer, so the geometric walk
+    never lands on them from a poster and the viewer has to climb the whole menu to reach them.
+    A press at the top edge with nobody left above hands the remote straight to that corner. */
+export function focusCorner(direction: FocusDirection): boolean {
+  if (direction !== 'up') return false
+  const active = document.activeElement as HTMLElement | null
+  const corner = Array.from(document.querySelectorAll<HTMLElement>('.site-rotate, .site-fullscreen')).filter(visible)
+  if (!corner.length) return false
+  if (active && corner.includes(active)) return false
+  focusElement(active === corner[0] ? corner[corner.length - 1] : corner[0])
+  return true
 }
 
 /** The page and every carousel scrolls its own axis, so the walk has to hand the press over to

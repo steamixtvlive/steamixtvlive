@@ -99,8 +99,31 @@ export async function fetchLiveCatalog(
   }
 }
 
-export async function resolveLiveChannel(id: string, signal?: AbortSignal): Promise<GeilPlayback> {
-  return requestJson<GeilPlayback>(`/api/geil/live/resolve?id=${encodeURIComponent(id)}`, signal)
+/** The ready-made national line-up needs every station of a country at once, so the group is read
+    page by page instead of one page at a time like the infinite list. */
+export async function fetchAllLiveChannels(
+  group: string,
+  signal?: AbortSignal,
+): Promise<{ items: GeilItem[]; features: GeilFeatures }> {
+  const seen = new Set<string>()
+  const items: GeilItem[] = []
+  let features: GeilFeatures = {}
+  let cursor: string | number | null = null
+  for (let page = 0; page < 12; page += 1) {
+    const data = await fetchLiveCatalog({ filter: { group }, cursor, limit: 300 }, signal)
+    if (data.features) features = data.features
+    for (const item of data.items) {
+      if (seen.has(item.id)) continue
+      seen.add(item.id)
+      items.push(item)
+    }
+    cursor = data.nextCursor ?? null
+    if (!cursor || !data.items.length) break
+  }
+  return { items, features }
+}
+
+export async function resolveLiveChannel(id: string, signal?: AbortSignal): Promise<GeilPlayback> {  return requestJson<GeilPlayback>(`/api/geil/live/resolve?id=${encodeURIComponent(id)}`, signal)
 }
 
 export async function fetchM3uGroups(signal?: AbortSignal): Promise<Array<{ id: string; name: string; count: number }>> {
@@ -271,7 +294,7 @@ export function channelStation(name: string): string {
   return value.replace(/\s+/g, ' ').replace(/^[\s.\-_|[\]()]+|[\s.\-_|[\]()]+$/g, '').trim()
 }
 
-function qualityRank(name: string): number {
+export function qualityRank(name: string): number {
   const upper = String(name || '').toUpperCase()
   if (/4K|UHD|2160P/.test(upper)) return 4
   if (/FHD|FULL HD|HD\+/.test(upper)) return 3
@@ -280,12 +303,11 @@ function qualityRank(name: string): number {
   return 1
 }
 
-/** The live provider lists every station once per quality variant and names them
-    "KANAL (7)", "KANAL (6)"… in a collation that puts the Turkish letters after the English
-    ones, so a country page ends mid-alphabet and the next page jumps back to the first
-    station. This keeps one row per station (its best picture), and, unless the viewer picked
-    an order of their own, reads the list in the station's own alphabet so it starts at the
-    beginning instead of restarting halfway down. */
+/** The live provider lists every station once per quality variant — "KANAL (7)", "KANAL (6)"… —
+    and the viewer came to this list in the order its own editor put it, which is the order they
+    expect to find a station in and the order the remote's channel dial steps through. So the rows
+    are collapsed to one per station, best picture first, and left exactly where the list put them.
+    Only an order the viewer picks themselves rearranges the page. */
 export function normalizeLiveChannels(items: GeilItem[], sort = ''): GeilItem[] {
   const byStation = new Map<string, GeilItem>()
   for (const channel of items) {
@@ -294,7 +316,7 @@ export function normalizeLiveChannels(items: GeilItem[], sort = ''): GeilItem[] 
     if (!held || qualityRank(channel.name) > qualityRank(held.name)) byStation.set(key, channel)
   }
   const unique = [...byStation.values()]
-  if (sort && sort !== 'name') return unique
+  if (sort !== 'name') return unique
   // A provider decorates some stations (".BLACK", "[[ TELEKOM SPORT ]]"); comparing the decorated
   // string files them under punctuation, so the alphabet is keyed on the first real word.
   const sortKey = (name: string) => channelStation(name).replace(/^[^\p{L}\p{N}]+/u, '')

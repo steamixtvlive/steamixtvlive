@@ -5,7 +5,8 @@ import Hls from 'hls.js'
 import { Captions, List, Layers, Check } from 'lucide-react'
 import type { PlayerState, GeilItem, PlayerSource } from './types'
 import { XIcon, ChevronUp, ChevronDown, VolumeIcon, MuteIcon, FullscreenIcon, ExitFullscreenIcon, PipIcon, PlayIcon, HeartIcon, SearchIcon, ArrowLeftIcon } from './icons'
-import { channelColor, channelQuality, channelStation, currentEpg, formatClock, initialOf, normalizeLiveChannels, remainingLabel } from './api'
+import { channelColor, channelQuality, channelStation, currentEpg, fetchAllLiveChannels, formatClock, initialOf, normalizeLiveChannels, remainingLabel } from './api'
+import { NATIONAL_GROUP_ID, NATIONAL_GROUP_NAME, nationalChannels } from './national'
 import { saveContinueWatching } from './storage'
 import { subtitleLanguageCode, subtitleLanguageLabel } from './subtitle-language'
 import { activateFocused, focusFirst, moveFocus, remoteDriven, stepSelect, type FocusDirection } from './tv'
@@ -145,6 +146,14 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
       if (!userInteracted.current) { setPanelLoading(false); return }
       setPanelLoading(true)
       try {
+        if (panelGroup === NATIONAL_GROUP_ID) {
+          // The viewer's own line-up is not a provider group: the country list is read whole and
+          // put back into their order, best picture per station.
+          const every = await fetchAllLiveChannels('Turkey', controller.signal)
+          if (controller.signal.aborted) return
+          setCatalogChannels(nationalChannels(every.items))
+          return
+        }
         const params = new URLSearchParams()
         if (panelSearch.trim().length >= 2) params.set('search', panelSearch.trim())
         if (panelSort) params.set('sort', panelSort)
@@ -157,7 +166,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
         setPanelFeatures(data.features || {})
         // The catalogue decides which country groups exist, so an unsupported default falls back to all.
         const groupOptions = (data.features?.filter || []).find((feature) => feature.id === 'group')?.values || []
-        if (panelGroup !== '__favorites__' && groupOptions.length && !groupOptions.some((option) => option.id === panelGroup)) setPanelGroup('')
+        if (panelGroup !== '__favorites__' && panelGroup !== NATIONAL_GROUP_ID && groupOptions.length && !groupOptions.some((option) => option.id === panelGroup)) setPanelGroup('')
         // Use the full server-side result when available; fall back to the supplied
         // channel set if the catalog request fails or returns no items.
         if (Array.isArray(data.items)) {
@@ -588,9 +597,13 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
     const touch = event.touches[0]
     const from = event.target as HTMLElement | null
     // The bar, the channel panel and the source picker answer gestures for themselves; only a drag
-    // that starts on the picture is a dial. The centre of that picture carries the play button, so
-    // the rule is read off the surface the finger landed on, not off which element is on top.
-    if (from?.closest('.player-controls, .ch-overlay, .subtitle-menu')) { swipeRef.current = null; return }
+    // that starts on the picture is a dial. The full-screen controls layer is not one of them: it is
+    // a transparent catcher, so the rule is read off the surface the finger landed on, not off which
+    // element is on top.
+    if (from?.closest('.player-top, .player-bottom, .player-bar, .ch-overlay, .subtitle-menu, .player-menu, .modal-bg, .player-center-toggle')) {
+      swipeRef.current = null
+      return
+    }
     swipeHandledRef.current = false
     swipeRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null
     revealControls()
@@ -613,6 +626,24 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
   function cancelSwipe() {
     swipeRef.current = null
   }
+
+  // React registers touchmove passively at the root, so the one thing that keeps a dial alive —
+  // refusing the page's claim on the drag — cannot be done from a prop. Without it a scroll starts
+  // on the first ten pixels, the gesture is cancelled, and the finger lift reports nothing.
+  useEffect(() => {
+    const root = containerRef.current
+    if (!root) return
+    const onMove = (event: TouchEvent) => {
+      const start = swipeRef.current
+      const touch = event.touches[0]
+      if (!start || !touch) return
+      const dy = touch.clientY - start.y
+      const dx = touch.clientX - start.x
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) event.preventDefault()
+    }
+    root.addEventListener('touchmove', onMove, { passive: false })
+    return () => root.removeEventListener('touchmove', onMove)
+  }, [])
 
   function copyLink() {
     const url = window.location.href
@@ -1125,6 +1156,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 {(panelFeatures?.filter?.find((feature) => feature.id === 'group')?.values || []).map((option) => (
                   <option key={option.id} value={option.id}>{option.name}</option>
                 ))}
+                <option value={NATIONAL_GROUP_ID}>{NATIONAL_GROUP_NAME}</option>
               </select>
               <button className={`ep-pill panel-favorites-filter ${panelGroup === '__favorites__' ? 'active' : ''}`} aria-pressed={panelGroup === '__favorites__'} onClick={() => setPanelGroup((value) => value === '__favorites__' ? '' : '__favorites__')}>
                 {t('channels.favorites')} {favIds.size > 0 ? <span className="ep-pill-count">{favIds.size}</span> : null}
@@ -1135,7 +1167,7 @@ export default function Player({ state, onClose, onPrev, onNext, channels = [], 
                 .filter((channel) => matchesPanelSearch(channel, panelSearch))
                 .map((channel, index) => (
                   <div className="ch-item" key={channel.id} style={{ position: 'relative', height: 64 }}>
-                    <div className="ch-row" tabIndex={0} role="button" aria-label={channelStation(channel.name)} style={{ height: '100%' }} onClick={() => { onChannelSelect(channel, panelChannels); setPanelOpen(false); containerRef.current?.focus({ preventScroll: true }) }}>
+                    <div className="ch-row" tabIndex={0} role="button" aria-label={channelStation(channel.name)} style={{ height: '100%' }} onClick={() => onChannelSelect(channel, panelChannels)}>
                       <span className="ch-num">{index + 1}</span>
                       <span className="ch-logo ch-logo-ph" style={{ background: channelColor(channelStation(channel.name)) }}>{initialOf(channelStation(channel.name))}</span>
                       <div className="ch-main">
