@@ -160,13 +160,13 @@ function decodeBase64Url(value) {
   return Buffer.from(String(value).replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
 }
 
-function signPayload(payload) {
+export function signPayload(payload) {
   const data = encodeBase64Url(JSON.stringify(payload))
   const sig = createHmac('sha256', SECRET).update(data).digest('base64url')
   return `${data}.${sig}`
 }
 
-function verifyPayload(token) {
+export function verifyPayload(token) {
   const [data, sig] = String(token || '').split('.')
   if (!data || !sig) return null
   const expected = createHmac('sha256', SECRET).update(data).digest('base64url')
@@ -305,6 +305,115 @@ async function handleLiveResolve(reqUrl, res) {
     format: data.format,
     url: proxyUrl(data.url, data.headers),
   })
+}
+
+/* -------------------------------------------------------------------------- */
+/* Abonenin kendi kanal listesi                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* Sağlayıcının medya kutuları http:// olduğu için tarayıcı onları kendi başına isteyemiyor;
+   o adresler bizden geçmek zorunda kalıyor ve kota videonun kendisini yiyor. Abonenin kendi
+   listesi aynı kanalların https hali: adresi ondan verdiğimizde videoyu tarayıcı doğrudan
+   listeden çeker, bize yalnızca küçük JSON kalır. Eşleşme isimle değil numarayla — katalogdaki
+   sayısal kimlik, listedeki yayın kimliğinin sayısal ön ekidir (9630 kanaldan 9145'i örtüşüyor). */
+
+const LIVE_LIST_URL = (process.env.STEAMIX_LIVE_M3U || 'https://atakannn19833.lxi.be/vaybe.php?list=all.m3u').trim()
+const LIVE_LIST_TTL = 6 * 60 * 60 * 1000
+const LIVE_RESOLVE_PATH = /\/live\/resolve$/i
+
+let liveTable = { at: 0, ids: [], byId: new Map() }
+let liveLoading = null
+
+function liveIdOf(pathname, search) {
+  const inPath = String(pathname).match(/\/live\/play\/(\d{4,20})/i)
+  if (inPath) return inPath[1]
+  if (!LIVE_RESOLVE_PATH.test(pathname)) return ''
+  const target = new URLSearchParams(search || '').get('url') || ''
+  const inQuery = target.match(/\/live\/play\/(\d{4,20})/i)
+  return inQuery ? inQuery[1] : ''
+}
+
+/** Numarayla başlayan tek bir yayın kimliği varsa onun adresi; yoksa boş string. */
+function liveAddressOf(table, id) {
+  let low = 0
+  let high = table.ids.length
+  while (low < high) {
+    const mid = (low + high) >> 1
+    if (table.ids[mid] < id) low = mid + 1
+    else high = mid
+  }
+  const full = table.ids[low]
+  return full && full.startsWith(id) ? table.byId.get(full) || '' : ''
+}
+
+async function loadLiveTable() {
+  if (liveTable.byId.size && Date.now() < liveTable.at + LIVE_LIST_TTL) return liveTable
+  if (liveLoading) return liveLoading
+  liveLoading = (async () => {
+    const response = await fetch(LIVE_LIST_URL, {
+      headers: { 'user-agent': UA, accept: 'text/plain,application/x-mpegurl' },
+      signal: AbortSignal.timeout(60000),
+    })
+    if (!response.ok) throw new Error(`Kendi listesi alınamadı (${response.status})`)
+    const lines = (await response.text()).split(/\r?\n/)
+    const ids = []
+    const byId = new Map()
+    for (let i = 0; i < lines.length; i += 1) {
+      if (!lines[i].startsWith('#EXTINF')) continue
+      let address = ''
+      for (let j = i + 1; j < lines.length; j += 1) {
+        const next = lines[j].trim()
+        if (!next || next.startsWith('#')) continue
+        address = next
+        break
+      }
+      if (!address) continue
+      let inner = ''
+      try {
+        inner = new URL(address).searchParams.get('url') || ''
+      } catch {
+        continue
+      }
+      const full = inner.match(/play\/([0-9a-z]{8,40})/i)
+      if (!full || byId.has(full[1])) continue
+      byId.set(full[1], address)
+      ids.push(full[1])
+    }
+    ids.sort()
+    liveTable = { at: Date.now(), ids, byId }
+    liveLoading = null
+    return liveTable
+  })()
+  // Liste sunucusuna ulaşılamazsa eski tabloyla devam edilir: kanal yine açılır, adres eskisi gibi.
+  try {
+    return await liveLoading
+  } catch {
+    liveLoading = null
+    return liveTable
+  }
+}
+
+export async function ownLiveAddress(pathname, search) {
+  const id = liveIdOf(pathname, search)
+  if (!id) return ''
+  return liveAddressOf(await loadLiveTable(), id)
+}
+
+/** Çözümleme yanıtındaki yayın adresini listemizdekilerle değiştirir. */
+export function applyLiveAddress(text, address) {
+  if (!address) return text
+  try {
+    const data = JSON.parse(text)
+    if (!data || typeof data.url !== 'string') return text
+    data.url = address
+    return JSON.stringify(data)
+  } catch {
+    return text
+  }
+}
+
+export function warmLiveTable() {
+  loadLiveTable().catch(() => {})
 }
 
 /* -------------------------------------------------------------------------- */
@@ -612,6 +721,8 @@ async function handleStream(req, res, reqUrl) {
   const headers = {
     'user-agent': UA,
     accept: '*/*',
+    origin: GEIL,
+    referer: `${GEIL}/`,
     ...inheritedHeaders,
   }
   if (req.headers.range) headers.range = req.headers.range

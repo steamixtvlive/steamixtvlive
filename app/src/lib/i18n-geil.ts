@@ -60,7 +60,7 @@ const tr = {
   'misc.today': 'Bugün', 'misc.yesterday': 'Dün',
   'common.on': 'Açık', 'common.off': 'Kapalı',
   'activation.title': 'Aktivasyon kodunuzu girin', 'activation.subtitle': 'NOTFLİX’i ilk kez kullanıyorsunuz. Size verilen aktivasyon kodunu girin.',
-  'activation.placeholder': 'Aktivasyon kodu', 'activation.submit': 'Aktive Et', 'activation.invalid': 'Aktivasyon kodu hatalı, lütfen tekrar deneyin.',
+  'activation.placeholder': 'Aktivasyon kodu', 'activation.submit': 'Etkinleştir', 'activation.invalid': 'Aktivasyon kodu hatalı, lütfen tekrar deneyin.',
   'activation.hint': 'Kod bu tarayıcıda saklanır. Veriler temizlenirse kod yeniden istenir.',
   'sources.noneMovie': 'Bu filmin kaynağı henüz yoktur.', 'sources.noneSeries': 'Bu dizinin kaynağı henüz yoktur.', 'sources.dead': 'Çalışmıyor', 'sources.allFailed': 'Hiçbir kaynak şu an açılamadı. Lütfen daha sonra tekrar deneyin.',
   'player.subtitlesNone': 'Altyazı bulunamadı', 'player.subtitleGeneric': 'Altyazı',

@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream'
 
-import { GEIL, UA, proxyUrl, rewritePlaylist } from './geil-api.js'
+import { GEIL, UA, applyLiveAddress, ownLiveAddress, proxyUrl, rewritePlaylist, signPayload, verifyPayload, warmLiveTable } from './geil-api.js'
 
 /**
  * Same-origin mirror of the provider's own web player (geil.to).
@@ -119,18 +119,64 @@ const BRAND_FONT = "@font-face{font-family:'Bebas Neue';font-style:normal;font-w
    has never heard of that font, so the letters have to be fetched here too or they fall back to a
    plain narrow Arial and the mark stops being ours. */
 const BRAND_STYLE = `<style>${BRAND_FONT}${BRAND_HIDE}{display:none!important}`
+  /* Their rail is driven by one custom property: --open feeds the width, the label fade, the glass
+     and the pill. Forcing only the width left a wide bar with no words and no way to shut. */
+  + '.sidebar:hover,.sidebar:focus-within{--open:1}'
+  /* Pressing our three lines is a shut command, not a hover: without this the pointer that just
+     clicked stays on the rail and the hover rule above reopens it the instant the focus leaves. */
+  + '.sidebar.nf-shut{--open:0!important}'
   + 'a.sidebar-brand{position:relative}'
-  + 'a.sidebar-brand .nf-brand{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);'
-  + 'display:flex;align-items:center;justify-content:center;gap:0;pointer-events:none}'
-  + 'a.sidebar-brand .nf-burger{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;gap:4px;width:24px}'
-  + 'a.sidebar-brand .nf-burger i{display:block;height:3px;border-radius:2px;background:#e50914}'
-  + 'a.sidebar-brand .nf-word{display:flex;align-items:baseline;justify-content:center;max-width:0;opacity:0;overflow:hidden;white-space:nowrap;'
-  + "font-family:'Bebas Neue','Anton','Arial Narrow','Arial Black',Impact,sans-serif;font-size:27px;font-weight:400;line-height:.82;letter-spacing:.012em;"
-  + 'color:#e50914;-webkit-text-fill-color:#e50914;-webkit-text-stroke:.03em #e50914;'
-  + 'text-shadow:0 0 14px rgba(229,9,20,.55),0 0 44px rgba(229,9,20,.3);transition:max-width .2s ease,opacity .2s ease}'
-  + 'a.sidebar-brand .nf-word u{display:inline-block;position:relative;margin:0 .028em;font:inherit;color:inherit;text-decoration:none}'
-  + "a.sidebar-brand .nf-word u.nf-idot::after{content:'';position:absolute;left:50%;top:-.21em;width:.16em;height:.16em;margin-left:-.08em;border-radius:50%;background:currentColor}"
-  + 'a.sidebar-brand.nf-wide .nf-word{max-width:150px;opacity:1;overflow:visible;margin-left:9px}</style>'
+  /* The mark hangs off the same number the rail widens itself with, so the two can never disagree:
+     shut it sits centred in the strip, open it slides to the rail's own left padding and the name
+     unfolds beside it. TV mode keeps the box wide and cuts it, so there the mark stays left. */
+  + 'a.sidebar-brand .nf-brand{position:absolute;top:50%;left:calc(50% - var(--open) * (50% - 10px));'
+  + 'transform:translate(calc(-50% * (1 - var(--open))),-50%);'
+  + 'display:flex;align-items:center;justify-content:center;gap:0;pointer-events:none;'
+  + 'transition:left .34s cubic-bezier(.22,.61,.36,1),transform .34s cubic-bezier(.22,.61,.36,1)}'
+  + 'html.tv-mode a.sidebar-brand .nf-brand{left:10px;transform:translateY(-50%)}'
+  + 'a.sidebar-brand .nf-burger{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;gap:5px;width:26px;height:26px}'
+  + 'a.sidebar-brand .nf-burger i{display:block;height:3px;border-radius:2px;background:#e50914;box-shadow:0 0 10px rgba(229,9,20,.55)}'
+  /* The name hangs beside the lines on its own hook: it takes no room in the mark, so nothing has
+     to squash or clip it. Squashing with max-width hid it correctly but cut the bloom an eighth of
+     a letter wide on every side, and that bloom is the whole curve. Out of flow it keeps its light
+     and only fades, exactly like the labels beside it do. */
+  + 'a.sidebar-brand .nf-word{position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);'
+  + 'display:flex;align-items:baseline;justify-content:flex-start;white-space:nowrap;opacity:var(--open);'
+  + "font-family:'Bebas Neue','Arial Narrow','Arial Black',Impact,sans-serif;font-size:27px;font-weight:400;line-height:.82;letter-spacing:.004em;"
+  + 'color:#e50914;-webkit-text-fill-color:#e50914;'
+  /* Hedef logotip pik pik olculdu: govde harf yuksekliginin 0,15'i, harflar arasi bosluk 0,15'i.
+     Bebas'in kendi govdesi 0,16 — bir de kalem cizilirse yazi hedeften agir kaliyor, o yuzden
+     kalinlik yalnizca secilen yuzden gelir; isik dort katman olarak aynen devam eder. */
+  + 'text-shadow:0 0 .07em rgba(229,9,20,.5),0 0 .215em rgba(229,9,20,.42),'
+  + '0 .05em .5em rgba(229,9,20,.3),0 .09em .9em rgba(229,9,20,.26);transition:opacity .2s ease}'
+  + 'a.sidebar-brand .nf-word u{display:inline-block;position:relative;margin:0 .017em;font:inherit;color:inherit;text-decoration:none}'
+  + "a.sidebar-brand .nf-word u.nf-idot::after{content:'';position:absolute;left:50%;top:calc(-.0915em - max(.0385em,2px));width:.1015em;height:.1015em;margin-left:-.0508em;border-radius:2px;background:currentColor}"
+  /* Her sayfa yenilemede ayni kimlik sahnesi: uygulamanin kendi splash'inden alinma sayilar,
+     ayni harf harf giris, ayni isik ve ayni tek ray. Cakisma olmasin diye en uste cikar. */
+  + '.nf-load{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;overflow:hidden;background:#04050a;'
+  + "font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-user-select:none;user-select:none;transition:opacity .42s ease}"
+  + '.nf-load.is-out{opacity:0}'
+  + '.nf-load__bloom{position:absolute;inset:-30%;pointer-events:none;background:radial-gradient(ellipse 46% 38% at 50% 44%,rgba(229,9,20,.3) 0%,rgba(229,9,20,.07) 42%,transparent 70%),radial-gradient(ellipse 70% 55% at 50% 112%,rgba(120,12,30,.34) 0%,transparent 66%);animation:nfBloom 11s ease-in-out infinite alternate}'
+  + '@keyframes nfBloom{from{opacity:.62;transform:scale(.97)}to{opacity:1;transform:scale(1.05)}}'
+  + '.nf-load__grid{position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 92px);-webkit-mask-image:radial-gradient(ellipse 60% 55% at 50% 48%,#000 0%,transparent 78%);mask-image:radial-gradient(ellipse 60% 55% at 50% 48%,#000 0%,transparent 78%);opacity:.5}'
+  + '.nf-load__inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;padding:0 6vw}'
+  + '.nf-load__mark{position:relative}'
+  + ".nf-load__word{margin:0;font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-weight:400;font-size:clamp(54px,12.5vw,148px);line-height:.82;letter-spacing:.004em;color:#e50914;-webkit-text-fill-color:#e50914;text-shadow:0 0 .07em rgba(229,9,20,.5),0 0 .215em rgba(229,9,20,.42),0 .05em .5em rgba(229,9,20,.3),0 .09em .9em rgba(229,9,20,.26)}"
+  + '.nf-load__word u{display:inline-block;position:relative;margin:0 .017em;font:inherit;color:inherit;text-decoration:none;animation:nfLetterIn .78s cubic-bezier(.18,.86,.24,1) both}'
+  + '.nf-load__word u.nf-idot::after{content:"";position:absolute;left:50%;top:calc(-.0915em - max(.0385em,2px));width:.1015em;height:.1015em;margin-left:-.0508em;border-radius:2px;background:currentColor}'
+  + '.nf-load__word u:nth-child(1){animation-delay:.04s}.nf-load__word u:nth-child(2){animation-delay:.1s}.nf-load__word u:nth-child(3){animation-delay:.16s}.nf-load__word u:nth-child(4){animation-delay:.22s}.nf-load__word u:nth-child(5){animation-delay:.28s}.nf-load__word u:nth-child(6){animation-delay:.34s}.nf-load__word u:nth-child(7){animation-delay:.4s}'
+  + '@keyframes nfLetterIn{0%{opacity:0;transform:translateY(.34em) scale(1.16);filter:blur(14px)}60%{opacity:.9;filter:blur(2px)}100%{opacity:1;transform:none;filter:blur(0)}}'
+  + '.nf-load__bar{position:absolute;top:-14%;bottom:-14%;left:-34%;width:28%;z-index:3;pointer-events:none;background:linear-gradient(100deg,transparent 0%,rgba(255,122,128,.55) 38%,rgba(255,240,240,.92) 50%,rgba(255,122,128,.55) 62%,transparent 100%);filter:blur(10px);mix-blend-mode:screen;animation:nfSweep 2.5s cubic-bezier(.55,0,.45,1) infinite}'
+  + '@keyframes nfSweep{0%{transform:translateX(0);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateX(480%);opacity:0}}'
+  + '.nf-load__rail{position:relative;width:min(320px,62vw);height:3px;margin-top:clamp(26px,4.4vh,48px);border-radius:3px;overflow:hidden;background:rgba(255,255,255,.1)}'
+  + '.nf-load__rail-run{position:absolute;inset:0 auto 0 0;width:44%;border-radius:3px;background:linear-gradient(90deg,transparent,#e50914 35%,#ff6b72 55%,transparent);box-shadow:0 0 14px rgba(229,9,20,.55);animation:nfRail 1.5s cubic-bezier(.6,.05,.4,.95) infinite}'
+  + '@keyframes nfRail{0%{transform:translateX(-110%)}100%{transform:translateX(255%)}}'
+  + '.nf-load__hint{margin:clamp(18px,3vh,30px) 0 0;min-height:1.2em;font-size:clamp(10px,1.15vw,12px);font-weight:500;letter-spacing:.3em;text-transform:uppercase;text-align:center;color:rgba(255,255,255,.6)}'
+  + '.nf-load__credit{position:absolute;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom));font-size:9.5px;font-weight:600;letter-spacing:.44em;white-space:nowrap;color:rgba(255,255,255,.32)}'
+  + '.nf-load__skip{display:none;position:absolute;bottom:max(20px,env(safe-area-inset-bottom));right:max(18px,env(safe-area-inset-right));padding:9px 18px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.72);font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;cursor:pointer}'
+  + '.nf-load__skip.is-on{display:block}.nf-load__skip:hover,.nf-load__skip:focus{color:#fff;border-color:rgba(255,255,255,.34);outline:none}'
+  + '@media (prefers-reduced-motion:reduce){.nf-load__word u,.nf-load__hint{animation:none}.nf-load__bloom{animation:none;opacity:.9}.nf-load__bar{animation:none;opacity:0}.nf-load__rail-run{animation:none;width:100%;opacity:.75}}'
+  + '</style>'
 
 const BRAND_SCRIPT = '<script>(function(){'
   + "function plant(){var slot=document.querySelector('a.sidebar-brand');if(!slot)return false;"
@@ -138,10 +184,96 @@ const BRAND_SCRIPT = '<script>(function(){'
   + 'mark.innerHTML=\'<span class="nf-burger"><i></i><i></i><i></i></span><span class="nf-word">\''
   + '+\'<u>N</u><u>O</u><u>T</u><u>F</u><u>L</u><u class="nf-idot">I</u><u>X</u></span>\';'
   + 'slot.insertBefore(mark,slot.firstChild)}'
-  + 'if(!slot.nfSeen){slot.nfSeen=true;try{new ResizeObserver(function(){slot.classList.toggle("nf-wide",slot.clientWidth>92)}).observe(slot)}catch(e){slot.classList.add("nf-wide")}}'
   + 'return true}'
-  + 'if(plant())return;'
-  + 'new MutationObserver(function(m,o){if(plant())o.disconnect()}).observe(document.documentElement,{childList:true,subtree:true});'
+  + 'var INFO=\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>\''
+  + ',LOCK=\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"></rect><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"></path></svg>\''
+  + ',ROW=function(l,s,v){return \'<div class="s-item s-item-nav"><span class="s-label">\'+l+(s?\'<span class="s-sub">\'+s+\'</span>\':\'\')+\'</span>\'+(v?\'<span class="s-value">\'+v+\'</span>\':\'\')+\'</div>\'}'
+  + ',GROUP=function(i,t,rows){var g=document.createElement(\'div\');g.className=\'s-group nf-own\';'
+  + 'g.innerHTML=\'<div class="s-group-head"><span class="s-gicon">\'+i+\'</span><span class="s-group-title">\'+t+\'</span></div>\'+rows;return g};'
+  + 'function about(){var box=document.querySelector(\'.settings-groups\');if(!box||box.querySelector(\'.nf-own\'))return;'
+  + 'box.appendChild(GROUP(INFO,\'Hakkında\',ROW(\'NOTFLİX\',\'vavoo altyapısıyla çalışan özgün altyapı\',\'\')'
+  + '+ROW(\'Geliştirici\',\'RENDIR MEDİA\',\'\')+ROW(\'Protokol\',\'\',\'MediaHubMX\')));'
+  + 'box.appendChild(GROUP(LOCK,\'Lokasyon / Bölge\',ROW(\'Bölge\',\'\',\'Almanya\')+ROW(\'Tunnel\',\'\',\'Cloudflare\')))}'
+  + 'function onSettings(){if(/setting/i.test(location.hash))about()}'
+  // The rail is held open only while the focus sits inside it, so a choice has to hand the focus
+  // back: otherwise the drawer stays wide for the whole page the choice just opened. The brand is
+  // a link too, and pressing it used to park the focus on itself and leave the drawer wide open.
+  + 'document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest(".nav-item,a.sidebar-brand"):null;if(!a)return;'
+  + 'function shut(){var ae=document.activeElement;if(ae&&ae.blur&&ae.closest&&ae.closest(".sidebar"))ae.blur()}'
+  + 'if(a.matches("a.sidebar-brand")){var sb=document.querySelector(".sidebar");'
+  + 'if(sb){sb.classList.add("nf-shut");'
+  + 'var off=function(){sb.classList.remove("nf-shut");sb.removeEventListener("pointerleave",off)};'
+  + 'sb.addEventListener("pointerleave",off);setTimeout(off,900)}}'
+  + 'shut();setTimeout(shut,90)});'
+  /* Sag tik, surukle-birak ve oynaticinin "farkli kaydet" dugmesi yayini cakmanin en kolay
+     yollari; burada kapaniyor. Gelistirici aracina karsi bunlarin hicbirisi durduruucu degil:
+     asil kilit suresi dolan imza, yani birine yapistirilan adres bir gun sonra kendiliginden olu. */
+  + 'function noMenu(e){var t=e.target,n=t&&t.tagName;'
+  + 'if(n==="INPUT"||n==="TEXTAREA"||(t&&t.isContentEditable))return;e.preventDefault()}'
+  + 'document.addEventListener("contextmenu",noMenu,true);'
+  + 'document.addEventListener("dragstart",function(e){if(e.target&&e.target.tagName==="VIDEO")e.preventDefault()},true);'
+  + 'document.addEventListener("keydown",function(e){var k=(e.key||"").toLowerCase();'
+  + 'if(k==="f12"||((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==="i"||k==="j"||k==="c"||k==="k"))'
+  + '||((e.ctrlKey||e.metaKey)&&!e.altKey&&(k==="u"||k==="s"||k==="p")))e.preventDefault()});'
+  + 'function hard(){var v=document.getElementsByTagName("video");'
+  + 'for(var i=0;i<v.length;i++){var x=v[i];if(x.nfLock)continue;x.nfLock=1;'
+  + 'x.setAttribute("controlsList","nodownload noplaybackrate");x.setAttribute("disablePictureInPicture","");'
+  + 'x.setAttribute("disableRemotePlayback","");'
+  + 'x.addEventListener("contextmenu",function(e){e.preventDefault()},true)}}'
+  /* Her sayfa yenilemede kimlik sahnesi: boyanabilecek ilk sey olsun diye body daha ilk
+     satirinda kurulur. Uygulamanin kendi penceresinin icinde susar, orada zaten kendi
+     splash'inin altindadir; cift sahne olmaz. Hareket istemeyen tarayici hiç beklemez. */
+  + 'var EP="/api/geil/site/__activate",KEY="nf_key",SEEN="nf_splash_seen",LOST="nf_grant_lost",LINE_MS=2600,SPLASH_MS=10400,'
+  + 'LINES=["Sunucuya bağlanılıyor…","Katalog hazırlanıyor…","Yayın çizgileri denetleniyor…","Bağlanıldı"],'
+  + 'WORD=\'<u>N</u><u>O</u><u>T</u><u>F</u><u>L</u><u class="nf-idot">I</u><u>X</u>\';'
+  /* Kapı kendi splash'ini oynatıp sayfayı yeniliyor; site aynı ritüeli üst üste ikinci kez
+     yaşatmasın diye tek kullanımlık bayrak bırakılır. */
+  + 'var seen=false;try{seen=sessionStorage.getItem(SEEN)==="1";if(seen)sessionStorage.removeItem(SEEN)}catch(e){}'
+  /* Site verileri silinince kendi kaydını siler ama belge sunucuda kalır; vedanın yenilemeden
+     önce yetişmesi garanti edilemez. Belgesiz yakalanan sayfa veda edip kendini yeniler, böylece
+     kod ekranı ilk temizlemede gelir. */
+  + 'var leaving=false;(function(){var has=false;try{has=!!localStorage.getItem(KEY)}catch(e){has=true}'
+  + 'if(has){try{sessionStorage.removeItem(LOST)}catch(e){}return}'
+  + 'try{if(sessionStorage.getItem(LOST)==="1")return;sessionStorage.setItem(LOST,"1")}catch(e){}'
+  + 'leaving=true;seen=false;'
+  /* Yer degistirme ayni adrese yapilirsa tarayici bunu "ayni belge" sayiyor: adresin sonundaki
+     #/... parasi yuklendigi icin yenileme hic olmuyor, sahne ekranda kili kalip Atla bosuna
+     tikanirdi. reload() parayi umursamaz, belgeyi gercekten yeniden ister. */
+  + 'function bye(){location.reload()}'
+  + 'fetch(EP,{method:"POST",headers:{"content-type":"application/json"},body:\'{"x":1}\'}).then(bye,bye)})();'
+  + 'function mount(){if(leaving||seen||window.self!==window.top||document.querySelector(".nf-load"))return true;if(!document.body)return false;'
+  + 'var el=document.createElement("div");el.className="nf-load";el.setAttribute("role","status");'
+  + 'el.innerHTML=\'<div class="nf-load__bloom"></div><div class="nf-load__grid"></div><div class="nf-load__inner">'
+  + '<div class="nf-load__mark"><div class="nf-load__word" aria-label="NOTFLİX">\'+WORD+\'</div><span class="nf-load__bar"></span></div>'
+  + '<div class="nf-load__rail"><i class="nf-load__rail-run"></i></div><p class="nf-load__hint">\'+LINES[0]+\'</p></div>'
+  + '<button type="button" class="nf-load__skip">Atla</button><div class="nf-load__credit">RENDİR MEDİA</div>\';'
+  + 'document.body.appendChild(el);'
+  + 'if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){el.remove();return true}'
+  + 'var i=0,h=el.querySelector(".nf-load__hint"),k=el.querySelector(".nf-load__skip"),t;'
+  + 'function out(){clearInterval(t);el.classList.add("is-out");setTimeout(function(){el.remove()},460)}'
+  + 'k.onclick=out;'
+  + 't=setInterval(function(){i++;h.textContent=LINES[i];if(i>=LINES.length-1){clearInterval(t);k.classList.add("is-on")}},LINE_MS);'
+  + 'setTimeout(out,SPLASH_MS);return true}'
+  /* Site "verileri temizle" dediginde kendi kayitlarini siler; izin belgesi sunucuda kaldigi
+     icin kod bir daha sorulmazdi. Silme anindan belgeden de vazgecis gonderilir. */
+  + 'var sc=window.Storage&&window.Storage.prototype&&window.Storage.prototype.clear;'
+  + 'if(sc){window.Storage.prototype.clear=function(){try{localStorage.removeItem(KEY)}catch(e){}'
+  + 'try{fetch(EP,{method:"POST",headers:{"content-type":"application/json"},body:\'{"x":1}\'})}catch(e){}'
+  + 'return sc.apply(this,arguments)}}'
+  + 'document.addEventListener("click",function(ev){var n=ev.target;if(!n||!n.closest)return;'
+  + 'var btn=n.closest(".confirm-actions .btn-danger");if(!btn)return;'
+  + 'var md=btn.closest(".modal-bg");if(!md)return;var want=(md.getAttribute("aria-label")||"").trim();if(!want)return;'
+  + 'var row=document.querySelector(".s-label-danger");if(!row||row.textContent.trim()!==want)return;'
+  + 'try{localStorage.removeItem(KEY)}catch(e){}'
+  + 'try{fetch(EP,{method:"POST",headers:{"content-type":"application/json"},body:\'{"x":1}\'})}catch(e){}'
+  + '},true);'
+  + 'var po=new MutationObserver(function(m,o){if(plant())o.disconnect()});'
+  + 'po.observe(document.documentElement,{childList:true,subtree:true});'
+  + 'var so=new MutationObserver(function(m,o){if(mount())o.disconnect()});'
+  + 'so.observe(document.documentElement,{childList:true});'
+  + 'new MutationObserver(function(){onSettings();hard()}).observe(document.documentElement,{childList:true,subtree:true});'
+  + 'window.addEventListener("hashchange",function(){onSettings();setTimeout(onSettings,250);setTimeout(onSettings,800)});'
+  + 'plant();onSettings();hard();mount();'
   + '})();</script>'
 
 function toOurBrand(html) {
@@ -153,6 +285,292 @@ function toOurBrand(html) {
     .replace(/GEIL\.TO/g, 'NOTFLİX')
     .replace(/#EB2B58/gi, '#E50914')
     .replace(/<\/head>/i, `${BRAND_STYLE}${BRAND_SCRIPT}</head>`)
+}
+
+/* ------------------------------------------------------ aktivasyon kapisi --- */
+
+/* MUSTERIYE VERDIGIN TEK KOD. Degistirmek icin yalnizca bu satiri yaz; yeni kod buraya
+   girdigin an eskisi olu. Kod bu dosyada durur ve tarayiciya hic gitmez — tarayici
+   yalnizca "tamam / hatali" sonucunu gorur, sayfagi kimse okuyamaz. */
+const ACT_CODE = 'FNNXZ62Z'
+const ACTIVATE = '/__activate'
+const ACT_COOKIE = 'nf_access'
+const GRANT_TTL = 400 * 24 * 60 * 60 * 1000 /* tarayicilar 400 gunden uzun yasayan cooki'yi saklamayi reddeder */
+const MAX_TRIES = 8 /* ayni IP art arda sekiz kez yanlis yazarsa yarim saat kapida bekler */
+const COOLDOWN = 30 * 60 * 1000
+
+/** Bos bir tarayici ile kodu girmis tarayici arasindaki tek fark: bu imzali belge. */
+function makeGrant() {
+  return signPayload({ a: 1, exp: Date.now() + GRANT_TTL })
+}
+
+function grantValid(token) {
+  if (!token) return false
+  const payload = verifyPayload(token)
+  return !!payload && payload.a === 1 && (!payload.exp || payload.exp > Date.now())
+}
+
+function normalizeCode(value) {
+  return String(value || '').replace(/\s+/g, '').toUpperCase()
+}
+
+function cookieValue(req, name) {
+  for (const part of String(req.headers.cookie || '').split(';')) {
+    const eq = part.indexOf('=')
+    if (eq < 0) continue
+    if (part.slice(0, eq).trim() === name) {
+      try {
+        return decodeURIComponent(part.slice(eq + 1).trim())
+      } catch {
+        return ''
+      }
+    }
+  }
+  return ''
+}
+
+/* SameSite=None yalnizca https'te gecerli; yerel test http ile yapildigi icin orada
+   Lax'a iniyor, yoksa tarayici cooki'yi sessizce cuba atardi. */
+function isSecure(req) {
+  const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim()
+  return proto ? proto === 'https' : !!req.socket.encrypted
+}
+
+function grantCookie(token, req) {
+  return `${ACT_COOKIE}=${token}; Path=/; Max-Age=${Math.floor(GRANT_TTL / 1000)}; HttpOnly; ${isSecure(req) ? 'SameSite=None; Secure' : 'SameSite=Lax'}`
+}
+
+/* Veriler temizlendiğinde izin belgesi de silinir: belge sunucuda durduğu için sayfayı
+   yenilemek yetmez, tarayıcıya "bu çerez artık yok" demek gerekir. */
+function revokeCookie(req) {
+  return `${ACT_COOKIE}=; Path=/; Max-Age=0; HttpOnly; ${isSecure(req) ? 'SameSite=None; Secure' : 'SameSite=Lax'}`
+}
+
+/* Deneme sayaci bellekte, yani her sunucu adasi kendi sayar: amaci kodu saniyede bin
+   kez deneyerek bulmayi bosuna zorlastirmak, hesap kilidini musterinin üzerine yikmak degil. */
+const attempts = new Map()
+
+function clientIp(req) {
+  return String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'bilinmeyen'
+}
+
+function coolingDown(ip) {
+  const hit = attempts.get(ip)
+  if (!hit) return false
+  if (hit.until > Date.now()) return true
+  attempts.delete(ip)
+  return false
+}
+
+function noteFailure(ip) {
+  const hit = attempts.get(ip) || { count: 0, until: 0 }
+  hit.count += 1
+  if (hit.count >= MAX_TRIES) {
+    hit.count = 0
+    hit.until = Date.now() + COOLDOWN
+  }
+  attempts.set(ip, hit)
+  if (attempts.size > 4096) attempts.delete(attempts.keys().next().value)
+}
+
+function sendJson(res, status, data, cookie) {
+  const body = JSON.stringify(data)
+  const headers = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'content-length': Buffer.byteLength(body) }
+  if (cookie) headers['set-cookie'] = cookie
+  res.writeHead(status, headers)
+  res.end(body)
+}
+
+async function activate(req, res) {
+  let body = {}
+  try {
+    body = JSON.parse(String((await readBody(req)) || '') || '{}')
+  } catch {
+    body = {}
+  }
+  const ip = clientIp(req)
+  if (coolingDown(ip)) {
+    sendJson(res, 429, { ok: false, error: 'Çok fazla deneme yaptın. Yarım saat sonra tekrar dene.' })
+    return
+  }
+
+  /* Tarayici verisi temizlendiginde ayni istek belgeyi de cubaya atar: kapi bir daha sorulur. */
+  if (body.x === 1) {
+    sendJson(res, 200, { ok: true }, revokeCookie(req))
+    return
+  }
+
+  /* Tarayici verisi temizlenmeden cooki de silinirse (ozel mod, tarayici degisimi)
+     hafizadaki belge geri getirilir; kod bir daha sorulmaz. */
+  const savedToken = String(body.k || '')
+  if (savedToken) {
+    if (grantValid(savedToken)) {
+      sendJson(res, 200, { ok: true }, grantCookie(savedToken, req))
+    } else {
+      sendJson(res, 403, { ok: false, error: 'Kayıtlı kod artık geçersiz.' })
+    }
+    return
+  }
+
+  if (normalizeCode(body.c) !== normalizeCode(ACT_CODE)) {
+    noteFailure(ip)
+    sendJson(res, 403, { ok: false, error: 'Aktivasyon kodu hatalı.' })
+    return
+  }
+  attempts.delete(ip)
+  const token = makeGrant()
+  sendJson(res, 200, { ok: true, key: token }, grantCookie(token, req))
+}
+
+/* Kodu girmemis tarayici ayna yerine bu sayfayi gorur. Marka, splash'taki tarifin
+   aynisidir: duz kirmizi dolgu, ince cizgi ve dort katman isik — harfler kalinlastirilmaz. */
+const GATE_HTML = `<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>NOTFLİX</title>
+<link rel="icon" href="${OUR_ICON}">
+<style>${BRAND_FONT}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{display:flex;align-items:center;justify-content:center;padding:24px;background:#05060a;color:#fff;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-user-select:none;user-select:none}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(62% 48% at 50% -6%,rgba(229,9,20,.3),transparent 72%),radial-gradient(48% 40% at 88% 104%,rgba(88,10,90,.22),transparent 70%),radial-gradient(46% 38% at 6% 100%,rgba(12,60,110,.24),transparent 72%)}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.4;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 96px),repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 96px);-webkit-mask-image:radial-gradient(ellipse 72% 66% at 50% 46%,#000 0%,transparent 82%);mask-image:radial-gradient(ellipse 72% 66% at 50% 46%,#000 0%,transparent 82%)}
+.nf-gate{position:relative;z-index:2;width:100%;max-width:430px;padding:clamp(28px,5.2vw,44px) clamp(22px,5.4vw,42px) clamp(24px,4.4vw,36px);text-align:center;border:1px solid rgba(255,255,255,.1);border-radius:26px;background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.018));box-shadow:0 40px 90px -34px rgba(0,0,0,.92),inset 0 1px 0 rgba(255,255,255,.09);backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%)}
+.nf-eyebrow{display:inline-flex;align-items:center;gap:8px;margin:0 0 clamp(16px,2.6vw,22px);padding:7px 13px;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(255,255,255,.045);font-size:10px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+.nf-eyebrow i{width:6px;height:6px;border-radius:50%;background:#e50914;box-shadow:0 0 10px rgba(229,9,20,.85)}
+.nf-gate h1{margin:0 0 14px;font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-weight:400;font-size:clamp(44px,12vw,80px);line-height:.82;letter-spacing:.004em;color:#e50914;-webkit-text-fill-color:#e50914;text-shadow:0 0 .07em rgba(229,9,20,.5),0 0 .215em rgba(229,9,20,.42),0 .05em .5em rgba(229,9,20,.3),0 .09em .9em rgba(229,9,20,.26)}
+.nf-gate p{margin:0 0 clamp(22px,3.4vw,30px);font-size:14.5px;line-height:1.6;color:rgba(255,255,255,.66)}
+.nf-field{position:relative}
+.nf-gate input{display:block;width:100%;height:56px;padding:0 18px;font-family:inherit;font-size:16px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;text-align:center;color:#fff;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.14);border-radius:15px;outline:none;-webkit-user-select:text;user-select:text;transition:border-color .18s ease,background-color .18s ease,box-shadow .18s ease}
+.nf-gate input::placeholder{font-weight:500;letter-spacing:.13em;text-transform:none;color:rgba(255,255,255,.3)}
+.nf-gate input:focus{border-color:rgba(229,9,20,.75);background:rgba(229,9,20,.07);box-shadow:inset 0 0 0 1px rgba(229,9,20,.3)}
+.nf-gate button{margin-top:14px;width:100%;height:56px;font-family:inherit;font-size:16.5px;font-weight:700;letter-spacing:.015em;color:#fff;background:linear-gradient(180deg,#f21420,#c30711);border:0;border-radius:15px;cursor:pointer;box-shadow:0 16px 34px -16px rgba(229,9,20,.8),inset 0 1px 0 rgba(255,255,255,.22);transition:filter .18s ease,background-image .18s ease}
+.nf-gate button:hover:not(:disabled){filter:brightness(1.09)}
+.nf-gate button:disabled{opacity:.5;cursor:default}
+.nf-gate button:focus-visible{outline:1px solid rgba(255,255,255,.62);outline-offset:-4px}
+.nf-gate .err{margin:14px 0 0;min-height:0;padding:11px 14px;font-size:13.5px;line-height:1.4;color:#ffa3aa;background:rgba(229,9,20,.1);border:1px solid rgba(229,9,20,.24);border-radius:12px}
+.nf-gate .err:empty{display:none}
+.nf-gate .nf-foot{margin:clamp(18px,2.8vw,24px) 0 0;font-size:11.5px;line-height:1.5;letter-spacing:.01em;color:rgba(255,255,255,.38)}
+u{display:inline-block;position:relative;margin:0 .017em;font:inherit;color:inherit;text-decoration:none}
+u.nf-idot::after{content:'';position:absolute;left:50%;top:calc(-.0915em - max(.0385em,2px));width:.1015em;height:.1015em;margin-left:-.0508em;border-radius:2px;background:currentColor}
+@media (prefers-reduced-motion:reduce){.nf-gate input,.nf-gate button{transition:none}}
+/* Uygulamanin kendi splash'iyle ayni sahne: harfler tek tek sis perdesinden cikar, isik yaziya
+   çarpar, altta tek ray döner. Sayilar notflix-loading.css'ten alinmadir, iki ekran ayni kimligi
+   tasin diye. */
+.nf-load{position:fixed;inset:0;z-index:400;display:none;place-items:center;overflow:hidden;background:#04050a}
+.nf-load.is-on{display:grid;animation:nfLoadIn .42s ease both}
+@keyframes nfLoadIn{from{opacity:0}to{opacity:1}}
+.nf-load__bloom{position:absolute;inset:-30%;pointer-events:none;background:radial-gradient(ellipse 46% 38% at 50% 44%,rgba(229,9,20,.3) 0%,rgba(229,9,20,.07) 42%,transparent 70%),radial-gradient(ellipse 70% 55% at 50% 112%,rgba(120,12,30,.34) 0%,transparent 66%);animation:nfBloom 11s ease-in-out infinite alternate}
+@keyframes nfBloom{from{opacity:.62;transform:scale(.97)}to{opacity:1;transform:scale(1.05)}}
+.nf-load__grid{position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 92px);-webkit-mask-image:radial-gradient(ellipse 60% 55% at 50% 48%,#000 0%,transparent 78%);mask-image:radial-gradient(ellipse 60% 55% at 50% 48%,#000 0%,transparent 78%);opacity:.5}
+.nf-load__inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;padding:0 6vw}
+.nf-load__mark{position:relative}
+.nf-load__word{margin:0;font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-weight:400;font-size:clamp(54px,12.5vw,148px);line-height:.82;letter-spacing:.004em;color:#e50914;-webkit-text-fill-color:#e50914;text-shadow:0 0 .07em rgba(229,9,20,.5),0 0 .215em rgba(229,9,20,.42),0 .05em .5em rgba(229,9,20,.3),0 .09em .9em rgba(229,9,20,.26)}
+.nf-load__word u{animation:nfLetterIn .78s cubic-bezier(.18,.86,.24,1) both}
+.nf-load__word u:nth-child(1){animation-delay:.04s}
+.nf-load__word u:nth-child(2){animation-delay:.1s}
+.nf-load__word u:nth-child(3){animation-delay:.16s}
+.nf-load__word u:nth-child(4){animation-delay:.22s}
+.nf-load__word u:nth-child(5){animation-delay:.28s}
+.nf-load__word u:nth-child(6){animation-delay:.34s}
+.nf-load__word u:nth-child(7){animation-delay:.4s}
+@keyframes nfLetterIn{0%{opacity:0;transform:translateY(.34em) scale(1.16);filter:blur(14px)}60%{opacity:.9;filter:blur(2px)}100%{opacity:1;transform:none;filter:blur(0)}}
+.nf-load__bar{position:absolute;top:-14%;bottom:-14%;left:-34%;width:28%;z-index:3;pointer-events:none;background:linear-gradient(100deg,transparent 0%,rgba(255,122,128,.55) 38%,rgba(255,240,240,.92) 50%,rgba(255,122,128,.55) 62%,transparent 100%);filter:blur(10px);mix-blend-mode:screen;animation:nfSweep 2.5s cubic-bezier(.55,0,.45,1) infinite}
+@keyframes nfSweep{0%{transform:translateX(0);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateX(480%);opacity:0}}
+.nf-load__rail{position:relative;width:min(320px,62vw);height:3px;margin-top:clamp(26px,4.4vh,48px);border-radius:3px;overflow:hidden;background:rgba(255,255,255,.1)}
+.nf-load__rail-run{position:absolute;inset:0 auto 0 0;width:44%;border-radius:3px;background:linear-gradient(90deg,transparent,#e50914 35%,#ff6b72 55%,transparent);box-shadow:0 0 14px rgba(229,9,20,.55);animation:nfRail 1.5s cubic-bezier(.6,.05,.4,.95) infinite}
+@keyframes nfRail{0%{transform:translateX(-110%)}100%{transform:translateX(255%)}}
+.nf-load__hint{margin:clamp(18px,3vh,30px) 0 0;min-height:1.2em;font-size:clamp(10px,1.15vw,12px);font-weight:500;letter-spacing:.3em;text-transform:uppercase;text-align:center;color:rgba(255,255,255,.6);animation:nfHintIn .6s ease both}
+@keyframes nfHintIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.nf-load__credit{position:absolute;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom));font-size:9.5px;font-weight:600;letter-spacing:.44em;white-space:nowrap;color:rgba(255,255,255,.32)}
+/* Atla dugmesi uygulamanin kendi splash'indekiyle ayni yer ve ayni ince cizgili kutu:
+   rituelin son adimina gelmeden kendini gostermez, kimse yarida kacirmaz. */
+.nf-load__skip{display:none;position:absolute;bottom:max(20px,env(safe-area-inset-bottom));right:max(18px,env(safe-area-inset-right));padding:9px 18px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.72);font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;cursor:pointer}
+.nf-load__skip.is-on{display:block;animation:nfSkipIn .5s ease both}
+.nf-load__skip:hover,.nf-load__skip:focus{color:#fff;border-color:rgba(255,255,255,.34);outline:none}
+@keyframes nfSkipIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.nf-load.is-on,.nf-load__word u,.nf-load__hint{animation:none}.nf-load__bloom{animation:none;opacity:.9}.nf-load__bar{animation:none;opacity:0}.nf-load__rail-run{animation:none;width:100%;opacity:.75}}
+</style>
+</head>
+<body>
+<form class="nf-gate" id="g" autocomplete="off">
+<span class="nf-eyebrow"><i aria-hidden="true"></i>Erişim</span>
+<h1 aria-label="NOTFLİX"><u>N</u><u>O</u><u>T</u><u>F</u><u>L</u><u class="nf-idot">I</u><u>X</u></h1>
+<p>İzlemeye başlamak için aktivasyon kodunu gir.</p>
+<div class="nf-field"><input id="c" name="c" placeholder="Aktivasyon kodu" autocapitalize="characters" spellcheck="false" aria-label="Aktivasyon kodu"></div>
+<button id="b" type="submit">Etkinleştir</button>
+<p class="err" id="e" role="alert"></p>
+<p class="nf-foot">Kod bir kez girilir; tarayıcı verilerin temizlenene kadar bir daha sorulmaz.</p>
+</form>
+<div class="nf-load" id="l" role="status" aria-live="polite">
+<div class="nf-load__bloom" aria-hidden="true"></div>
+<div class="nf-load__grid" aria-hidden="true"></div>
+<div class="nf-load__inner">
+<div class="nf-load__mark"><h1 class="nf-load__word" aria-label="NOTFLİX"><u>N</u><u>O</u><u>T</u><u>F</u><u>L</u><u class="nf-idot">I</u><u>X</u></h1><span class="nf-load__bar" aria-hidden="true"></span></div>
+<div class="nf-load__rail" aria-hidden="true"><i class="nf-load__rail-run"></i></div>
+<p class="nf-load__hint" id="h">Sunucuya bağlanılıyor…</p>
+</div>
+<button type="button" class="nf-load__skip" id="k">Atla</button>
+<div class="nf-load__credit">RENDİR MEDİA</div>
+</div>
+<script>(function(){
+var KEY='nf_key',TRY='nf_tried',SEEN='nf_splash_seen',LINE_MS=2600,SPLASH_MS=10400,g=document.getElementById('g'),c=document.getElementById('c'),
+b=document.getElementById('b'),e=document.getElementById('e'),l=document.getElementById('l'),h=document.getElementById('h'),k=document.getElementById('k'),
+LINES=['Sunucuya bağlanılıyor…','Katalog hazırlanıyor…','Yayın çizgileri denetleniyor…','Bağlanıldı'];
+function get(){try{return localStorage.getItem(KEY)}catch(err){return null}}
+function put(v){try{if(v)localStorage.setItem(KEY,v)}catch(err){}}
+function wipe(){try{localStorage.removeItem(KEY);sessionStorage.removeItem(TRY)}catch(err){}}
+function seen(){try{return sessionStorage.getItem(TRY)==='1'}catch(err){return false}}
+function mark(){try{sessionStorage.setItem(TRY,'1')}catch(err){}}
+function say(m){e.textContent=m||'';c.focus()}
+function wait(on){b.disabled=on;b.textContent=on?'Bekle…':'Etkinleştir'}
+function send(p){return fetch('__activate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(p)})
+.then(function(r){return r.json()})
+.catch(function(){return{ok:false,error:'Sunucuya ulaşılamadı. Tekrar dene.'}})}
+/* Kapi açilirken bos bir ana ekrana düsmemek icin once kimlik ekrani: uygulamanin kendi
+   splash'inin ayni sahnesi ve ayni calisan satirlari, ayni hizda. Hareket istemeyen tarayici
+   beklemeden gecer. */
+function enter(){
+var calm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+g.style.display='none';l.classList.add('is-on');
+try{sessionStorage.setItem(SEEN,'1')}catch(err){}
+if(calm){location.reload();return}
+var i=0,timer;
+function out(){clearInterval(timer);location.reload()}
+k.onclick=out;
+timer=setInterval(function(){
+i++;h.textContent=LINES[i];
+if(i<LINES.length-1)return;
+clearInterval(timer);k.classList.add('is-on');k.focus();
+},LINE_MS);
+setTimeout(out,SPLASH_MS)}
+var saved=get();
+if(saved&&!seen()){mark();send({k:saved}).then(function(d){if(d.ok){enter()}else{wipe();say('Kodu yeniden girmen gerekiyor.')}})}
+g.addEventListener('submit',function(ev){
+ev.preventDefault();
+var code=c.value.trim();
+if(!code){say('Kod boş bırakılamaz.');return}
+wait(true);
+send({c:code}).then(function(d){
+if(d.ok){put(d.key);enter();return}
+wait(false);
+say(d.error||'Aktivasyon kodu hatalı.');c.select();
+})});
+g.addEventListener('keydown',function(ev){
+if(ev.key==='ArrowDown'||ev.key==='ArrowRight'){b.focus();ev.preventDefault()}
+else if(ev.key==='ArrowUp'||ev.key==='ArrowLeft'){c.focus();ev.preventDefault()}
+});
+c.focus();
+})()</script>
+</body>
+</html>`
+
+function sendGate(res, isHead) {
+  if (isHead) sendEmpty(res, 200, 'text/html; charset=utf-8', 'no-store')
+  else sendBody(res, 200, GATE_HTML, 'text/html; charset=utf-8', 'no-store')
 }
 
 /**
@@ -187,9 +605,9 @@ function kindOf(pathname, contentType) {
   return 'binary'
 }
 
-function rewriteBody(kind, text, baseUrl) {
+function rewriteBody(kind, text, baseUrl, liveAddress = '') {
   if (kind === 'playlist') return rewritePlaylist(text, baseUrl, {})
-  if (kind === 'json') return toSafeUrls(toMirrorPaths(text), baseUrl)
+  if (kind === 'json') return toSafeUrls(toMirrorPaths(applyLiveAddress(text, liveAddress)), baseUrl)
   if (kind === 'html') return toOurBrand(toMirrorMount(toMirrorPaths(text)))
   if (kind === 'script' || kind === 'style' || kind === 'text') return toMirrorPaths(text)
   return text
@@ -235,11 +653,39 @@ export function createGeilSiteApi() {
 
     const rest = mirrorPath(pathname)
 
+    // Tek POST kapisi: kod buradan gecer, baska hicbir yol yazili istek kabul etmez.
+    if (rest === ACTIVATE) {
+      if (req.method !== 'POST') sendEmpty(res, 405, 'text/plain; charset=utf-8', 'no-store')
+      else await activate(req, res)
+      return
+    }
+
+    const granted = grantValid(cookieValue(req, ACT_COOKIE))
+
     // The player is handed these by name from the catalogue; answer with a redirect to
-    // the signed media proxy so the insecure hop never reaches the browser.
+    // the signed media proxy so the insecure hop never reaches the browser. Our own list
+    // already speaks https, so when the channel is in it the browser may go there itself.
     if (/^\/(live|vod)\/play\//i.test(rest)) {
+      if (!granted) {
+        sendBody(res, 403, 'Aktivasyon gerekiyor', 'text/plain; charset=utf-8', 'no-store')
+        return
+      }
+      const own = await ownLiveAddress(rest, '')
+      if (own) {
+        res.writeHead(302, { location: own, 'cache-control': 'no-store' })
+        res.end()
+        return
+      }
       res.writeHead(302, { location: proxyUrl(`${GEIL}${rest}${reqUrl.search}`, {}), 'cache-control': 'no-store' })
       res.end()
+      return
+    }
+
+    /* Sayfa mi dosya mi, yukariya sormadan anlasilir: uzantisi olmayan her adres bir
+       ekrandir. Kodsuz tarayici ekran yerine kapiyi gorur, dosyalar ise acik kalir
+       (kapinin kendi giyimi de onlardan biri). */
+    if (!granted && !/\.[a-z0-9]{2,5}$/i.test(rest)) {
+      sendGate(res, isHead)
       return
     }
 
@@ -318,10 +764,12 @@ export function createGeilSiteApi() {
       sendBody(res, 502, `Ayna okunamadı: ${error.message}`, 'text/plain; charset=utf-8', 'no-store')
       return
     }
-    const rewritten = rewriteBody(kind, text, upstream.url || target)
+    const liveAddress = kind === 'json' ? await ownLiveAddress(rest, reqUrl.search) : ''
+    const rewritten = rewriteBody(kind, text, upstream.url || target, liveAddress)
+    if (kind === 'html') warmLiveTable()
     const cacheControl = kind === 'playlist' || kind === 'json'
       ? 'no-store, max-age=0'
-      : isStatic ? 'public, max-age=86400' : 'no-cache'
+      : isStatic ? 'public, max-age=86400' : 'no-store'
     const fallbackType = kind === 'json' ? 'application/json; charset=utf-8' : 'text/plain; charset=utf-8'
     if (isStatic && upstream.ok) remember(cacheKey, { body: rewritten, contentType: contentType || fallbackType }, Buffer.byteLength(rewritten), STATIC_TTL)
     sendBody(res, status, rewritten, contentType || fallbackType, cacheControl)

@@ -1,5 +1,6 @@
 import type { GeilItem } from './types'
 import { posterUrl } from './api'
+import { ACTIVATE_URL } from './edge'
 
 export interface SavedItem {
   id: string
@@ -179,7 +180,7 @@ export function clearDeadSource(url: string): void {
 }
 
 const ACTIVATION_KEY = 'notflix_activated'
-const ACTIVATION_CODE = 'BRNnfx26Z2'
+const ACTIVATION_CODE = 'FNNXZ62Z'
 let activatedInMemory = false
 
 export function isActivated(): boolean {
@@ -206,13 +207,19 @@ export function clearAllData(): void {
     const keys: string[] = []
     for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index)
-      if (key && (key.startsWith('notflix') || key === 'lang' || key.startsWith('geil'))) keys.push(key)
+      if (key && (key.startsWith('notflix') || key === 'lang' || key.startsWith('geil') || key.startsWith('nf_'))) keys.push(key)
     }
     keys.forEach((key) => localStorage.removeItem(key))
     activatedInMemory = false
   } catch {
     // Storage can be blocked; the UI still reports completion.
   }
+  // Ayni tarayicida duran markali aynanin izni sunucudaki bir belgedir; veriler silinirken
+  // o belgeden de vazgecilmezse kap bir daha sorulmaz, yani temizlik yari yarim kalir.
+  // Veda, aynanin bulundugu adrese yapilir: Render yolu ya da worker.
+  try {
+    fetch(ACTIVATE_URL, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"x":1}', credentials: 'include' }).catch(() => {})
+  } catch { /* the gate still falls back to asking when the cookie expires */ }
   window.dispatchEvent(new CustomEvent('notflix-geil-storage'))
   window.dispatchEvent(new CustomEvent('notflix-geil-live-favorites'))
   window.dispatchEvent(new CustomEvent('notflix-activation-reset'))
