@@ -179,6 +179,10 @@ const BRAND_STYLE = `<style>${BRAND_FONT}${BRAND_HIDE}{display:none!important}`
   + '</style>'
 
 const BRAND_SCRIPT = '<script>(function(){'
+  // The player asks for subtitle files without credentials; our activation door then
+  // answers with its own HTML page and the subtitle silently ends up empty. Put the
+  // cookie back on requests that go to our own address only.
+  + 'var OF=window.fetch;if(OF){window.fetch=function(i,x){try{var s=(i&&i.url)?String(i.url):String(i);if(new URL(s,location.href).origin===location.origin){x=Object.assign({},x,{credentials:"include"})}}catch(e){}return OF.call(window,i,x)}}'
   + "function plant(){var slot=document.querySelector('a.sidebar-brand');if(!slot)return false;"
   + "if(!slot.querySelector('.nf-brand')){var mark=document.createElement('span');mark.className='nf-brand';"
   + 'mark.innerHTML=\'<span class="nf-burger"><i></i><i></i><i></i></span><span class="nf-word">\''
@@ -587,6 +591,13 @@ function toSafeUrls(text, baseUrl) {
         absolute = new URL(match, baseUrl).toString()
       } catch {
         return match
+      }
+      // The provider's own https address (a subtitle file, for instance) would be a
+      // cross-origin request with no CORS header on the answer; through the mirror it
+      // is same-origin and the player stops failing.
+      if (/^https?:\/\/(?:(?:www\.)?geil\.to|(?:www\.)?geil\.app|(?:www\.)?geil\.win)(?::\d+)?(?:[/?]|$)/i.test(absolute)) {
+        const own = new URL(absolute)
+        return PREFIX + own.pathname + own.search
       }
       if (/^https:\/\//i.test(absolute)) return match
       return proxyUrl(absolute, {})

@@ -17,6 +17,14 @@ const STREAM = '/__s'
    panelde bir gizli degisken acmaya gerek kalmasin diye sana ozel uretildi. Degistirmek
    istersen Cloudflare panelinde PROXY_SECRET adina bir deger ver — burdakini o ezer. */
 const DEFAULT_SECRET = 'steamix-edge-e5261843eb7eb4cd0bd9c43dd017fe68b1cc'
+/* Provider'in ham http kutulari (vod "Server B1" ve listemizde olmayan canlilar) Cloudflare'in
+   cikis IP'sine 403 diyor, Almanya cikisina demiyor. Bu yuzden o adrester worker'dan degil
+   kendi LXI hostingimizin imzali kapisindan akiyor: olcuim 2026-11-02 — kutu LXI cikisina
+   200 + m3u8 verdi, Cloudflare cikisina 403. Hosting trafiği sinirsiz oldugu icin Render
+   kotasina hicbir sey dusmuyor; Render yalnizca uygulamarin kendi dosyalarini servis ediyor.
+   Site, listemizden gelen canlilar ve https kaynaklar yine worker'da durur. */
+const BRIDGE_STREAM = 'https://notflixlive.lxi.be/s.php'
+const BRIDGE_SECRET = 'notflix-geil-proxy-v1-7c4f2a9e'
 
 const PROVIDER_HOSTS = /(?:https?:)?\/\/(?:(?:www\.)?geil\.(?:to|app|win))(?::\d+)?/gi
 const ABSOLUTE_URL = /https?:\/\/[^\s"'\\<>)\]]+/gi
@@ -84,10 +92,10 @@ async function verifyPayload(token, secret) {
   }
 }
 
-async function streamUrl(url, secret, headers) {
+async function streamUrl(url, headers) {
   const payload = { u: String(url) }
   if (headers && Object.keys(headers).length) payload.h = headers
-  return `${STREAM}?t=${encodeURIComponent(await signPayload(payload, secret))}`
+  return `${BRIDGE_STREAM}?t=${encodeURIComponent(await signPayload(payload, BRIDGE_SECRET))}`
 }
 
 /* -------------------------------------------------- kendi kanal listemiz --- */
@@ -101,7 +109,7 @@ const LIVE_LIST = 'https://atakannn19833.lxi.be/vaybe.php?list=all.m3u'
 const LIVE_LIST_TTL = 6 * 60 * 60 * 1000
 const LIVE_RESOLVE = /\/live\/resolve$/i
 
-let liveTable = { at: 0, ids: [], byId: new Map() }
+let liveTable = { at: 0, ids: [], byId: new Map(), own: new Set() }
 let liveLoading = null
 
 /** Istenen kanal kimligi: ya yolun icinde (/live/play/12345) ya cozumleme sorusundaki adreste. */
@@ -140,6 +148,9 @@ async function loadLiveTable() {
     const lines = (await response.text()).split(/\r?\n/)
     const ids = []
     const byId = new Map()
+    /* Yayin numaralarinin kisa hali: saglayicinin katalog kimligi listedeki yayin kimliginin
+       sayi on ekidir. Bu kume "kanal bizde var, yani cekiyor" demektir — grup adi onemsiz. */
+    const own = new Set()
     for (let i = 0; i < lines.length; i += 1) {
       if (!lines[i].startsWith('#EXTINF')) continue
       let address = ''
@@ -160,9 +171,11 @@ async function loadLiveTable() {
       if (!full || byId.has(full[1])) continue
       byId.set(full[1], address)
       ids.push(full[1])
+      const numara = /^\d{6,}/.exec(full[1])
+      if (numara) own.add(numara[0])
     }
     ids.sort()
-    liveTable = { at: Date.now(), ids, byId }
+    liveTable = { at: Date.now(), ids, byId, own }
     liveLoading = null
     return liveTable
   })()
@@ -210,6 +223,41 @@ function kindOf(pathname, contentType) {
   return 'binary'
 }
 
+/* ------------------------------------------------------- kenar onbellek --- */
+/* Abonelerin hepsi ayni kanal listesini, ayni film kartini ister. Cloudflare bu
+   cevabi kendinde tutarsa worker hic uyanmaz: ne istek sayisina girer ne CPU'ya
+   — gunluk 100 bini yiyen sey o listeler degil, her tiklamada uyanan izlek.
+
+   SURELER UYDURMA DEGIL: saglayicinin kendi addon manifestleri kactan saniye
+   saklanacagini soyluyor. Olculen:
+     /live/mhub-addon.json      -> cache {"catalog":300,"item":300}
+     /vod/mhub-addon.json       -> cache {"source":300}
+     /subtitle/mhub-addon.json  -> cache {"subtitle":86400}
+   Biz canli listeye saglayicinin dedigi 300 saniyeyi veriyoruz (listeyi 3 saat
+   saklamak olurdu; channels.json her 300 kanallik sayfayla REHBERI DE tasir,
+   epg[{title,start,end}] — saatlerce bekleyen bir kopya ekranda "simdi yayinda"
+   diye yanlis program yazar). Altyazi listesine 24 saat yerine 1 saat veriyoruz:
+   sonradan eklenen Turkce altyazi bir gun boyunca "yok" gorunmesin.
+
+   Sayfa kabugu ile oynatilan adresi ureten /live/resolve ve /vod/resolve
+   disarda kalir (ikisi de .json ile bitmiyor). IMZALI ADRESLER 24 SAAT YASIYOR
+   (TOKEN_TTL), o yuzden 3 saatlik saklama katalogdaki linki oldurmuyor.
+   Yeni film/kanal eklenirse abone en fazla 3 saat sonra gorur. */
+
+const EDGE_TTL = 3 * 60 * 60
+const EDGE_TTL_LIVE = 5 * 60 /* saglayicinin beyani: 300 — rehber tazeligi icin daha fazlasi yasak */
+const EDGE_TTL_SOURCE = 5 * 60 /* saglayicinin beyani: 300 */
+const EDGE_TTL_SUBTITLE = 60 * 60 /* saglayici 86400 diyor; biz yeni altyazi icin kirpiyoruz */
+
+/** Bu adres kenarda saklanir mi ve kactan saniye; 0 demek saklanmaz. */
+function edgeTtlFor(pathname) {
+  if (!/\.json$/i.test(pathname)) return 0
+  if (/\/source\//i.test(pathname)) return EDGE_TTL_SOURCE
+  if (/\/subtitle\//i.test(pathname)) return EDGE_TTL_SUBTITLE
+  if (/\/live\/(?:catalog|item)\//i.test(pathname)) return EDGE_TTL_LIVE
+  return EDGE_TTL
+}
+
 /**
  * Orijinal adresler bu adresle degistirilir. Bos birakirsak "/live" gibi yollar
  * kendiliginden dogru calisir, ama tek basina kalan marka adresi ("") bazi
@@ -241,7 +289,7 @@ function upstreamSearch(search, origin) {
 }
 
 /** Katalog/manifest yanitindaki adresler: http yayin imzali proxy'ye, gerisi kendi yolumuza. */
-async function toSafeUrls(text, baseUrl, origin, secret) {
+async function toSafeUrls(text, baseUrl, origin) {
   const source = String(text)
   if (!/http/i.test(source) && !/["']\.\//.test(source)) return toOwnPaths(source, origin)
   let out = ''
@@ -252,14 +300,27 @@ async function toSafeUrls(text, baseUrl, origin, secret) {
     const raw = match[0]
     let absolute = raw
     try { absolute = new URL(raw, baseUrl).toString() } catch { out += raw; continue }
-    if (NAMESPACES.test(absolute) || /^https:\/\//i.test(absolute)) { out += raw; continue }
-    out += await streamUrl(absolute, secret, null)
+    if (NAMESPACES.test(absolute)) { out += raw; continue }
+    /* Saitenin KENDI https adresi (altyazi dosyasi gibi) tarayiciya oldugu gibi giderse
+       istek karsi-koken olur ve cevapta CORS basligi yok: oynatici "Failed to fetch" yer.
+       Aynanin yoluna cevrilirse bayt zaten bizim kapidan gectigi icin hata kalir. */
+    if (/^https?:\/\/(?:(?:www\.)?geil\.(?:to|app|win))(?::\d+)?(?:[/?]|$)/i.test(absolute)) {
+      try {
+        const own = new URL(absolute)
+        out += origin + own.pathname + own.search
+      } catch {
+        out += raw
+      }
+      continue
+    }
+    if (/^https:\/\//i.test(absolute)) { out += raw; continue }
+    out += await streamUrl(absolute, null)
   }
   return (out + toOwnPaths(source.slice(at), origin)).replace(/"\.\/([a-z0-9_-]{1,40})"/gi, (_m, id) => `"${origin}/${id}"`)
 }
 
 /** Oynatma listesindeki her satir (ve her URI="...") imzali proxy adresine doner. */
-async function rewritePlaylist(text, baseUrl, secret) {
+async function rewritePlaylist(text, baseUrl) {
   const lines = String(text).split(/\r?\n/)
   const out = []
   for (const line of lines) {
@@ -270,12 +331,12 @@ async function rewritePlaylist(text, baseUrl, secret) {
       if (!uris.length) { out.push(line); continue }
       let fixed = line
       for (const uri of uris) {
-        try { fixed = fixed.split(`URI="${uri}"`).join(`URI="${await streamUrl(new URL(uri, baseUrl).toString(), secret, null)}"`) } catch { /* dokunma */ }
+        try { fixed = fixed.split(`URI="${uri}"`).join(`URI="${await streamUrl(new URL(uri, baseUrl).toString(), null)}"`) } catch { /* dokunma */ }
       }
       out.push(fixed)
       continue
     }
-    try { out.push(await streamUrl(new URL(trimmed, baseUrl).toString(), secret, null)) } catch { out.push(line) }
+    try { out.push(await streamUrl(new URL(trimmed, baseUrl).toString(), null)) } catch { out.push(line) }
   }
   return out.join('\n')
 }
@@ -342,12 +403,29 @@ const BRAND_STYLE = `<style>${BRAND_FONT}${BRAND_HIDE}{display:none!important}`
   + '.nf-load__rail-run{position:absolute;inset:0 auto 0 0;width:44%;border-radius:3px;background:linear-gradient(90deg,transparent,#e50914 35%,#ff6b72 55%,transparent);box-shadow:0 0 14px rgba(229,9,20,.55);animation:nfRail 1.5s cubic-bezier(.6,.05,.4,.95) infinite}'
   + '@keyframes nfRail{0%{transform:translateX(-110%)}100%{transform:translateX(255%)}}'
   + '.nf-load__hint{margin:clamp(18px,3vh,30px) 0 0;min-height:1.2em;font-size:clamp(10px,1.15vw,12px);font-weight:500;letter-spacing:.3em;text-transform:uppercase;text-align:center;color:rgba(255,255,255,.6)}'
-  + '.nf-load__credit{position:absolute;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom));font-size:9.5px;font-weight:600;letter-spacing:.44em;white-space:nowrap;color:rgba(255,255,255,.32)}'
+  + '.nf-load__credit{position:absolute;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom));max-width:min(92vw,700px);font-size:9.5px;font-weight:600;letter-spacing:.26em;line-height:2.1;white-space:nowrap;text-align:center;color:rgba(255,255,255,.32)}'
+  + '.nf-load__credit .tm{letter-spacing:0;margin-left:.45em;font-size:1.15em;opacity:.9}'
+  /* Atla dugmesi sag altta; dar telefonda ikisi ayni satirda tokusuyor (320px olcildi: 8px
+     ust uste). Damga o kadar darlikta bir satir yukari kalkar, genis ekranda yerinde kalir. */
+  + '@media (max-width:400px){.nf-load__credit{bottom:calc(max(20px,env(safe-area-inset-bottom)) + 56px)}}'
   + '.nf-load__skip{display:none;position:absolute;bottom:max(20px,env(safe-area-inset-bottom));right:max(18px,env(safe-area-inset-right));padding:9px 18px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.72);font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;cursor:pointer}'
   + '.nf-load__skip.is-on{display:block}.nf-load__skip:hover,.nf-load__skip:focus{color:#fff;border-color:rgba(255,255,255,.34);outline:none}'
   + '@media (prefers-reduced-motion:reduce){.nf-load__word u,.nf-load__hint{animation:none}.nf-load__bloom{animation:none;opacity:.9}.nf-load__bar{animation:none;opacity:0}.nf-load__rail-run{animation:none;width:100%;opacity:.75}}'
   + '</style>'
 const BRAND_SCRIPT = '<script>(function(){'
+  /* Oynatici alt yaziyi cercevesiz istiyor (fetch credentials:"omit"). Bizim kapimiziz:
+     cerceve gitmeyen istek kodu gormez ve cevap kapi sayfasinin HTML'i olur — oynatici
+     onu alt yazi sayar, ekran bos kalir. Kendi adresimizde cerceveyi zorla geri veriyoruz;
+     ucuncu tarafa giden isteklere dokunulmaz, o yuzden bir sey sizmiyor. */
+  + 'var OF=window.fetch;if(OF){window.fetch=function(i,x){try{var s=(i&&i.url)?String(i.url):String(i);if(new URL(s,location.href).origin===location.origin){x=Object.assign({},x,{credentials:"include"})}}catch(e){}return OF.call(window,i,x)}}'
+  /* Kanal tahtasinin secimi tarayicida saklanir ve saglayici bos birakir. Sayfa artik
+     kendi kategorimizle aciliyor: TURKIYE ULUSAL, siralamasi A-Z. Bu bir kere zorlanir
+     (surum damgasiyle); abone sonradan baska ulke secerse secimine dokunulmaz. */
+  + 'try{var PK="vuma_catalog_picks",MK="nf_picks_v",GE="geil-live/channels";'
+  + 'var P=JSON.parse(localStorage.getItem(PK)||"{}")||{},C=P[GE]||{},F=C.filters||{};'
+  + 'if(localStorage.getItem(MK)!=="2"){F.group="Türkiye Ulusal";C.sort="name";localStorage.setItem(MK,"2")}'
+  + 'else if(!C.sort){C.sort="name"}'
+  + 'C.filters=F;P[GE]=C;localStorage.setItem(PK,JSON.stringify(P))}catch(e){}'
   + "function plant(){var slot=document.querySelector('a.sidebar-brand');if(!slot)return false;"
   + "if(!slot.querySelector('.nf-brand')){var mark=document.createElement('span');mark.className='nf-brand';"
   + 'mark.innerHTML=\'<span class="nf-burger"><i></i><i></i><i></i></span><span class="nf-word">\''
@@ -420,7 +498,7 @@ const BRAND_SCRIPT = '<script>(function(){'
   + 'el.innerHTML=\'<div class="nf-load__bloom"></div><div class="nf-load__grid"></div><div class="nf-load__inner">'
   + '<div class="nf-load__mark"><div class="nf-load__word" aria-label="NOTFLİX">\'+WORD+\'</div><span class="nf-load__bar"></span></div>'
   + '<div class="nf-load__rail"><i class="nf-load__rail-run"></i></div><p class="nf-load__hint">\'+LINES[0]+\'</p></div>'
-  + '<button type="button" class="nf-load__skip">Atla</button><div class="nf-load__credit">RENDİR MEDİA</div>\';'
+  + '<button type="button" class="nf-load__skip">Atla</button><div class="nf-load__credit">RENDIR MEDİA 2027<span class="tm">™</span></div>\';'
   + 'document.body.appendChild(el);'
   + 'if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){el.remove();return true}'
   + 'var i=0,h=el.querySelector(".nf-load__hint"),k=el.querySelector(".nf-load__skip"),t;'
@@ -513,7 +591,7 @@ async function handleStream(request, secret) {
   if (isPlaylist) {
     const body = await upstream.text()
     if (!body.trim()) return text('text/plain; charset=utf-8', 'Bos oynatma listesi', 502)
-    return new Response(await rewritePlaylist(body, finalUrl, secret), {
+    return new Response(await rewritePlaylist(body, finalUrl), {
       status: 200,
       headers: { ...cors, 'content-type': 'application/vnd.apple.mpegurl; charset=utf-8', 'cache-control': 'no-store' },
     })
@@ -562,17 +640,23 @@ function cookieValue(request, name) {
 }
 
 /* SameSite=None yalnizca https'te gecerli; yerel test http ile yapildigi icin orada
-   Lax'a iniyor, yoksa tarayici cooki'yi sessizce cuba atardi. */
+   Lax'a iniyor, yoksa tarayici cooki'yi sessizce cuba atardi.
+   Aynayi Render gibi baska bir siteden cerceve icinde acarsek tarayici bu belgeden birini
+   cerceveye hic vermiyor; o yuzden https'te belgenin bir de Partitioned kopyasi yazilir.
+   Kopyalar ayni imzayi tasir, hangisi gelirse gelsin kapinin cevabi degismez. */
 function grantCookie(token, url) {
-  const secure = url.protocol === 'https:'
-  return `${ACT_COOKIE}=${token}; Path=/; Max-Age=${Math.floor(GRANT_TTL / 1000)}; HttpOnly; ${secure ? 'SameSite=None; Secure' : 'SameSite=Lax'}`
+  const life = `Path=/; Max-Age=${Math.floor(GRANT_TTL / 1000)}; HttpOnly`
+  if (url.protocol !== 'https:') return [`${ACT_COOKIE}=${token}; ${life}; SameSite=Lax`]
+  const plain = `${ACT_COOKIE}=${token}; ${life}; SameSite=None; Secure`
+  return [plain, `${plain}; Partitioned`]
 }
 
 /* Veriler temizlendiğinde izin belgesi de silinir: belge sunucuda durduğu için sayfayı
-   yenilemek yetmez, tarayıcıya "bu çerez artık yok" demek gerekir. */
+   yenilemek yetmez, tarayıcıya "bu çerez artık yok" demek gerekir — iki kopyaya da. */
 function revokeCookie(url) {
-  const secure = url.protocol === 'https:'
-  return `${ACT_COOKIE}=; Path=/; Max-Age=0; HttpOnly; ${secure ? 'SameSite=None; Secure' : 'SameSite=Lax'}`
+  if (url.protocol !== 'https:') return [`${ACT_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`]
+  const plain = `${ACT_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=None; Secure`
+  return [plain, `${plain}; Partitioned`]
 }
 
 async function isGranted(request, secret) {
@@ -606,8 +690,8 @@ function noteFailure(ip) {
 }
 
 function json(value, status = 200, cookie = '') {
-  const headers = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
-  if (cookie) headers['set-cookie'] = cookie
+  const headers = new Headers({ 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
+  for (const line of [].concat(cookie)) if (line) headers.append('set-cookie', line)
   return new Response(JSON.stringify(value), { status, headers })
 }
 
@@ -707,7 +791,9 @@ u.nf-idot::after{content:'';position:absolute;left:50%;top:calc(-.0915em - max(.
 @keyframes nfRail{0%{transform:translateX(-110%)}100%{transform:translateX(255%)}}
 .nf-load__hint{margin:clamp(18px,3vh,30px) 0 0;min-height:1.2em;font-size:clamp(10px,1.15vw,12px);font-weight:500;letter-spacing:.3em;text-transform:uppercase;text-align:center;color:rgba(255,255,255,.6);animation:nfHintIn .6s ease both}
 @keyframes nfHintIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.nf-load__credit{position:absolute;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom));font-size:9.5px;font-weight:600;letter-spacing:.44em;white-space:nowrap;color:rgba(255,255,255,.32)}
+.nf-load__credit{position:absolute;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom));max-width:min(92vw,700px);font-size:9.5px;font-weight:600;letter-spacing:.26em;line-height:2.1;white-space:nowrap;text-align:center;color:rgba(255,255,255,.32)}
+.nf-load__credit .tm{letter-spacing:0;margin-left:.45em;font-size:1.15em;opacity:.9}
+@media (max-width:400px){.nf-load__credit{bottom:calc(max(20px,env(safe-area-inset-bottom)) + 56px)}}
 /* Atla dugmesi uygulamanin kendi splash'indekiyle ayni yer ve ayni ince cizgili kutu:
    rituelin son adimina gelmeden kendini gostermez, kimse yarida kacirmaz. */
 .nf-load__skip{display:none;position:absolute;bottom:max(20px,env(safe-area-inset-bottom));right:max(18px,env(safe-area-inset-right));padding:9px 18px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.72);font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;cursor:pointer}
@@ -736,7 +822,7 @@ u.nf-idot::after{content:'';position:absolute;left:50%;top:calc(-.0915em - max(.
 <p class="nf-load__hint" id="h">Sunucuya bağlanılıyor…</p>
 </div>
 <button type="button" class="nf-load__skip" id="k">Atla</button>
-<div class="nf-load__credit">RENDİR MEDİA</div>
+<div class="nf-load__credit">RENDIR MEDİA 2027<span class="tm">™</span></div>
 </div>
 <script>(function(){
 var KEY='nf_key',TRY='nf_tried',SEEN='nf_splash_seen',LINE_MS=2600,SPLASH_MS=10400,g=document.getElementById('g'),c=document.getElementById('c'),
@@ -794,6 +880,619 @@ function gatePage() {
   return new Response(GATE_HTML, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } })
 }
 
+/* ------------------------------------------------ kendi kategorimiz ------ */
+/* SAGLAYICIDA "Turkiye Ulusal" DIE BIR GRUP YOK: bu kategori abonenin kendi listesi.
+   Sira onun kurduyu sira (TRT 1'den baslar) ve her istasyonun en temiz goruntusu
+   secilir — cunku saglayici ayni kanali alti-yedi kopya ile listeliyor ("ATV HD (3)",
+   "4K TR: ATV" gibi) ve kirik Turkce yazimlara kadar iniyor ("TRT T RK").
+   Kanal saglayicinin Turkiye kuyrugunda yoksa kategoride de yok: uydurma kanal
+   adresi verip bos ekran gosteremeyiz. Kategori, sitenin kendi grup secim tahtasina
+   yazilir; secilince adresi site kendisi sorar, cevabi biz kurariz. */
+
+const NATIONAL_GROUP = 'Türkiye Ulusal'
+const NATIONAL_TTL = 30 * 60 * 1000
+const NATIONAL_PAGES = 8
+/* Populerlik sirasi icin saglayicinin "trending" kopyasi uc sayfada yeterince buyuk. */
+const NATIONAL_RANK_PAGES = 3
+/* Kategori daima 200 kanal gosterir: abonenin kuyrugundaki istasyonlar once gelir, sonra
+   elle secme yedek kuyruk (NATIONAL_EXTRA), en son saglayicinin Turkiye saydigi diger
+   kanallar. Kuyrukta olup saglayicida hic olmayan istasyon (Sinema TV, Kabe, il
+   kanallarinin cogu) uydurulmaz; yerini gercek bir kanal doldurur. */
+const NATIONAL_TARGET = 200
+const QUALITY_TOKEN = /\b(4k|uhd|2160p|full\s?hd|fhd|hd\+|hd|sd|hevc|x?265|1080p|720p|hq|lq)\b/gi
+const NATIONAL_STATIONS = [
+'TRT 1 HD',
+  'TRT 2 HD',
+  'TRT Haber',
+  'TRT Spor|TRTSPOR',
+  'TRT Spor Yıldız',
+  'TRT Belgesel',
+  'TRT Çocuk',
+  'TRT Müzik',
+  'TRT Türk',
+  'TRT Avaz',
+  'Star TV HD|Star',
+  'Show TV HD|Show',
+  'Kanal D HD|Kanal D',
+  'ATV HD|ATV',
+  'NOW TV HD|NOW|Fox TV|Fox',
+  'TV8 HD|TV 8',
+  'Kanal 7 HD|Kanal 7',
+  'Beyaz TV HD|Beyaz',
+  'TGRT Haber HD',
+  'TV8,5 HD|TV8.5|TV 8.5',
+  'Teve2 HD',
+  '360 TV|360',
+  'TLC Türkiye|TLC',
+  'DMAX Türkiye|DMAX',
+  'Flash Haber TV|Flash Haber',
+  'Tele 1|Tele1',
+  'Habertürk HD|Habertuerk',
+  'CNN Türk HD|CNN Turk',
+  'NTV HD|NTV',
+  'A Haber HD',
+  'Sözcü TV|Sozcu',
+  'Halk TV|Halk',
+  'TV100|TV 100',
+  'KRT TV|KRT',
+  '24 TV|24',
+  'Ülke TV|Ulke',
+  'Bloomberg HT',
+  'TGRT Belgesel',
+  'Ekotürk|Ekoturk',
+  'A Para',
+  'Sinema TV',
+  'Sinema TV 2',
+  'Sinema Aksiyon',
+  'Sinema Aile',
+  'Sinema Komedi',
+  'Sinema Yerli',
+  'FilmBox HD|Filmbox',
+  'BeIN Movies Premiere HD|beIN Movies Premiere|BeeIN Movies Premiere',
+  'BeIN Movies Stars HD|beIN Movies Stars',
+  'BeIN Movies Action HD|beIN Movies Action',
+  'BeIN Movies Family HD|beIN Movies Family',
+  'BeIN Movies Comedy HD|beIN Movies Comedy',
+  'Tivibu Sinema 1',
+  'Tivibu Sinema 2',
+  'S Cinema',
+  'Smart Sinema',
+  'Movie Smart Platin',
+  'Movie Smart Gold',
+  'Turkishtime Sinema',
+  'Aksiyon Türk|Aksiyon Turkmovie',
+  'BeIN Sports 1 HD|beIN Sports 1',
+  'BeIN Sports 2 HD|beIN Sports 2',
+  'BeIN Sports 3 HD|beIN Sports 3',
+  'BeIN Sports 4 HD|beIN Sports 4',
+  'BeIN Sports 5 HD|beIN Sports 5',
+  'BeIN Sports Haber|beIN Sports Haber',
+  'S Sport 1 HD|S Sport|S-SPORT 1',
+  'S Sport 2 HD|S Sport 2',
+  'S Sport Plus',
+  'Tivibu Spor 1',
+  'Tivibu Spor 2',
+  'Tivibu Spor 3',
+  'Tivibu Spor 4',
+  'Exxen Spor 1|Exxen TV Spor 1',
+  'Exxen Spor 2|Exxen Sports 2',
+  'Exxen Spor 3|Exxen Sports 3',
+  'Exxen Spor 4|Exxen Sports 4',
+  'Smart Spor HD',
+  'Spor Smart 2',
+  'TRT Spor 2|TRT Spor Yildiz 2',
+  'A Spor HD|A Spor',
+  'TJK TV|TJK',
+  'FB TV|FB',
+  'GS TV|GS',
+  'BJK TV|BJK',
+  'Eurosport 1 HD',
+  'Eurosport 2 HD',
+  'Motorsport TV|Motorsport',
+  'Fight Network',
+  'Sports TV|Sports',
+  'National Geographic HD|Nat Geo|National Geographic',
+  'National Geographic Wild HD|Nat Geo Wild|National Geographic Wild',
+  'Discovery Channel HD|Discovery',
+  'Discovery Science HD',
+  'Animal Planet HD',
+  'BBC Earth HD|BBC Earth',
+  'History Channel HD|History',
+  'Love Nature HD',
+  'Viasat History',
+  'Viasat Explore',
+  'Viasat Nature',
+  'Crime + Investigation|Crime and Investigation|Crime Investigation',
+  'Food Network',
+  'HGTV',
+  'Travel Channel|Travel',
+  'ID Discovery|Investigation Discovery',
+  'TRT Docu',
+  'Da Vinci Kids',
+  'CNN International',
+  'BBC World News',
+  'Al Jazeera English',
+  'France 24 English|France 24',
+  'DW English|DW',
+  'Euronews Türkçe|Euronews Turkce|Euronews',
+  'TRT World HD',
+  'TRT Arabi',
+  'TRT Kurdi',
+  'TRT Int|TRT Turk',
+  'TRT Müzik HD',
+  'Kral TV|KRAL',
+  'Kral Pop TV|Kral Pop',
+  'Number One Türk|Number One|Number 1 Turk',
+  'Number One TV|Number One|Number1 TV',
+  'Power Türk|Power Turk',
+  'Power TV',
+  'Dream Türk|Dream Turk',
+  'MTV Hits',
+  'MTV 90s',
+  'MTV 80s',
+  'Club MTV',
+  'Trace Urban',
+  'Mezzo HD|Mezzo',
+  'Deluxe Music',
+  'Power Love',
+  'Kral Akustik',
+  'TRT Çocuk HD',
+  'Cartoon Network',
+  'Disney Channel',
+  'Disney Junior',
+  'Minika GO|Minika Go',
+  'Minika Çocuk',
+  'Boomerang HD|Boomerang',
+  'Nick Jr.|Nick Jr',
+  'Nickelodeon',
+  'Duck TV|Duck',
+  'Baby TV|Baby',
+  'JimJam',
+  'Tiji',
+  'TRT Diyanet Çocuk',
+  'Cartoonito',
+  'Diyanet TV|Diyanet',
+  'Diyanet Kur\'an|Diyanet Kurani|Kuran TV',
+  'Dost TV|Dost',
+  'Hilal TV|Hilal',
+  'Semerkand TV|Semerkand',
+  'Berat TV|Berat',
+  'Vuslat TV|Vuslat',
+  'Kabe Canlı (Mekke)|Kabe|Kaaba|Mekke',
+  'Medine Canlı|Medine',
+  'Olay TV (Karadeniz)|Olay TV|Olay',
+  'Karadeniz TV|Karadeniz BRTV|Mavi Karadeniz',
+  'Kontv|Kon TV',
+  'Kanal 26',
+  'Bursa Hakimiyet TV|Bursa Hakimiyet',
+  'Edirne TV|Edirne',
+  'Ordu TV|Ordu',
+  'Ordu Medya TV|Ordu Medya',
+  'TV 52|TV52',
+  'Çay TV|Cay',
+  'Güven TV|Guven',
+  'Kadırga TV|Kadirga',
+  'Akdeniz TV|Akdeniz',
+  'Ege TV|Ege|Ege Turk TV',
+  'Meltem TV|Meltem',
+  'Mesudiye TV|Mesudiye',
+  'Ünye TV|Unye',
+  'Fatsa Güneş TV|Fatsa Gunes',
+  'Denizli RTV|Denizli Deha TV',
+  'Kayseri Mega TV|Kayseri|TV Kayseri',
+  'Konya TV|Konya',
+  'Van TV|Van',
+  'Diyar TV|Diyar',
+  'Line TV Bursa|Line TV',
+  'DRT Denizli',
+  'Antalya TV|Antalya',
+  'Alanya TV|Alanya',
+  'Manisa TV|Manisa|ETV Manisa',
+  'Sakarya TV|Sakarya',
+  'Kocaeli TV|Kocaeli',
+  'Tek Rumeli TV|Tek Rumeli|Rumeli TV',
+  'TGRT FM Görsel|TGRT FM',
+  'Kral FM Görsel|Kral FM',
+  'Power FM Görsel|Power FM',
+  'Süper FM Görsel|Super FM',
+  'Metro FM Görsel|Metro FM',
+  'Alem FM Görsel|Alem FM',
+  'Show Radyo Görsel|Show Radyo',
+  'Joy Turk Görsel|Joy Turk|JoyTurk',
+  'Slow Türk Görsel|Slow Turk',
+  'TRT Nağme Görsel|TRT NAGME|TRT Nağme'
+]
+
+/* Kuyruktaki 200 istasyonun 72'sini saglayici hic tasimiyor (FilmBox, BeIN Movies Comedy,
+   Tivibu Sinema, GS TV, CNN International, MTV...). Kategori yine 200 kalsin diye ardina
+   elle secme ikinci bir kuyruk yazildi: hepsi saglayicida GERCEKTEN var, yayini kendi
+   listemizde var ve adi bir kanal adi — film paketi, "MAC SAATI" yayini, kisi kanali degil.
+   Sira mantikli: once ulusal spor ve haber, sonra sinema/cocuk/muzik, en son il kanallari.
+   Saglayici bunlardan birini de kaldirirsa makine doldurmasi (asagidaki fillLineUp) devreye
+   girer; kuyrukta oldugu hal hicbir yerde bulunmayan istasyon uydurulmaz. */
+const NATIONAL_EXTRA = [
+  'BeIN Sports MAX 1',
+  'BeIN Sports MAX 2',
+  'Exxen Spor 5|Exxen TV Spor 5',
+  'Exxen Spor 6|Exxen TV Spor 6',
+  'Exxen Spor 7|Exxen TV Spor 7',
+  'Tivibu Spor 5',
+  'Tabii Spor 3',
+  'Tabii Spor 4',
+  'Tabii Spor 5',
+  'Tabii Spor 6',
+  'HT Spor',
+  'Ekol Spor',
+  'Spor Smart',
+  '24 Haber',
+  'Kanal 24',
+  'TVNET',
+  'İlke TV',
+  'Bengü Türk|BengüTürk|Bengu Türk',
+  'Ekol TV',
+  'Türk Haber TV|Turkhabet TV',
+  'Euro Star',
+  'A2',
+  'Exxen TV',
+  'TV 4',
+  'Sinema 1002',
+  'Sinema TV Aksiyon',
+  'BeIN Series 1',
+  'BeIN Series 3',
+  'BeIN Gurme',
+  'Discovery World',
+  'Disney Junior|Disney Jr',
+  'Pepee TV',
+  'TRT 3',
+  'Satranç TV',
+  'Red Bull TV|Redbull TV',
+  'Yaban',
+  'TAY TV',
+  'Power Türk',
+  'Power Dance',
+  'Power Türk Akustik|Powerturk Akustik',
+  'Radio Rock',
+  'NR1 Türk',
+  'NR1 Damar',
+  'Tatlıses TV|Tatlises TV',
+  'Kent Türk',
+  'Adana TV',
+  'Mercan TV|Adıyaman Mercan TV',
+  'Boğaz TV|Anakkale Boğaz TV',
+  'Can TV',
+  'BRT 1',
+  'ETV Kayseri',
+  'Gonca TV',
+  'Güneydoğu TV',
+  'HRT Akdeniz TV',
+  'Hunat TV',
+  'İz TV',
+  'İzmir TV 35',
+  'Kanal 33',
+  'Kanal 58',
+  'Kıbrıs Kanal T',
+  'Koza TV',
+  'Mersin EL TV',
+  'Vizyon 58 TV Sivas',
+  'Sun TV',
+  'Tempo TV',
+  'TV 264',
+  'TV Kayseri',
+  'Yeni Kocaeli TV',
+  'Yol TV',
+  'Zonguldak Kanal Z',
+  'Aslan TV',
+  'ATV Alanya',
+  'Kare TV',
+  'Life TV',
+  'Finest TV',
+  'Bilgilendirme',
+  'Anadolu Dernek TV',
+  'Ankara T RKIYEM TV|Ankara Türkiyem TV',
+  'MimoCan TV',
+  'Rehber TV',
+  'Kudüs TV'
+]
+
+/** Saglayicinin kirik Turkce yazimlari tek yerde onarilir: harflerin ustunden dusen
+    I/İ/U karakteri bosluk birakir ("S NEMA" = SİNEMA, "HABERT RK" = HABERTÜRK,
+    "AK T TV" = AKİT TV, "M N KA GO" = MİNİKA GO, "DA VINC" = DA VINCI). */
+function repairSpelling(value) {
+  return String(value || '')
+    .replace(/T ?RK\b/g, 'TÜRK')
+    .replace(/AK T\b/g, 'AKİT')
+    .replace(/M N KA/g, 'MİNİKA')
+    .replace(/M Z K\b/g, 'MÜZİK')
+    .replace(/\bLKE TV\b/g, 'İLKE TV')
+    .replace(/S NEMA/g, 'SİNEMA')
+    .replace(/\bAKS YON\b/g, 'AKSİYON')
+    .replace(/\bA LE\b/g, 'AİLE')
+    .replace(/\bYERL\b/g, 'YERLİ')
+    .replace(/\bKOMED\b/g, 'KOMEDİ')
+    .replace(/\bDA VINC\b/g, 'DA VINCI')
+    /* Saglayici harfin hic düsmemis hallerini de yaziyor: altta kalan noktasiz kelimeler. */
+    .replace(/\b(?:SOZCU SZC|S ZC SZC|SZC|SOZCU)\b/g, 'SÖZCÜ')
+    .replace(/\bCOCUK\b/g, 'ÇOCUK')
+    .replace(/\bDIYANET\b/g, 'DİYANET')
+    .replace(/\bBUYUKSEHIR\b/g, 'BÜYÜKŞEHİR')
+    .replace(/\bBELEDIYESI\b/g, 'BELEDİYESİ')
+    .replace(/\bKARADENIZ\b/g, 'KARADENİZ')
+    .replace(/\bEDIRNE\b/g, 'EDİRNE')
+    .replace(/\bKOCAELI\b/g, 'KOCAELİ')
+    .replace(/\bMAVI\b/g, 'MAVİ')
+    .replace(/\bYENI\b/g, 'YENİ')
+    .replace(/\bANAKKALE\b/g, 'ÇANAKKALE')
+    .replace(/\bCAY\b/g, 'ÇAY')
+    .replace(/\bDENIZLI\b/g, 'DENİZLİ')
+    .replace(/\bGUNEYDOGU\b/g, 'GÜNEYDOĞU')
+    .replace(/\bAKUSTIK\b/g, 'AKUSTİK')
+    .replace(/\bKAYSERI\b/g, 'KAYSERİ')
+    .replace(/\bIZMIR\b/g, 'İZMİR')
+    .replace(/\bBENGU\b/g, 'BENGÜ')
+    .replace(/\bEKO TURK\b/g, 'EKOTÜRK')
+    .replace(/\bTIVIBUSPOR\b/g, 'TIVIBU SPOR')
+}
+
+/** "4K TR: ATV HD (3)" ile "ATV HEVC" ikisi de ATV'dir. */
+function stationKey(name) {
+  let value = repairSpelling(name).replace(/(\s*(?:\([^()]*\)|\[[^\]]*\]))+$/, '').trim()
+  value = value.replace(/^\s*(?:4k|uhd|fhd|hd)?\s*(?:tr|turk|türk)\s*[:\-|]\s*/i, '')
+  value = value.replace(QUALITY_TOKEN, ' ')
+  return value.replace(/\s+/g, ' ').replace(/^[\s.\-_|[\]()]+|[\s.\-_|[\]()]+$/g, '').trim()
+}
+
+const TURKISH_FOLD = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u' }
+
+/** Isim eslestirmesi icin kiriksiz anahtar: nokta, parantez, kalite etiketi ve aksan duser. */
+function foldKey(name) {
+  const lower = stationKey(name).toLocaleLowerCase('tr')
+  let out = ''
+  for (const char of lower) {
+    const folded = TURKISH_FOLD[char] || char
+    if (/[a-z0-9]/.test(folded)) out += folded
+  }
+  return out
+}
+
+function qualityRank(name) {
+  const upper = String(name || '').toUpperCase()
+  if (/4K|UHD|2160P/.test(upper)) return 4
+  if (/FHD|FULL HD|HD\+/.test(upper)) return 3
+  if (/\bHD\b/.test(upper)) return 2
+  if (/\bSD\b/.test(upper)) return 0
+  return 1
+}
+
+/** Istenen istasyonun en temiz kopyasi; tam karsi yoksa bir tek yakin on ek kabul.
+    Esit uzaklikta birden cok kopya varsa en iyi resimli ve yayini bizde olan secilir. */
+function pickStation(pool, key, own = new Set()) {
+  let best = null
+  for (const entry of pool) {
+    if (entry.key !== key) continue
+    if (!best || variantScore(entry.item, own) > variantScore(best.item, own)) best = entry
+  }
+  if (best) return best.item
+  let runner = null
+  for (const entry of pool) {
+    if (!(entry.key.startsWith(key) || key.startsWith(entry.key))) continue
+    if (Math.min(entry.key.length, key.length) < 4) continue
+    const distance = Math.abs(entry.key.length - key.length)
+    if (!runner || distance < runner.distance) runner = { key: entry.key, item: entry.item, distance }
+    else if (distance === runner.distance && variantScore(entry.item, own) > variantScore(runner.item, own)) {
+      runner = { key: entry.key, item: entry.item, distance }
+    }
+  }
+  return runner ? runner.item : null
+}
+
+/** Kopya secimi: once en iyi resim (4K > FHD > HD > etiketsiz), esitse yayini kendi
+    listemizde olan kopya. Boylece "TRT SPOR SD" ile "TRT SPOR 4K" yanisira tek kanal
+    durur ve abone en kotusunu HD gorecek sekilde en kalitelisini gorur. */
+function variantScore(item, own) {
+  return qualityRank(item.name) * 2 + (own.has(String(item.id)) ? 1 : 0)
+}
+
+/** Liste saglayicinin kopyalari arasindan tek kanala iner, abonenin verdigi siraya dizilir:
+    once 200luk kuyruk, sonra elle secme yedek kuyruk, toplam 200'i gecmeden. */
+function nationalLineUp(items, own = new Set()) {
+  const pool = items.map((item) => ({ key: foldKey(item.name), item }))
+  const taken = new Set()
+  const out = []
+  for (const station of NATIONAL_STATIONS.concat(NATIONAL_EXTRA)) {
+    if (out.length >= NATIONAL_TARGET) break
+    let hit = null
+    /* Kuyruk satiri birden fazla yazim tasiyabilir ("Exxen Spor 1|Exxen TV Spor 1"):
+       hepsi aranir, en iyi kopyasi secilir. Ayni kanalin baska satirdaki kopyasi
+       (taken) tekrar listelenmez. */
+    for (const alternative of station.split('|')) {
+      const found = pickStation(pool, foldKey(alternative), own)
+      if (!found || taken.has(found.id)) continue
+      if (!hit || variantScore(found, own) > variantScore(hit, own)) hit = found
+    }
+    if (!hit) continue
+    taken.add(hit.id)
+    const key = foldKey(hit.name)
+    if (key) taken.add(key)
+    out.push(hit)
+  }
+  return out
+}
+
+/** Kategori 200'e tamamlanir. Kuyruklar (200luk liste + elle secme yedek liste) saglayicida
+    bulundugu kadar dizilir; hala eksik varsa bu makine doldurmasi devreye girer. Once yayini
+    kendi listemizde olan kanallar (onlar her zaman cekiyor), sonra saglayicinin Turkiye saydigi
+    (.tr kuyruklu) HD uzeri kopyalar — saglayicinin populerlik sirasiyla, populairesi bilinmeyen
+    A-Z ile en altta durur. SD etiketli kopya, film paketi ve yedek besleme aboneye gosterilmez.
+    Hicbir yerde bulunmayan istasyon uydurulmaz; yerini gercek bir kanal doldurur. */
+const FILL_JUNK = /\b(raw|feed|backup|kutu|uydu|kupe|h ?265|x ?265|\d+ ?fps|\d{3,4}p|horror|anima(l|tio)n|animaux|barbie|pokemon|patron|niloya|salon|office|mac saati|cinema|dream|global|kingbox|max|best|dinamik|showmax|moviesmart|dizismart|premi(er|um)|vizyon|loca|kral|kong|spider|transformer|paw|kocaay|masal|adibesa|nevizade|gadget|collerde|rokka)\b|\bcocuk \d\b/i
+
+function tvgKey(item) {
+  const tvg = String((item.ids && item.ids.tvg) || '')
+  let out = ''
+  for (const char of tvg.toLocaleLowerCase('tr')) if (/[a-z0-9]/.test(char)) out += char
+  return out
+}
+
+const ALPHABET = (a, b) => stationKey(a.name).localeCompare(stationKey(b.name), 'tr', { numeric: true, sensitivity: 'base' })
+
+function fillLineUp(items, takenList, target, ranks, own = new Set()) {
+  const keys = new Set()
+  const claim = (item) => {
+    const key = foldKey(item.name)
+    if (key) keys.add(key)
+    const tvg = tvgKey(item)
+    if (tvg) keys.add(tvg)
+  }
+  for (const item of takenList) claim(item)
+  const isOwn = (item) => own.has(String(item.id))
+  const byStation = new Map()
+  for (const item of items) {
+    /* Kendi listemizdeki kanal Turkiye kanali zaten; saglayicinin etiketine bakilmaz. */
+    if (!isOwn(item) && !/\.tr$/i.test(String((item.ids && item.ids.tvg) || ''))) continue
+    const rank = qualityRank(item.name)
+    /* SD etiketli kopya doldurmada da kullanilmaz: abone "en kotusu HD" istiyor. */
+    if (rank < 1 || FILL_JUNK.test(item.name)) continue
+    const key = foldKey(item.name)
+    if (!key || keys.has(key) || keys.has(tvgKey(item))) continue
+    const held = byStation.get(key)
+    if (!held || variantScore(item, own) > variantScore(held, own)) byStation.set(key, item)
+  }
+  const tier = (item) => (isOwn(item) ? 0 : qualityRank(item) >= 2 ? 1 : 2)
+  const score = (item) => {
+    const held = ranks.get(foldKey(item.name))
+    return held === undefined ? Number.MAX_SAFE_INTEGER : held
+  }
+  const out = [...byStation.values()].sort((a, b) => tier(a) - tier(b) || score(a) - score(b) || ALPHABET(a, b))
+  return out.slice(0, Math.max(0, target - takenList.length))
+}
+
+/* Turkiye kuyrugu ~900 kanal, saglayici sayfayi 300'de kesiyor: uc-dort istekte toplanir
+   ve yarim saat bellekte tutulur — kategori her acilisinda saglayiciya yeniden gidilmez. */
+const turkeyCache = new Map()
+
+async function pullTurkeyPages(region, language, sort, stopAt) {
+  const items = []
+  let features = null
+  for (let page = 0; page < stopAt; page += 1) {
+    const params = new URLSearchParams({ region, language, sort, 'filter[group]': 'Turkey' })
+    if (items.length) params.set('cursor', String(items.length))
+    let data = null
+    try {
+      const response = await fetch(GEIL + '/live/catalog/live/channels.json?' + params, {
+        headers: { 'user-agent': UA, accept: 'application/json', origin: GEIL, referer: GEIL + '/' },
+        signal: AbortSignal.timeout(30000),
+      })
+      if (response.ok) data = await response.json()
+    } catch { /* eski kopya ile devam */ }
+    if (!data || !Array.isArray(data.items) || !data.items.length) break
+    items.push(...data.items)
+    if (!features) features = data.features || null
+    if (!data.nextCursor) break
+  }
+  return { items, features }
+}
+
+/** Populerlik sirasi: ayni kanalin kopyalari arasindaki en iyi derece saklanir. */
+function trendingRanks(items) {
+  const ranks = new Map()
+  items.forEach((item, index) => {
+    const key = foldKey(item.name)
+    if (!key) return
+    const held = ranks.get(key)
+    if (held === undefined || index < held) ranks.set(key, index)
+  })
+  return ranks
+}
+
+async function turkeyCatalog(region, language) {
+  const cacheKey = region + '|' + language
+  const held = turkeyCache.get(cacheKey)
+  if (held && Date.now() < held.at + NATIONAL_TTL) return held
+  const listed = await pullTurkeyPages(region, language, 'name', NATIONAL_PAGES)
+  if (!listed.items.length) return held || { at: 0, items: [], features: null, national: [], fill: [] }
+  const popular = await pullTurkeyPages(region, language, 'trending', NATIONAL_RANK_PAGES)
+  /* Kendi listemiz gunde bir kez indirilir ve bellekte durur: yayini bizde olan kopya
+     secilir, doldurma da onlardan once secilir — abone "her zaman çeken" kanal istiyor. */
+  const { own } = await loadLiveTable()
+  const national = nationalLineUp(listed.items, own)
+  const fresh = {
+    at: Date.now(),
+    items: listed.items,
+    features: listed.features,
+    national,
+    fill: fillLineUp(listed.items, national, NATIONAL_TARGET, trendingRanks(popular.items), own),
+  }
+  turkeyCache.set(cacheKey, fresh)
+  return fresh
+}
+
+/** Sitenin grup secim tahtasi bu özellik listesinden doluyor: kendi satirimizi ekliyoruz.
+    Eklenirse true; saglayici listeyi hic vermediyse false ve yanit oldugu gibi kalir. */
+function offerNationalGroup(features) {
+  const list = features && Array.isArray(features.filter) ? features.filter : []
+  const group = list.find((entry) => entry && entry.id === 'group')
+  if (!group) return false
+  group.values = Array.isArray(group.values) ? group.values : []
+  if (!group.values.some((entry) => entry && entry.id === NATIONAL_GROUP)) {
+    group.values.push({ id: NATIONAL_GROUP, name: NATIONAL_GROUP })
+  }
+  return true
+}
+
+/** Liste bizim oldugu icin isimleri de biz temizliyoruz: yayindaki "(6)" varyanta sayari
+    ve "[LIVE DURING EVENTS ONLY]" saglayicinin notu aboneye gorecek bir sey degil,
+    "TRT T RK" ise saglayicinin kirik yazimi, "NICK JR HD HD" de iki kere yazilmis etiket,
+    "4K TR: TRT 1 HD" de saglayicinin kendi dosya klasorunun adi — o kanalin adi degil. */
+function prettyName(name) {
+  const bare = repairSpelling(name)
+    .replace(/^\s*(?:4K|UHD|FHD|HD)\s+[A-Z]{2}\s*:\s*/i, '')
+    .replace(/(\s*(?:\([^()]*\)|\[[^\]]*\]))+$/, '')
+    .replace(/\b(4K|UHD|FHD|HD\+|HD)\s+SD\b/gi, '$1')
+    .replace(/\b(4K|UHD|FHD|HD\+|HD)\s+\1\b/gi, '$1')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return bare || String(name || '')
+}
+
+/** Normal kanal listesi saglayicidan geliyor; tahtaya kendi satirimizi burda taniyoruz.
+    Baska tek bir karaktere dokunulmaz, cozulemeyen govde oldugu gibi gecer. */
+function withNationalGroup(body) {
+  try {
+    const data = JSON.parse(body)
+    if (!offerNationalGroup(data.features)) return body
+    return JSON.stringify(data)
+  } catch {
+    return body
+  }
+}
+
+const NATIONAL_REQUEST = /^\/live\/catalog\/(?:live\/)?channels\.json$/i
+
+/**
+ * "Türkiye Ulusal" secilince site aynı adresi bize soruyor; cevabi kendimiz kuruyoruz.
+ * Item'lar saglayicinin kendi kopyalari (kimlik, logo, rehber oldugu gibi durur), sadece
+ * liste bizim siramiz ve tek kopya. Adresler de ayni yeniden yazimdan gecer.
+ */
+async function nationalAnswer(request, url, origin, cacheKey, ctx) {
+  const catalog = await turkeyCatalog(url.searchParams.get('region') || 'GB', url.searchParams.get('language') || 'tr')
+  const lineUp = catalog.national.concat(catalog.fill)
+  let items = lineUp
+  const needle = foldKey(url.searchParams.get('search') || '')
+  if (needle) items = lineUp.filter((entry) => foldKey(entry.name).includes(needle))
+  const features = catalog.features || { search: true, sort: [], filter: [] }
+  offerNationalGroup(features)
+  const payload = { items: items.map((item) => ({ ...item, name: prettyName(item.name) })), nextCursor: null, features }
+  const body = await toSafeUrls(JSON.stringify(payload), GEIL + '/live/catalog/live/channels.json', origin)
+  const response = new Response(request.method === 'HEAD' ? null : body, {
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': catalog.items.length ? `public, max-age=${EDGE_TTL_LIVE}` : 'no-store',
+    },
+  })
+  if (catalog.items.length && request.method === 'GET') ctx.waitUntil(caches.default.put(cacheKey, response.clone()))
+  return response
+}
+
 /* -------------------------------------------------------------- ana yol ---- */
 
 export default {
@@ -827,8 +1526,7 @@ export default {
       if (!granted) return text('text/plain; charset=utf-8', 'Aktivasyon gerekiyor', 403)
       const own = await ownLiveAddress(url.pathname, '')
       if (own) return Response.redirect(own, 302)
-      const token = await signPayload({ u: GEIL + url.pathname + url.search }, secret)
-      return Response.redirect(`${origin}${STREAM}?t=${encodeURIComponent(token)}`, 302)
+      return Response.redirect(await streamUrl(GEIL + url.pathname + url.search, null), 302)
     }
 
     /* Sayfa mi dosya mi, yukariya sormadan anlasilir: uzantisi olmayan her adres bir
@@ -836,12 +1534,21 @@ export default {
        (kapinin kendi giyimi de onlardan biri). */
     if (!granted && !/\.[a-z0-9]{2,5}$/i.test(url.pathname)) return gatePage()
 
+    /* Kendi kategorimiz secildiyse saglayiciya hic gidilmez: liste bizim. */
+    if (NATIONAL_REQUEST.test(url.pathname) && url.searchParams.get('filter[group]') === NATIONAL_GROUP) {
+      const key = new Request(origin + url.pathname + url.search, request)
+      const stored = await caches.default.match(key)
+      if (stored) return stored
+      return await nationalAnswer(request, url, origin, key, ctx)
+    }
+
     const target = GEIL + (url.pathname === '/' ? '/' : url.pathname) + upstreamSearch(url.search, origin)
     const isStatic = url.pathname.startsWith('/vuma/')
     const edge = caches.default
     const cacheKey = new Request(origin + url.pathname + url.search, request)
+    const mayCache = isStatic || edgeTtlFor(url.pathname) > 0
 
-    if (isStatic) {
+    if (mayCache) {
       const hit = await edge.match(cacheKey)
       if (hit) return hit
     }
@@ -875,21 +1582,32 @@ export default {
 
     let body = await upstream.text()
     if (kind === 'html') body = toOurBrand(toOwnPaths(body, origin))
-    else if (kind === 'playlist') body = await rewritePlaylist(body, upstream.url || target, secret)
-    else if (kind === 'json') body = await toSafeUrls(await swapLiveAddress(body, url.pathname, url.search), upstream.url || target, origin, secret)
+    else if (kind === 'playlist') body = await rewritePlaylist(body, upstream.url || target)
+    else if (kind === 'json') {
+      const swapped = await swapLiveAddress(body, url.pathname, url.search)
+      body = await toSafeUrls(NATIONAL_REQUEST.test(url.pathname) ? withNationalGroup(swapped) : swapped, upstream.url || target, origin)
+    }
     else if (/geil\.(to|app|win)/i.test(body)) body = toOwnPaths(body, origin)
 
     // kabuk ilk kez acildiginda liste arka planda hazirlansin: ilk kanal 3 saniye beklemesin.
     if (kind === 'html') ctx.waitUntil(loadLiveTable().then(() => undefined, () => undefined))
 
-    const cacheControl = kind === 'playlist' || kind === 'json'
-      ? 'no-store'
-      : isStatic ? 'public, max-age=2592000, immutable' : 'no-store'
+    /* Kenarda saklanacak yanit: giysiler 30 gun, katalog JSON'lari 3 saat,
+       rehber tasidiyi icin canli liste 60 saniye. Sayfa kabugu ve oynatilacak
+       adresin ciktigi yollar no-store kalir. SAGLAYICI HATA VERDIYSE hicbir sey
+       saklanmaz — aksine gecici bir 404 kenere yazilirsa abone 3 saat boyunca
+       "kanal yok" gorur ve worker bir daha gercegi sormaz. */
+    const edgeTtl = upstream.ok
+      ? (isStatic ? 2592000 : (kind === 'json' ? edgeTtlFor(url.pathname) : 0))
+      : 0
+    const cacheControl = edgeTtl
+      ? `public, max-age=${edgeTtl}${isStatic ? ', immutable' : ''}`
+      : 'no-store'
     const response = new Response(request.method === 'HEAD' ? null : body, {
       status,
       headers: { 'content-type': contentType || fallbackType, 'cache-control': cacheControl },
     })
-    if (isStatic && upstream.ok && request.method === 'GET') ctx.waitUntil(edge.put(cacheKey, response.clone()))
+    if (mayCache && edgeTtl && upstream.ok && request.method === 'GET') ctx.waitUntil(edge.put(cacheKey, response.clone()))
     return response
   },
 }

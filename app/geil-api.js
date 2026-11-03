@@ -8,15 +8,20 @@ import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto'
  * are made against geil.to's mHub v2 live addon, VOD metadata comes from the
  * public mHub TMDB addon, and VOD sources/resolution use geil.to's VOD addon.
  *
- * Every media URL is rewritten through /api/geil/stream. That keeps HTTP-only
- * IPTV streams working on an HTTPS deployment and lets us pass the referer
- * required by some VOD CDNs.
+ * Every provider box answers over plain http, so the browser can never ask it
+ * directly: the address is signed and handed to a door that re-serves it over
+ * https. Render's own door bills every byte of that crossing, so the media
+ * addresses it recognises are signed straight to the free LXI host instead
+ * (edge/lxi-proxy.php — same key, same payload). Anything the LXI door would
+ * refuse stays on the same-origin route rather than failing at the door.
  */
 
 export const GEIL = 'https://geil.to'
 export const MHUB = 'https://www.mhub.mx'
 export const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 const SECRET = process.env.GEIL_PROXY_SECRET || 'notflix-geil-proxy-v1-7c4f2a9e'
+const BRIDGE_STREAM = (process.env.LXI_BRIDGE_URL || 'https://notflixlive.lxi.be/door.php').replace(/\/+$/, '')
+const BRIDGE_TTL_MS = 24 * 60 * 60 * 1000
 
 const LIVE_TTL = 60 * 1000
 const LIVE_RESOLVE_TTL = 90 * 1000
@@ -180,10 +185,141 @@ export function verifyPayload(token) {
   }
 }
 
+/* Taşınmak zorunda kalan her adres (http kutu, damga zorunlu CDN) bedava kuryeye gider;
+   Render'ın kendi kapısı artık film taşımaz — kota ölçümü orada durur. */
 function proxyUrl(url, headers = null) {
-  const payload = { u: String(url) }
+  const payload = { u: String(url), exp: Date.now() + BRIDGE_TTL_MS }
   if (headers && typeof headers === 'object' && Object.keys(headers).length) payload.h = headers
-  return `/api/geil/stream?t=${encodeURIComponent(signPayload(payload))}`
+  return `${BRIDGE_STREAM}?t=${encodeURIComponent(signPayload(payload))}`
+}
+
+/* https bir medya adresi tarayıcıya kendi başına açıksa hiç taşınmaz: aksi halde filmin
+   her saniyesi Render'ın 5 GB'ından çıkar. Listenin kendisi yetmez — MSE oynatma listesini,
+   anahtarını ve her parçayı ayrı ayrı ister; o yüzden adres ağaç aşağı yoklanır. Bir adım
+   bile şüphe ya da gecikme bırakırsa eski yol (taşıma) korunur, seyrersiz kalma riski yok.
+   Yoklanan 16 KB'lık başlar bize ait, karar 10 dakika saklanır: aynı filmde tekrar sorulmaz. */
+const directCache = new Map()
+const DIRECT_TTL = 60 * 60 * 1000
+/* Aşığı kötülemek pahasına: bir adres bir an yavaşsa diye 1 saat kuryeye mahkum edilmez. */
+const DIRECT_FAIL_TTL = 60 * 1000
+const DIRECT_BUDGET_MS = 12000
+const DIRECT_HOPS = 5
+
+const junkType = /text\/html|application\/json|text\/xml/i
+const playlistType = /mpegurl|m3u/i
+
+function isHttps(value) {
+  try {
+    return /^https:/i.test(new URL(String(value)).href)
+  } catch {
+    return false
+  }
+}
+
+function pathOf(value) {
+  try {
+    return new URL(String(value)).pathname
+  } catch {
+    return ''
+  }
+}
+
+function corsOpen(response, origin) {
+  const value = response.headers.get('access-control-allow-origin')
+  if (value === '*') return true
+  return Boolean(origin) && value === origin
+}
+
+async function drain(response) {
+  try { await response.body?.cancel() } catch {}
+}
+
+// Bir oynatma listesinden tarayıcının kendi başına isteyeceği ilk adresler: şifre anahtarı ve ilk satır.
+function mediaTargets(playlist, baseUrl) {
+  const out = []
+  const key = /#EXT-X-KEY:([^\r\n]*)/i.exec(playlist)
+  if (key && !/METHOD=NONE/i.test(key[1])) {
+    const uri = /URI="([^"]+)"/i.exec(key[1])
+    if (uri) out.push(uri[1])
+  }
+  const line = playlist.split(/\r?\n/).find((entry) => entry.trim() && !entry.trim().startsWith('#'))
+  if (line) out.push(line.trim())
+  return [...new Set(out.map((uri) => {
+    try { return new URL(uri, baseUrl).href } catch { return '' }
+  }).filter(isHttps))]
+}
+
+async function directProbe(url, origin) {
+  const signal = AbortSignal.timeout(DIRECT_BUDGET_MS)
+  const seen = new Set()
+  const queue = [{ url, child: false }]
+  let mediaSeen = false
+  while (queue.length && seen.size < DIRECT_HOPS) {
+    if (signal.aborted) return false
+    const entry = queue.shift()
+    if (seen.has(entry.url)) continue
+    seen.add(entry.url)
+    let response = null
+    try {
+      response = await fetch(entry.url, {
+        headers: { 'user-agent': UA, range: 'bytes=0-16384', ...(origin ? { origin } : {}) },
+        redirect: 'follow',
+        signal,
+      })
+    } catch {
+      return false
+    }
+    const type = response.headers.get('content-type') || ''
+    const finalUrl = response.url || entry.url
+    const playlist = playlistType.test(type) || /\.m3u8?([?#]|$)/i.test(pathOf(finalUrl))
+    const usable = response.status < 300 && !junkType.test(type) && isHttps(finalUrl)
+    // Parçalar ve listeler MSE için CORS'a muhtaç; kökteki düz video tarayıcıda src'te okunur, istemez.
+    if (!usable || ((entry.child || playlist) && !corsOpen(response, origin))) {
+      await drain(response)
+      return false
+    }
+    if (!playlist) {
+      mediaSeen = true
+      await drain(response)
+      continue
+    }
+    let text = ''
+    try {
+      text = String(await response.text()).slice(0, 40000)
+    } catch {
+      return false
+    }
+    if (!/#EXTM3U/.test(text)) return false
+    const targets = mediaTargets(text, finalUrl)
+    if (!targets.length) return false
+    for (const target of targets) queue.push({ url: target, child: true })
+  }
+  return mediaSeen
+}
+
+/* Adreslerde dolaşan tek başlık referer; ölçüldü: bu CDN'ler hiç bakmıyor (referer'siz ve
+   kendi sitemizin refereriyle de 200 + acao:* veriyorlar). Tarayıcının koyamadığı başlıklar
+   istenirse taşıma şart: cookie/authorization ancak bizim kapımızdan geçebilir. */
+const browserCannotSend = /^(?:cookie|authorization)$/i
+
+async function openDirectly(url, headers, origin = '') {
+  const value = String(url)
+  if (!/^https:\/\//i.test(value)) return false
+  if (Object.entries(allowedSourceHeaders(headers)).some(([key]) => browserCannotSend.test(key))) return false
+  const key = `${origin || '-'}|${value}`
+  const known = cacheGet(directCache, key)
+  if (known !== null) return known
+  let open = false
+  try {
+    open = await directProbe(value, origin)
+  } catch {
+    open = false
+  }
+  return cacheSet(directCache, key, open, open ? DIRECT_TTL : DIRECT_FAIL_TTL)
+}
+
+async function playableUrl(url, headers, origin = '') {
+  return (await openDirectly(url, headers, origin)) ? String(url) : proxyUrl(url, headers)
 }
 
 function rewritePlaylist(playlist, baseUrl, inheritedHeaders) {
@@ -290,20 +426,24 @@ async function resolveLive(id) {
   return cacheSet(liveResolveCache, id, value, LIVE_RESOLVE_TTL)
 }
 
-async function handleLiveResolve(reqUrl, res) {
+async function handleLiveResolve(reqUrl, res, origin = '') {
   const id = (reqUrl.searchParams.get('id') || '').trim()
   if (!/^[A-Za-z0-9_-]{1,80}$/.test(id)) {
     sendJson(res, 400, { ok: false, error: 'Geçersiz kanal kimliği' })
     return
   }
   const data = await resolveLive(id)
+  /* Kanalların ~%94'i abonenin kendi listesinde https olarak duruyor. Adresi ondan
+     verdiğimizde videoyu tarayıcı doğrudan listeden çeker: ne Render ne kapı bir bayt
+     taşır. Listede olmayan kanal kapıdan geçer, hiçbir kanal boşta kalmaz. */
+  const own = await ownLiveAddress(`/live/play/${id}`, '').catch(() => '')
   sendJson(res, 200, {
     ok: true,
     id,
     name: data.name,
     live: data.live,
     format: data.format,
-    url: proxyUrl(data.url, data.headers),
+    url: own || await playableUrl(data.url, data.headers, origin),
   })
 }
 
@@ -632,7 +772,7 @@ async function clientFetchChain(sourceUrl) {
   }
 }
 
-async function handleVodResolve(reqUrl, res) {
+async function handleVodResolve(reqUrl, res, origin = '') {
   const type = reqUrl.searchParams.get('type') || ''
   const id = (reqUrl.searchParams.get('id') || '').trim()
   const sourceUrl = (reqUrl.searchParams.get('url') || '').trim()
@@ -650,7 +790,7 @@ async function handleVodResolve(reqUrl, res) {
 
   const cached = cacheGet(vodResolveCache, sourceUrl)
   if (cached) {
-    sendJson(res, 200, { ok: true, ...cached, url: proxyUrl(cached.url, cached.headers) })
+    sendJson(res, 200, { ok: true, ...cached, url: await playableUrl(cached.url, cached.headers, origin) })
     return
   }
 
@@ -661,7 +801,7 @@ async function handleVodResolve(reqUrl, res) {
   cacheSet(vodResolveCache, sourceUrl, resolved, VOD_RESOLVE_TTL)
   sendJson(res, 200, {
     ok: true,
-    url: proxyUrl(resolved.url, resolved.headers),
+    url: await playableUrl(resolved.url, resolved.headers, origin),
     format: resolved.format,
     live: resolved.live,
     quality: resolved.quality,
@@ -1118,7 +1258,7 @@ export function createGeilApi() {
         return
       }
       if (path === '/api/geil/live/resolve') {
-        await handleLiveResolve(reqUrl, res)
+        await handleLiveResolve(reqUrl, res, String(req.headers.origin || ''))
         return
       }
       if (path === '/api/geil/tmdb/catalog') {
@@ -1134,7 +1274,7 @@ export function createGeilApi() {
         return
       }
       if (path === '/api/geil/vod/resolve') {
-        await handleVodResolve(reqUrl, res)
+        await handleVodResolve(reqUrl, res, String(req.headers.origin || ''))
         return
       }
       if (path === '/api/geil/subtitle') {

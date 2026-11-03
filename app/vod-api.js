@@ -26,6 +26,12 @@ try {
 const CATALOG_TTL_MS = 6 * 60 * 60 * 1000
 const DETAIL_TTL_MS = 45 * 60 * 1000
 const TOKEN_TTL_MS = 2 * 60 * 60 * 1000
+/* Filmin baytlari Render'dan akmaz: saatte 2,36 GB (olcum 2026-11-03) tek basina 5 GB
+   kotasini bitiriyor. Adres, aynanin kullandigi imzali LXI taskyisina verilir; anahtar ve
+   payload bicimi edge/lxi-proxy.php ile birebir aynidir, o yuzden iki taraf tek imzayi dogrular. */
+const BRIDGE_STREAM = (process.env.LXI_BRIDGE_URL || 'https://notflixlive.lxi.be/door.php').replace(/\/+$/, '')
+const BRIDGE_SECRET = process.env.LXI_BRIDGE_SECRET || 'notflix-geil-proxy-v1-7c4f2a9e'
+const BRIDGE_TTL_MS = 24 * 60 * 60 * 1000
 const PAGE_SIZE = 42
 const HOME_ROW_SIZE = 48
 const MAX_TOKENS = 5000
@@ -497,6 +503,16 @@ function readToken(token) {
     return null
   }
   return entry
+}
+
+function bridgeToken(payload) {
+  const data = Buffer.from(JSON.stringify({ ...payload, exp: Date.now() + BRIDGE_TTL_MS })).toString('base64url')
+  const signature = createHmac('sha256', BRIDGE_SECRET).update(data).digest('base64url')
+  return `${data}.${signature}`
+}
+
+function lxiStreamUrl(url) {
+  return `${BRIDGE_STREAM}?t=${encodeURIComponent(bridgeToken({ u: url }))}`
 }
 
 function toTimestamp(value) {
@@ -1513,13 +1529,9 @@ function subtitleProxyUrl(url, format = '') {
   return `/api/vod/subtitle?t=${token}`
 }
 
-function streamProxyUrl(url, ext = '') {
+function streamProxyUrl(url) {
   if (!url) return ''
-  const token = rememberToken('stream', {
-    url,
-    ext: String(ext || extensionFromUrl(url) || '').replace(/^\./, '').toLowerCase(),
-  })
-  return `/api/vod/stream?t=${token}`
+  return lxiStreamUrl(url)
 }
 
 function movieStreamUrl(id, ext) {
@@ -1756,7 +1768,7 @@ async function movieDetail(id) {
     trailer: youtubeId(merge.youtube_trailer || merge.trailer),
     tmdbId: normalizeText(merge.tmdb_id || merge.tmdb || ''),
     subtitles: normalizeSubtitleEntries(rawSubtitles),
-    stream: streamProxyUrl(streamUrl, ext),
+    stream: streamProxyUrl(streamUrl),
     ext,
     detailError,
   }
@@ -1812,7 +1824,7 @@ async function seriesDetail(id) {
         duration: normalizeDuration(episode.duration),
         still: resolveImage(episode.still, base?.poster),
         ext,
-        stream: streamProxyUrl(streamUrl, ext),
+        stream: streamProxyUrl(streamUrl),
         subtitles: normalizeSubtitleEntries(episode.subtitles || []),
       })
     }
@@ -1839,7 +1851,7 @@ async function seriesDetail(id) {
         duration: normalizeDuration(episodeInfo.duration || entry.duration),
         still: resolveImage(episodeInfo.movie_image, episodeInfo.cover_big, entry.movie_image, entry.cover, base?.poster),
         ext,
-        stream: streamProxyUrl(streamUrl, ext),
+        stream: streamProxyUrl(streamUrl),
         subtitles: normalizeSubtitleEntries(
           episodeInfo.subtitles || entry.subtitles || entry.sub_titles || episodeInfo.sub_titles || [],
         ),
