@@ -182,11 +182,12 @@
     syncDots();
   }
 
-  /* ---------- SSS akordiyon ---------- */
+  /* ---------- SSS akordiyon (aynı anda tek soru açık) ---------- */
   var accItems = $$('#faq .acc__item');
   accItems.forEach(function (item) {
-    item.addEventListener('toggle', function () {
-      if (!item.open) return;
+    item.addEventListener('click', function (e) {
+      if (!e.target.closest('summary')) return;
+      if (item.open) return;
       accItems.forEach(function (other) {
         if (other !== item) other.open = false;
       });
