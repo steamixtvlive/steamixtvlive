@@ -480,7 +480,7 @@ ul{margin:0;padding:0;list-style:none}
 @media (max-width:920px){
   .hero{padding:112px 0 70px}
   .hero__inner{grid-template-columns:1fr;gap:46px}
-  .hero__stage{min-height:430px;max-width:560px;margin:0 auto}
+  .hero__stage{min-height:430px;width:100%;max-width:560px;margin:0 auto}
   .device--tv{max-width:100%;left:2%}
   .device--phone{width:140px;right:0}
   .device--pc{width:220px}
