@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0A">
+<title>NOTFLİX — Film, Dizi, Anime ve Canlı TV | Ücretsiz Android TV Uygulaması</title>
+<meta name="description" content="NOTFLİX: Film, dizi, anime ve canlı TV tek uygulamada. Android TV, Smart TV, Android telefon, tablet ve Windows için ücretsiz, hızlı ve düzenli güncellenen akıllı TV istemcisi.">
+<meta name="keywords" content="NOTFLİX, Android TV, Smart TV, canlı TV, film izleme, dizi izleme, anime, ücretsiz TV uygulaması, Windows">
+<meta property="og:type" content="website">
+<meta property="og:title" content="NOTFLİX — Tüm API bizden, izlemesi sizden">
+<meta property="og:description" content="Android TV, Smart TV, telefon ve Windows için ücretsiz akıllı TV uygulaması. Film, dizi, anime ve canlı TV tek yerde.">
+<meta property="og:url" content="https://steamixlive.onrender.com">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/img/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+<!-- marka tanımları (kelime markası yayı + parıltı + süpürme) -->
+<svg class="svg-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <path id="wmArc" d="M 6 70 Q 110 50 214 70" fill="none"/>
+    <filter id="wmGlow" x="-25%" y="-60%" width="150%" height="240%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="b2"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3.4" result="b1"/>
+      <feMerge>
+        <feMergeNode in="b2"/>
+        <feMergeNode in="b1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="wmSweepClip">
+      <rect class="wm-sweep" x="-70" y="0" width="54" height="80"/>
+    </clipPath>
+  </defs>
+</svg>
+
+<!-- ================= SPLASH ================= -->
+<div class="splash" id="splash">
+  <div class="splash__grid" aria-hidden="true"></div>
+  <span class="splash__bloom splash__bloom--1" aria-hidden="true"></span>
+  <span class="splash__bloom splash__bloom--2" aria-hidden="true"></span>
+
+  <div class="splash__center">
+    <div class="splash__badge">
+      <span class="brand__mark" aria-hidden="true">N</span>
+    </div>
+    <svg class="wordmark splash__wordmark" viewBox="0 0 220 78" role="img" aria-label="NOTFLİX">
+      <text class="wordmark__text" font-size="58" letter-spacing="1.5" filter="url(#wmGlow)">
+        <textPath href="#wmArc" startOffset="50%" text-anchor="middle">NOTFLİX</textPath>
+      </text>
+      <text class="wordmark__text wordmark__text--sweep" font-size="58" letter-spacing="1.5" clip-path="url(#wmSweepClip)">
+        <textPath href="#wmArc" startOffset="50%" text-anchor="middle">NOTFLİX</textPath>
+      </text>
+    </svg>
+    <p class="splash__cats">FİLM • DİZİ • CANLI TV</p>
+    <p class="splash__note">İçerikler internetten çekilmez; hepsi NOTFLİX'e aittir</p>
+  </div>
+
+  <div class="splash__bottom">
+    <div class="splash__rail"><span class="splash__fill"></span></div>
+    <p class="splash__by">RENDIR MEDİA</p>
+  </div>
+
+  <button class="splash__skip" id="splashSkip" type="button">Atla</button>
+</div>
+
+<a class="skip-link" href="#anasayfa">İçeriğe geç</a>
+
+<!-- ================= NAV ================= -->
+<header class="nav" id="nav">
+  <div class="nav__inner container">
+    <a class="brand brand--mark" href="#anasayfa" aria-label="NOTFLİX ana sayfa">
+      <span class="brand__mark" aria-hidden="true">N</span>
+    </a>
+
+    <nav class="nav__links" id="navLinks" aria-label="Ana menü">
+      <a href="#anasayfa" class="nav__link is-active">Ana Sayfa</a>
+      <a href="#ozellikler" class="nav__link">Özellikler</a>
+      <a href="#indir" class="nav__link">İndir</a>
+      <a href="#sss" class="nav__link">SSS</a>
+      <a href="#indir" class="btn btn--primary btn--sm nav__cta">Şimdi İndir</a>
+    </nav>
+
+    <button class="nav__toggle" id="navToggle" aria-label="Menüyü aç" aria-expanded="false" aria-controls="navLinks">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+<!-- ================= HERO ================= -->
+<section class="hero" id="anasayfa">
+  <div class="hero__bg" aria-hidden="true">
+    <span class="glow glow--1"></span>
+    <span class="glow glow--2"></span>
+    <span class="glow glow--3"></span>
+    <span class="grid-lines"></span>
+  </div>
+
+  <div class="container hero__inner">
+    <div class="hero__copy">
+      <svg class="wordmark hero__mark reveal" viewBox="0 0 220 78" role="img" aria-label="NOTFLİX">
+        <text class="wordmark__text" font-size="58" letter-spacing="1.5" filter="url(#wmGlow)">
+          <textPath href="#wmArc" startOffset="50%" text-anchor="middle">NOTFLİX</textPath>
+        </text>
+        <text class="wordmark__text wordmark__text--sweep" font-size="58" letter-spacing="1.5" clip-path="url(#wmSweepClip)">
+          <textPath href="#wmArc" startOffset="50%" text-anchor="middle">NOTFLİX</textPath>
+        </text>
+      </svg>
+
+      <span class="badge reveal">
+        <span class="badge__dot"></span>
+        Android TV · Smart TV · Windows · Mobil
+      </span>
+
+      <h1 class="hero__title reveal" style="--d:.06s">
+        Tüm API bizden,<br>
+        <span class="grad">izlemesi sizden.</span>
+      </h1>
+
+      <p class="hero__text reveal" style="--d:.12s">
+        NOTFLİX; film, dizi, anime ve canlı TV'yi tek bir akıllı TV istemcisinde birleştirir.
+        Kumanda dostu arayüz, 4K desteği ve düzenli güncellemelerle ev sinemasını cebine taşır.
+      </p>
+
+      <div class="hero__actions reveal" style="--d:.18s">
+        <a class="btn btn--primary btn--lg" href="https://www.dropbox.com/scl/fi/v4fkjh9hf1rqvv7twls50/notflix.apk?rlkey=hbtfqitdl57zykf9jfu6i27xp&amp;st=noeu08rr&amp;dl=1" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          Android APK İndir
+        </a>
+        <a class="btn btn--ghost btn--lg" href="https://www.dropbox.com/scl/fi/rrrr85qb886vufbgl0yur/NOTFL-X-Setup-1.0.1.exe?rlkey=6li1uq47tijkmq346qwpjynbi&amp;st=x4zkd1f5&amp;dl=1" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/></svg>
+          Windows Kur
+        </a>
+      </div>
+
+      <ul class="hero__meta reveal" style="--d:.24s">
+        <li><strong>0 ₺</strong><span> Tamamen ücretsiz</span></li>
+        <li><strong>4K</strong><span> HDR / Full HD</span></li>
+        <li><strong>7/24</strong><span> Canlı TV</span></li>
+      </ul>
+    </div>
+
+    <!-- Cihaz vitrinleri -->
+    <div class="hero__stage reveal" style="--d:.2s" aria-hidden="true">
+      <div class="device device--tv">
+        <div class="device__screen tv-ui">
+          <div class="tv-ui__bar">
+            <span class="tv-ui__logo">N</span>
+            <span class="tv-ui__search">Canlı TV</span>
+          </div>
+          <div class="tv-ui__body">
+            <div class="tv-ui__video">
+              <span class="tv-ui__play"></span>
+              <span class="tv-ui__channel">CANLI</span>
+            </div>
+            <ul class="tv-ui__list">
+              <li class="is-on"><i></i>Haber</li>
+              <li><i></i>Spor</li>
+              <li><i></i>Sinema</li>
+              <li><i></i>Çocuk</li>
+              <li><i></i>Belgesel</li>
+            </ul>
+          </div>
+        </div>
+        <div class="device__stand"></div>
+      </div>
+
+      <div class="device device--phone">
+        <div class="device__screen phone-ui">
+          <div class="phone-ui__top">
+            <span class="phone-ui__rows"></span>
+            <span class="phone-ui__rows"></span>
+            <span class="phone-ui__rows"></span>
+            <span class="phone-ui__rows"></span>
+          </div>
+          <div class="phone-ui__chips">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="phone-ui__grid">
+            <i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="device device--pc">
+        <div class="device__screen pc-ui">
+          <span class="pc-ui__bar"><i></i><i></i><i></i></span>
+          <div class="pc-ui__main">
+            <div class="pc-ui__side"><i></i><i></i><i></i><i></i></div>
+            <div class="pc-ui__stage"><b></b></div>
+          </div>
+        </div>
+      </div>
+
+      <span class="float-card float-card--1">4K HDR</span>
+      <span class="float-card float-card--2">Ücretsiz</span>
+      <span class="float-card float-card--3">TV Kumandası</span>
+    </div>
+  </div>
+
+  <div class="hero__fade" aria-hidden="true"></div>
+</section>
+
+<!-- ================= ŞERİT / ÖZELLİK SLIDER ================= -->
+<section class="slider-sec" id="ozellikler">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-head__kicker">Özellikler</span>
+      <h2 class="section-head__title">Her ekranda, her cihazda <span class="grad">NOTFLİX</span></h2>
+      <p class="section-head__text">Aynı hesap, aynı arayüz, aynı deneyim. Telefonunda başla, salonundaki TV'de bitir.</p>
+    </div>
+
+    <div class="slider reveal">
+      <button class="slider__nav slider__nav--prev" id="sliderPrev" aria-label="Önceki özellik">
+        <svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>
+      </button>
+
+      <div class="slider__track" id="sliderTrack" tabindex="0" aria-label="Özellik kartları">
+        <article class="fcard fcard--wide">
+          <div class="fcard__icon">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8"/></svg>
+          </div>
+          <h3>Canlı TV</h3>
+          <p>Yüzlerce kanal, kategorilere ayrılmış canlı yayın rehberi ve kumandayla kanal değiştirme. Program akışı ekranda.</p>
+          <span class="fcard__tag">7/24 yayın</span>
+        </article>
+
+        <article class="fcard">
+          <div class="fcard__icon">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>
+          </div>
+          <h3>Film & Dizi</h3>
+          <p>Arama, kategori, favoriler ve detay ekranında fragmanlar. Kaldığın yerden devam et.</p>
+          <span class="fcard__tag">Tek dokunuş</span>
+        </article>
+
+        <article class="fcard">
+          <div class="fcard__icon">
+            <svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg>
+          </div>
+          <h3>Anime</h3>
+          <p>Sezon ve bölüm seçimi, otomatik oynatma ve kumandaya tam uyumlu gezinme.</p>
+          <span class="fcard__tag">Sezon bazlı</span>
+        </article>
+
+        <article class="fcard">
+          <div class="fcard__icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></svg>
+          </div>
+          <h3>Kumanda Desteği</h3>
+          <p>TV kumandasıyla oynat, ses, kanal ve arayüz. Uzaktan kumandası olan her cihazda çalışır.</p>
+          <span class="fcard__tag">TV odaklı</span>
+        </article>
+
+        <article class="fcard">
+          <div class="fcard__icon">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+          </div>
+          <h3>Kolay Güncelleme</h3>
+          <p>Uygulama içinden tek dokunuşla yeni sürümü kontrol et, indir ve kur.</p>
+          <span class="fcard__tag">Otomatik denetim</span>
+        </article>
+
+        <article class="fcard">
+          <div class="fcard__icon">
+            <svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z" opacity=".9"/><path d="m9 12 2 2 4-4"/></svg>
+          </div>
+          <h3>Reklam Yok</h3>
+          <p>Sadece izle. Uygulama tamamen ücretsiz ve üyelik gerektirmez.</p>
+          <span class="fcard__tag">Ücretsiz</span>
+        </article>
+
+        <article class="fcard fcard--wide">
+          <div class="fcard__icon">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8"/></svg>
+          </div>
+          <h3>Windows & Mobil</h3>
+          <p>Aynı hesabın Windows kurulumu ve Android telefon/tablet sürümü. Nerede olursan ol, NOTFLİX yanında.</p>
+          <span class="fcard__tag">Çoklu platform</span>
+        </article>
+      </div>
+
+      <button class="slider__nav slider__nav--next" id="sliderNext" aria-label="Sonraki özellik">
+        <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
+
+      <div class="slider__dots" id="sliderDots" role="tablist" aria-label="Sayfalar"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ÖZELLİK KARTLARI ================= -->
+<section class="features">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-head__kicker">Neden NOTFLİX?</span>
+      <h2 class="section-head__title">Basit, hızlı, <span class="grad">reklamsız</span></h2>
+    </div>
+
+    <div class="fgrid">
+      <div class="fitem reveal"><span class="fitem__n">01</span><h3>Ücretsiz</h3><p>Üyelik, kart, abonelik yok. Uygulamayı indir, hemen başla.</p></div>
+      <div class="fitem reveal"><span class="fitem__n">02</span><h3>Düzenli Güncelleme</h3><p>Yeni özellikler ve düzeltmeler sık sık yayınlanır; uygulama içinden güncelleyebilirsin.</p></div>
+      <div class="fitem reveal"><span class="fitem__n">03</span><h3>Her Cihaz</h3><p>Android TV, Smart TV, Android TV emülatörleri, telefon, tablet ve Windows.</p></div>
+      <div class="fitem reveal"><span class="fitem__n">04</span><h3>Kumanda Odaklı</h3><p>Tüm ekranlar uzaktan kumanda ile gezinilecek şekilde tasarlandı.</p></div>
+      <div class="fitem reveal"><span class="fitem__n">05</span><h3>Canlı TV + On Demand</h3><p>Canlı kanallar ve film/dizi/anime kütüphanesi tek uygulamada.</p></div>
+      <div class="fitem reveal"><span class="fitem__n">06</span><h3>Hızlı ve Akıcı</h3><p>Optimize edilmiş oynatıcı, akıcı geçişler ve düşük cihazlarda bile performans.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= NASIL ÇALIŞIR ================= -->
+<section class="steps">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-head__kicker">3 adım</span>
+      <h2 class="section-head__title">Dakikalar içinde <span class="grad">izlemeye başla</span></h2>
+    </div>
+
+    <div class="steps__row">
+      <div class="step reveal">
+        <span class="step__num">1</span>
+        <h3>İndir</h3>
+        <p>Android için APK dosyasını ya da Windows için kurulum dosyasını indir.</p>
+        <code>notflix.apk</code>
+      </div>
+      <div class="step reveal">
+        <span class="step__num">2</span>
+        <h3>Kur &amp; İzin Ver</h3>
+        <p>İlk açılışta "bilinmeyen kaynaklar" iznini ver; uygulama hazır.</p>
+        <code>Ayarlar → Uygulamalar</code>
+      </div>
+      <div class="step reveal">
+        <span class="step__num">3</span>
+        <h3>İzle</h3>
+        <p>Keşfet, film, dizi, anime ya da canlı TV. Kumandanayla tam kontrol sende.</p>
+        <code>Başla → Keşfet</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= İNDİR ================= -->
+<section class="download" id="indir">
+  <div class="download__bg" aria-hidden="true"></div>
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-head__kicker">İndir</span>
+      <h2 class="section-head__title">Şimdi <span class="grad">indir</span>, ücretsiz başla</h2>
+      <p class="section-head__text">Android cihazlar için APK, masaüstü için Windows kurulum dosyası. Üyelik gerekmez.</p>
+    </div>
+
+    <div class="dl">
+      <article class="dl__card reveal">
+        <div class="dl__icon">
+          <svg viewBox="0 0 24 24"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        </div>
+        <h3>Android / Android TV</h3>
+        <p>TV, Smart TV, emülatör, telefon ve tablet için tek APK dosyası.</p>
+        <a class="btn btn--primary btn--block" href="https://www.dropbox.com/scl/fi/v4fkjh9hf1rqvv7twls50/notflix.apk?rlkey=hbtfqitdl57zykf9jfu6i27xp&amp;st=noeu08rr&amp;dl=1" target="_blank" rel="noopener">
+          APK İndir <small>notflix.apk</small>
+        </a>
+      </article>
+
+      <article class="dl__card reveal">
+        <div class="dl__icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/></svg>
+        </div>
+        <h3>Windows</h3>
+        <p>Windows 10 ve üzeri için masaüstü kurulum dosyası.</p>
+        <a class="btn btn--outline btn--block" href="https://www.dropbox.com/scl/fi/rrrr85qb886vufbgl0yur/NOTFL-X-Setup-1.0.1.exe?rlkey=6li1uq47tijkmq346qwpjynbi&amp;st=x4zkd1f5&amp;dl=1" target="_blank" rel="noopener">
+          Kurulumu İndir <small>NOTFL-X-Setup-1.0.1.exe</small>
+        </a>
+      </article>
+
+      <article class="dl__card dl__card--info reveal">
+        <div class="dl__icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+        </div>
+        <h3>Kurulum İpuçları</h3>
+        <ul class="ticks">
+          <li>Android TV'de "bilinmeyen uygulamalar" iznini açın.</li>
+          <li>Emülatörde 1080p çözünürlük önerilir.</li>
+          <li>Windows'ta SmartScreen uyarısında "Daha fazla bilgi" → "Yine de çalıştır".</li>
+          <li>Güncellemeleri uygulama içindeki <strong>Güncelleme</strong> bölümünden yapabilirsiniz.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SSS ================= -->
+<section class="faq" id="sss">
+  <div class="container container--narrow">
+    <div class="section-head reveal">
+      <span class="section-head__kicker">SSS</span>
+      <h2 class="section-head__title">Sıkça sorulan <span class="grad">sorular</span></h2>
+      <p class="section-head__text">Merak edilenler ve cevapları. Cevabını bulamadığysan destek sayfamıza göz at.</p>
+    </div>
+
+    <div class="acc" id="faq">
+      <details class="acc__item reveal" open>
+        <summary>NOTFLİX ücretsiz mi?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Evet, NOTFLİX tamamen ücretsizdir. Üyelik, abonelik veya kredi kartı bilgisi istemez. Uygulamayı indirdiğiniz anda tüm içeriklere erişebilirsiniz.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Uygulama hangi cihazlarda çalışır?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Android TV, Smart TV, Android TV emülatörleri (ör. BlueStacks, LDPlayer), Android telefonlar, tabletler ve Windows 10/11 üzerinde çalışır. Tek bir APK dosyası tüm Android cihazlarda kullanılır.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>TV kumandamla çalışıyor mu?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Evet, uygulama tamamen kumanda odaklı tasarlandı. Uzaktan kumanda ile menülerde gezinebilir, oynat/durdur, ses, kanal değiştirme ve ayar işlemlerini yapabilirsiniz. Canlı TV'de yukarı/aşağı tuşlarıyla doğrudan kanal geçişi yapılır.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Güncellemeler düzenli geliyor mu?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Evet, uygulama düzenli olarak güncellenir. Yeni özellikler, hata düzeltmeleri ve içerik yenilemeleri sık sık yayınlanır. Uygulama içindeki <strong>Ayarlar → Güncelleme</strong> bölümünden "Güncelleme denetle" diyerek tek dokunuşla kontrol edebilirsiniz.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Nasıl güncelleme yapılır?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Ayarlar ekranının en altındaki <strong>Güncelleme</strong> bölümündeki düğmeye basın. Uygulama sunucudaki son sürümü karşılaştırır; yeni sürüm varsa APK'yı indirir ve kurulumu başlatır. "Bilinmeyen kaynaklar" izni verilmemişse kurulum ekranı otomatik olarak açılır.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Canlı TV kanalları nereden geliyor?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Canlı TV kanalları her gün yenilenen yayın listelerinden otomatik olarak alınır ve uygulama içinde ülke, haber, spor, sinema, çocuk, müzik gibi kategorilere ayrılarak listelenir. Kanal listesi, uygulama açılışında otomatik yenilenir.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Film ve diziler nasıl bulunuyor?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>NOTFLİX, film/dizi/anime kataloğunu güncel bir veri kaynağından çeker. Ana sayfadaki <strong>Keşfet</strong> bölümünde önerileri görebilir, arama yapabilir, kategori ve türe göre filtreleyebilirsiniz. Detay ekranında fragmanlar oynatılır.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Android'da "bilinmeyen kaynak" hatası alıyorum, ne yapmalıyım?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>APK dosyasını açarken uyarı çıkarsa <strong>Ayarlar → Uygulamalar → Özel erişim → Bilinmeyen uygulamaları yükle</strong> yolunu izleyin ve indirdiğiniz dosyayı (Dosyalar uygulaması) seçin. Daha sonra NOTFLİX'i açıp <strong>Güncelleme</strong> bölümünden kurulumu başlatabilirsiniz.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>İnternet hızım yeterli mi?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Uygulama hem düşük hem yüksek bant genişliğinde çalışacak şekilde optimize edilmiştir. Canlı TV için en az 5 Mbps, on-demand izleme için 8 Mbps önerilir. Kablolu bağlantı en stabil sonucu verir.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Kaç cihazda kullanabilirim?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>NOTFLİX üyelik gerektirmediği için cihaz veya ekran sınırı yoktur. Aynı uygulamayı TV'de, telefonda, tablette ve bilgisayarda aynı anda kullanabilirsiniz.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Uygulama verilerimi topluyor mu?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Uygulama, izleme geçmişinizi cihazınızda saklayarak "Kaldığın yerden devam et" özelliğini çalıştırır. Reklam kimliği veya üçüncü taraf takip kodları kullanılmaz.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Android TV dışında Smart TV'lerde de çalışıyor mu?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Evet. Android işletim sistemi çalıştıran tüm Smart TV'lerde (Android TV, Google TV, VIDAA olmayan Android TV'ler) APK doğrudan kurulabilir. Ayrıca TV kutuları ve emülatörlerde de aynı dosya kullanılır.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Windows sürümü aynı hesabı kullanıyor mu?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Evet. Windows sürümü aynı NOTFLİX deneyimini masaüstüne taşır: aynı katalog, aynı canlı TV kanalları ve aynı öneri motoru.</p></div>
+      </details>
+
+      <details class="acc__item reveal">
+        <summary>Uygulama açılmıyor veya takılıyor, ne yapmalıyım?<span class="acc__ico"></span></summary>
+        <div class="acc__body"><p>Önce uygulamayı tamamen kapatıp yeniden açın. Sorun devam ederse Ayarlar → Güncelleme bölümünden en son sürümü kontrol edin; güncelleme genellikle bu tür sorunları çözer. Hâlâ devam ediyorsa uygulama verilerini temizleyip yeniden deneyin.</p></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section class="cta">
+  <div class="container">
+    <div class="cta__box reveal">
+      <h2>Salonun hazır. <span class="grad">Sen sadece otur.</span></h2>
+      <p>NOTFLİX ücretsiz, reklamsız ve düzenli güncellenen akıllı TV istemcin. Bugün indir, bu akşam film saatini başlat.</p>
+      <div class="cta__actions">
+        <a class="btn btn--primary btn--lg" href="https://www.dropbox.com/scl/fi/v4fkjh9hf1rqvv7twls50/notflix.apk?rlkey=hbtfqitdl57zykf9jfu6i27xp&amp;st=noeu08rr&amp;dl=1" target="_blank" rel="noopener">Android APK İndir</a>
+        <a class="btn btn--outline btn--lg" href="https://www.dropbox.com/scl/fi/rrrr85qb886vufbgl0yur/NOTFL-X-Setup-1.0.1.exe?rlkey=6li1uq47tijkmq346qwpjynbi&amp;st=x4zkd1f5&amp;dl=1" target="_blank" rel="noopener">Windows İndir</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <a class="brand" href="#anasayfa" aria-label="NOTFLİX ana sayfa">
+          <svg class="wordmark" viewBox="0 0 220 78" role="img" aria-label="NOTFLİX">
+            <text class="wordmark__text" font-size="58" letter-spacing="1.5" filter="url(#wmGlow)">
+              <textPath href="#wmArc" startOffset="50%" text-anchor="middle">NOTFLİX</textPath>
+            </text>
+            <text class="wordmark__text wordmark__text--sweep" font-size="58" letter-spacing="1.5" clip-path="url(#wmSweepClip)">
+              <textPath href="#wmArc" startOffset="50%" text-anchor="middle">NOTFLİX</textPath>
+            </text>
+          </svg>
+        </a>
+        <p>Tüm API bizden, izlemesi sizden. Android TV, Smart TV, mobil ve Windows için ücretsiz akıllı TV istemcisi.</p>
+        <div class="footer__social">
+          <a href="#indir" aria-label="İndir">
+            <svg viewBox="0 0 24 24"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          </a>
+          <a href="#ozellikler" aria-label="Özellikler">
+            <svg viewBox="0 0 24 24"><path d="m12 3 2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L12 17.3 6.2 20.8l1.6-6.6L2.6 9.8l6.8-.5z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <nav class="footer__col" aria-label="Site">
+        <h4>Site</h4>
+        <a href="#anasayfa">Ana Sayfa</a>
+        <a href="#ozellikler">Özellikler</a>
+        <a href="#indir">İndir</a>
+        <a href="#sss">SSS</a>
+      </nav>
+
+      <nav class="footer__col" aria-label="Platformlar">
+        <h4>Platformlar</h4>
+        <a href="https://www.dropbox.com/scl/fi/v4fkjh9hf1rqvv7twls50/notflix.apk?rlkey=hbtfqitdl57zykf9jfu6i27xp&amp;st=noeu08rr&amp;dl=1" target="_blank" rel="noopener">Android TV</a>
+        <a href="https://www.dropbox.com/scl/fi/v4fkjh9hf1rqvv7twls50/notflix.apk?rlkey=hbtfqitdl57zykf9jfu6i27xp&amp;st=noeu08rr&amp;dl=1" target="_blank" rel="noopener">Smart TV</a>
+        <a href="https://www.dropbox.com/scl/fi/rrrr85qb886vufbgl0yur/NOTFL-X-Setup-1.0.1.exe?rlkey=6li1uq47tijkmq346qwpjynbi&amp;st=x4zkd1f5&amp;dl=1" target="_blank" rel="noopener">Windows</a>
+        <a href="https://www.dropbox.com/scl/fi/v4fkjh9hf1rqvv7twls50/notflix.apk?rlkey=hbtfqitdl57zykf9jfu6i27xp&amp;st=noeu08rr&amp;dl=1" target="_blank" rel="noopener">Mobil &amp; Emülatör</a>
+      </nav>
+
+      <nav class="footer__col" aria-label="Yardım">
+        <h4>Yardım</h4>
+        <a href="#sss">Sıkça sorulan sorular</a>
+        <a href="#indir">Kurulum rehberi</a>
+        <a href="#indir">Güncelleme</a>
+      </nav>
+    </div>
+
+    <div class="footer__bottom">
+      <div class="footer__copy">
+        <span class="cmark" aria-hidden="true">C</span>
+        <p>© <strong>RENDIR MEDİA 2027</strong> — TÜM HAKLARI SAKLIDIR</p>
+      </div>
+      <p class="footer__note">NOTFLİX, bağımsız bir medya izleme arayüzüdür. İçerikler üçüncü taraf kaynaklardan sağlanır ve telif hakları ilgili sahiplerine aittir.</p>
+    </div>
+  </div>
+</footer>
+
+<button class="totop" id="toTop" aria-label="Yukarı çık">
+  <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>
+</button>
+
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>

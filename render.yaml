@@ -1,0 +1,12 @@
+# Render Blueprint — NOTFLİX tanıtım sitesi
+# Render Static Site: repodaki kök klasör yayınlanır.
+services:
+  - type: static
+    name: steamixlive
+    buildCommand: ""
+    staticPublishPath: .
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
