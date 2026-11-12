@@ -20,7 +20,7 @@ robots.txt / sitemap.xml
 1. Render'da **New → Static Site** → repo: `steamixtvlive/steamixtvlive`
 2. **Publish path**: `.` (kök klasör) — `build command` boş bırakılabilir.
    Alternatif olarak repodaki `render.yaml` blueprint'i kullanılabilir.
-3. Site adresi: `https://steamixlive.onrender.com`
+3. Site adresi: `https://notflixlive.onrender.com`
 
 Git'e push yapıldığında Render otomatik yeniden deploy eder.
 

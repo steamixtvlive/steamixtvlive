@@ -2,7 +2,7 @@
 # Render Static Site: repodaki kök klasör yayınlanır.
 services:
   - type: static
-    name: steamixlive
+    name: notflixlive
     buildCommand: ""
     staticPublishPath: .
     autoDeploy: true

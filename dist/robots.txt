@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://steamixlive.onrender.com/sitemap.xml
+Sitemap: https://notflixlive.onrender.com/sitemap.xml
