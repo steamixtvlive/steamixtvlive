@@ -5,6 +5,6 @@
   "description": "NOTFLİX tanıtım sitesi — RENDIR MEDİA 2027",
   "scripts": {
     "build": "node build.js",
-    "start": "npx --yes serve ."
+    "start": "node server.js"
   }
 }
