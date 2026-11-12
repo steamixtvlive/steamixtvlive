@@ -220,12 +220,12 @@ ul{margin:0;padding:0;list-style:none}
 /* cihaz vitrini */
 .hero__visual{display:flex;flex-direction:column;gap:18px}
 .hero__stage{
-  display:grid;grid-template-columns:auto auto;grid-template-rows:auto 1fr;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto 1fr;
   gap:0 18px;align-items:start;justify-content:center;width:100%;height:470px;
 }
-.device{position:relative;border-radius:18px;filter:drop-shadow(0 34px 54px rgba(0,0,0,.65))}
+.device{position:relative;border-radius:18px;filter:drop-shadow(0 34px 54px rgba(0,0,0,.65));min-width:0}
 .device__screen{overflow:hidden;background:var(--elevated);border:1px solid var(--line)}
-.device--tv{grid-area:1/1;width:340px;max-width:100%;z-index:3;animation:float 7s ease-in-out infinite}
+.device--tv{grid-area:1/1;width:100%;max-width:340px;z-index:3;animation:float 7s ease-in-out infinite}
 .device__stand{width:120px;height:10px;margin:0 auto;border-radius:0 0 8px 8px;background:linear-gradient(180deg,#1c1c1c,#0b0b0b);box-shadow:0 14px 30px rgba(0,0,0,.6)}
 .device--remote{grid-area:1/2;align-self:start;width:76px;z-index:2;animation:float 6.4s ease-in-out infinite .5s}
 .remote-svg{width:100%;height:auto;display:block}
@@ -501,10 +501,10 @@ ul{margin:0;padding:0;list-style:none}
 }
 @media (max-width:920px){
   .hero{padding:112px 0 70px}
-  .hero__inner{grid-template-columns:1fr;gap:46px}
+  .hero__inner{grid-template-columns:minmax(0,1fr);gap:46px}
   .hero__visual{width:100%;max-width:560px;margin:0 auto}
   .hero__stage{height:420px}
-  .device--tv{width:320px}
+  .device--tv{max-width:320px}
   .device--remote{width:70px}
   .device--phone{width:100px}
   .slider__nav{display:none}
@@ -542,9 +542,13 @@ ul{margin:0;padding:0;list-style:none}
   .hero__actions .btn{width:100%}
   .cta__actions .btn{width:100%}
   .footer__top{grid-template-columns:1fr}
-  .hero__stage{height:310px}
-  .device--tv{width:100%}
-  .device--remote{width:54px}
-  .device--phone{width:80px}
+  .hero__stage{height:300px;gap:0 12px}
+  .device--tv{max-width:100%}
+  .device--remote{width:52px}
+  .device--phone{width:78px}
   .dev-badge--2{display:none}
+  .tv-ui__body{grid-template-columns:1fr 62px;gap:6px;padding:7px}
+  .tv-ui__list li{font-size:.5rem;padding:4px 5px}
+  .hero__title{font-size:clamp(2rem,9vw,2.6rem)}
+  .section-head__title{font-size:1.55rem}
 }
