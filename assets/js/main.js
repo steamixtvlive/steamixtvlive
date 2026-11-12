@@ -205,15 +205,19 @@
     });
   }
 
-  /* ---------- sağ tık / geliştirici araçları engellendi ---------- */
+  /* ---------- sağ tık / kopyalama / geliştirici araçları engellendi ---------- */
   document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   document.addEventListener('dragstart', function (e) { e.preventDefault(); });
+  document.addEventListener('copy', function (e) { e.preventDefault(); });
+  document.addEventListener('cut', function (e) { e.preventDefault(); });
+  document.addEventListener('selectstart', function (e) { e.preventDefault(); });
   document.addEventListener('keydown', function (e) {
     var k = (e.key || '').toUpperCase();
     var dev = k === 'F12' ||
       (e.ctrlKey && e.shiftKey && (k === 'I' || k === 'J' || k === 'C')) ||
       (e.ctrlKey && k === 'U');
     if (dev) { e.preventDefault(); return false; }
+    if (e.ctrlKey && (k === 'C' || k === 'X' || k === 'A')) { e.preventDefault(); return false; }
   });
 
   /* ---------- yıl ---------- */

@@ -45,10 +45,13 @@ const server = http.createServer((req, res) => {
 
   fs.stat(filePath, (err, stat) => {
     if (!err && stat.isFile()) {
-      const type = MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
+      const ext = path.extname(filePath).toLowerCase();
+      const type = MIME[ext] || 'application/octet-stream';
+      // html/css/js her zaman tazelensin (cache sorunu olmasin)
+      const noCache = ext === '.html' || ext === '.css' || ext === '.js' || ext === '.svg';
       res.writeHead(200, {
         'Content-Type': type,
-        'Cache-Control': pathname === '/index.html' ? 'no-cache' : 'public, max-age=3600'
+        'Cache-Control': noCache ? 'no-cache, must-revalidate' : 'public, max-age=3600'
       });
       fs.createReadStream(filePath).pipe(res);
       return;
