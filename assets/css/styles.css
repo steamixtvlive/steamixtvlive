@@ -135,20 +135,7 @@ ul{margin:0;padding:0;list-style:none}
 .splash__bloom--1{width:70vmax;height:70vmax;top:-18vmax;left:-14vmax;background:radial-gradient(circle,rgba(229,9,20,.16),transparent 62%)}
 .splash__bloom--2{width:60vmax;height:60vmax;bottom:-20vmax;right:-12vmax;background:radial-gradient(circle,rgba(142,6,13,.16),transparent 62%)}
 .splash__center{position:relative;z-index:2;text-align:center;padding:0 20px;animation:splashIn .9s var(--ease) both}
-.splash__badge{
-  width:96px;height:96px;margin:0 auto 26px;border-radius:24px;
-  background:#000;border:1px solid rgba(229,9,20,.35);
-  display:grid;place-items:center;
-  box-shadow:0 0 0 1px rgba(229,9,20,.12),0 18px 50px -18px rgba(229,9,20,.9),inset 0 0 40px -14px rgba(229,9,20,.55);
-  animation:badgePulse 2.6s ease-in-out infinite;
-}
-.splash__badge .brand__mark{
-  width:auto;height:auto;border:0;background:none;box-shadow:none;
-  font-size:3.6rem;color:var(--accent);padding-bottom:6px;
-  text-shadow:0 0 18px rgba(229,9,20,.75),0 0 46px rgba(229,9,20,.45);
-}
 .splash__wordmark{width:min(58vw,360px);margin:0 auto}
-@keyframes badgePulse{0%,100%{transform:scale(1);box-shadow:0 0 0 1px rgba(229,9,20,.12),0 18px 50px -18px rgba(229,9,20,.9),inset 0 0 40px -14px rgba(229,9,20,.55)}50%{transform:scale(1.045);box-shadow:0 0 0 1px rgba(229,9,20,.28),0 22px 60px -16px rgba(229,9,20,1),inset 0 0 52px -12px rgba(229,9,20,.7)}}
 .splash__cats{
   margin-top:26px;color:var(--text-2);font-size:.76rem;font-weight:600;letter-spacing:.42em;text-indent:.42em;
 }
@@ -176,15 +163,6 @@ ul{margin:0;padding:0;list-style:none}
 .nav.is-stuck{background:rgba(8,8,8,.82);backdrop-filter:blur(16px);border-bottom-color:var(--line-soft)}
 .nav__inner{display:flex;align-items:center;justify-content:space-between;gap:18px;height:70px}
 .brand{display:inline-flex;align-items:center;gap:10px}
-.brand--mark .brand__mark{
-  width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
-  background:#000;border:1px solid var(--line);
-  color:var(--accent);font-family:'Bebas Neue','Outfit',sans-serif;font-size:1.7rem;font-weight:400;line-height:1;
-  padding-bottom:3px;
-  box-shadow:0 8px 20px -12px rgba(229,9,20,.95);
-  transition:border-color .25s,box-shadow .25s,transform .25s;
-}
-.brand--mark:hover .brand__mark{border-color:rgba(229,9,20,.55);box-shadow:0 10px 24px -12px rgba(229,9,20,1);transform:translateY(-1px)}
 .brand .wordmark{width:116px}
 .footer .brand .wordmark{width:150px}
 .nav__links{display:flex;align-items:center;gap:6px}
@@ -253,7 +231,14 @@ ul{margin:0;padding:0;list-style:none}
 
 .tv-ui{aspect-ratio:16/10;border-radius:16px}
 .tv-ui__bar{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line-soft);background:rgba(0,0,0,.4)}
-.tv-ui__logo{width:20px;height:20px;border-radius:6px;background:linear-gradient(140deg,var(--accent),var(--accent-deep));display:grid;place-items:center;font-size:.65rem;font-weight:900;color:#fff}
+.tv-ui__logo{
+  width:22px;height:22px;border-radius:6px;flex:none;
+  background:#000;border:1px solid rgba(229,9,20,.45);
+  display:grid;place-items:center;
+  font-family:'Bebas Neue','Outfit',sans-serif;font-size:.95rem;font-weight:400;
+  color:var(--accent);line-height:1;padding-bottom:2px;
+  box-shadow:0 0 10px -2px rgba(229,9,20,.9);
+}
 .tv-ui__search{flex:1;height:16px;border-radius:999px;background:rgba(255,255,255,.07)}
 .tv-ui__body{display:grid;grid-template-columns:1fr 92px;gap:9px;padding:10px}
 .tv-ui__video{position:relative;aspect-ratio:16/10;border-radius:9px;background:linear-gradient(135deg,#232323,#101010);border:1px solid var(--line-soft)}
