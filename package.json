@@ -1,0 +1,10 @@
+{
+  "name": "notflix-site",
+  "version": "1.0.1",
+  "private": true,
+  "description": "NOTFLİX tanıtım sitesi — RENDIR MEDİA 2027",
+  "scripts": {
+    "build": "node build.js",
+    "start": "npx --yes serve ."
+  }
+}
