@@ -242,7 +242,7 @@ ul{margin:0;padding:0;list-style:none}
 .dev-badge--1{bottom:-10px;right:-10px;color:var(--accent-soft);border-color:rgba(229,9,20,.45)}
 
 /* hero rozetleri (asla taşmaz, akış içinde) */
-.hero__tags{display:flex;flex-wrap:wrap;gap:9px;position:relative;z-index:6;justify-content:center}
+.hero__tags{display:flex;flex-wrap:wrap;gap:9px;position:relative;z-index:6;justify-content:flex-start}
 .tag{
   display:inline-flex;align-items:center;gap:7px;
   padding:8px 15px;border-radius:999px;
@@ -506,8 +506,10 @@ ul{margin:0;padding:0;list-style:none}
   /* mobilde marka ve slogan ortalı */
   .hero__copy{text-align:center;margin:0 auto;width:100%}
   .hero__mark{margin:0 auto 22px}
+  .badge{display:flex;width:fit-content;max-width:100%;margin:0 auto}
   .hero__actions{justify-content:center}
   .hero__meta{justify-content:center}
+  .hero__tags{justify-content:center}
   .hero__stage{min-height:400px}
   .device--tv{max-width:320px}
   .device--remote{width:70px}
