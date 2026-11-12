@@ -151,64 +151,95 @@
     </div>
 
     <!-- Cihaz vitrinleri -->
-    <div class="hero__stage reveal" style="--d:.2s" aria-hidden="true">
-      <div class="device device--tv">
-        <div class="device__screen tv-ui">
-          <div class="tv-ui__bar">
-            <svg class="tv-ui__logo" viewBox="0 0 64 64" aria-hidden="true">
-              <rect width="64" height="64" rx="14" fill="#000"/>
-              <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" fill="none" stroke="#E50914" stroke-opacity=".38" stroke-width="1.5"/>
-              <path d="M16 48V16h6.2l19.6 21.6V16h6.2v32h-6.2L22.2 26.4V48z" fill="#E50914"/>
-            </svg>
-            <span class="tv-ui__search">Canlı TV</span>
-          </div>
-          <div class="tv-ui__body">
-            <div class="tv-ui__video">
-              <span class="tv-ui__play"></span>
-              <span class="tv-ui__channel">CANLI</span>
+    <div class="hero__visual reveal" style="--d:.2s" aria-hidden="true">
+      <div class="hero__stage">
+        <div class="device device--tv">
+          <div class="device__screen tv-ui">
+            <div class="tv-ui__bar">
+              <svg class="tv-ui__logo" viewBox="0 0 64 64" aria-hidden="true">
+                <rect width="64" height="64" rx="14" fill="#000"/>
+                <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" fill="none" stroke="#E50914" stroke-opacity=".38" stroke-width="1.5"/>
+                <path d="M16 48V16h6.2l19.6 21.6V16h6.2v32h-6.2L22.2 26.4V48z" fill="#E50914"/>
+              </svg>
+              <span class="tv-ui__search">Canlı TV</span>
             </div>
-            <ul class="tv-ui__list">
-              <li class="is-on"><i></i>Haber</li>
-              <li><i></i>Spor</li>
-              <li><i></i>Sinema</li>
-              <li><i></i>Çocuk</li>
-              <li><i></i>Belgesel</li>
-            </ul>
+            <div class="tv-ui__body">
+              <div class="tv-ui__video">
+                <span class="tv-ui__play"></span>
+                <span class="tv-ui__channel">CANLI</span>
+              </div>
+              <ul class="tv-ui__list">
+                <li class="is-on"><i></i>Haber</li>
+                <li><i></i>Spor</li>
+                <li><i></i>Sinema</li>
+                <li><i></i>Çocuk</li>
+                <li><i></i>Belgesel</li>
+              </ul>
+            </div>
+          </div>
+          <div class="device__stand"></div>
+        </div>
+
+        <div class="device device--phone">
+          <div class="device__screen phone-ui">
+            <div class="phone-ui__top">
+              <span class="phone-ui__rows"></span>
+              <span class="phone-ui__rows"></span>
+              <span class="phone-ui__rows"></span>
+              <span class="phone-ui__rows"></span>
+            </div>
+            <div class="phone-ui__chips">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="phone-ui__grid">
+              <i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
           </div>
         </div>
-        <div class="device__stand"></div>
-      </div>
 
-      <div class="device device--phone">
-        <div class="device__screen phone-ui">
-          <div class="phone-ui__top">
-            <span class="phone-ui__rows"></span>
-            <span class="phone-ui__rows"></span>
-            <span class="phone-ui__rows"></span>
-            <span class="phone-ui__rows"></span>
-          </div>
-          <div class="phone-ui__chips">
-            <span></span><span></span><span></span>
-          </div>
-          <div class="phone-ui__grid">
-            <i></i><i></i><i></i><i></i><i></i><i></i>
+        <div class="device device--remote">
+          <svg class="remote-svg" viewBox="0 0 120 300" aria-hidden="true">
+            <defs>
+              <linearGradient id="rmBody" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#1e1e1e"/>
+                <stop offset="1" stop-color="#0b0b0b"/>
+              </linearGradient>
+            </defs>
+            <rect x="8" y="6" width="104" height="288" rx="26" fill="url(#rmBody)" stroke="#2d2d2d" stroke-width="2"/>
+            <circle cx="60" cy="40" r="15" fill="#E50914" opacity=".16"/>
+            <circle cx="60" cy="40" r="8" fill="#E50914"/>
+            <path d="M56.5 40.5a4.5 4.5 0 1 1 7 0" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/>
+            <rect x="34" y="70" width="52" height="52" rx="16" fill="#171717" stroke="#333"/>
+            <path d="M60 80v32M44 96h32" stroke="#d1d5db" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="60" cy="96" r="7" fill="#E50914"/>
+            <rect x="28" y="142" width="64" height="13" rx="6.5" fill="#1f1f1f"/>
+            <rect x="28" y="163" width="64" height="13" rx="6.5" fill="#1f1f1f"/>
+            <rect x="28" y="184" width="64" height="13" rx="6.5" fill="#1f1f1f"/>
+            <circle cx="60" cy="224" r="18" fill="#1f1f1f" stroke="#333"/>
+            <circle cx="60" cy="224" r="7" fill="#E50914" opacity=".9"/>
+            <g fill="#1f1f1f">
+              <circle cx="34" cy="262" r="9"/><circle cx="60" cy="262" r="9"/><circle cx="86" cy="262" r="9"/>
+              <circle cx="34" cy="282" r="9"/><circle cx="60" cy="282" r="9"/><circle cx="86" cy="282" r="9"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="device device--pc">
+          <div class="device__screen pc-ui">
+            <span class="pc-ui__bar"><i></i><i></i><i></i></span>
+            <div class="pc-ui__main">
+              <div class="pc-ui__side"><i></i><i></i><i></i><i></i></div>
+              <div class="pc-ui__stage"><b></b></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="device device--pc">
-        <div class="device__screen pc-ui">
-          <span class="pc-ui__bar"><i></i><i></i><i></i></span>
-          <div class="pc-ui__main">
-            <div class="pc-ui__side"><i></i><i></i><i></i><i></i></div>
-            <div class="pc-ui__stage"><b></b></div>
-          </div>
-        </div>
+      <div class="hero__tags">
+        <span class="tag tag--red">4K HDR</span>
+        <span class="tag tag--green">Ücretsiz</span>
+        <span class="tag">TV Kumandası</span>
       </div>
-
-      <span class="float-card float-card--1">4K HDR</span>
-      <span class="float-card float-card--2">Ücretsiz</span>
-      <span class="float-card float-card--3">TV Kumandası</span>
     </div>
   </div>
 

@@ -199,7 +199,7 @@ ul{margin:0;padding:0;list-style:none}
   mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 20%,transparent 78%);
   -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 20%,transparent 78%);
 }
-.hero__inner{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.hero__inner{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
 .hero__copy{max-width:620px}
 .hero__mark{margin-bottom:22px}
 .badge{
@@ -218,14 +218,34 @@ ul{margin:0;padding:0;list-style:none}
 .hero__fade{position:absolute;left:0;right:0;bottom:0;height:140px;background:linear-gradient(180deg,transparent,var(--bg))}
 
 /* cihaz vitrini */
-.hero__stage{position:relative;min-height:480px}
-.device{position:absolute;border-radius:18px;filter:drop-shadow(0 40px 60px rgba(0,0,0,.7))}
+.hero__visual{display:flex;flex-direction:column;gap:18px}
+.hero__stage{
+  display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;
+  gap:14px 18px;align-items:start;justify-content:start;width:100%;
+}
+.device{position:relative;border-radius:18px;filter:drop-shadow(0 34px 54px rgba(0,0,0,.65))}
 .device__screen{overflow:hidden;background:var(--elevated);border:1px solid var(--line)}
-.device--tv{width:100%;max-width:450px;top:10px;left:0;z-index:3;animation:float 7s ease-in-out infinite}
+.device--tv{grid-area:1/1;width:340px;max-width:100%;animation:float 7s ease-in-out infinite}
 .device__stand{width:120px;height:10px;margin:0 auto;border-radius:0 0 8px 8px;background:linear-gradient(180deg,#1c1c1c,#0b0b0b);box-shadow:0 14px 30px rgba(0,0,0,.6)}
-.device--phone{width:158px;right:0;bottom:24px;z-index:2;animation:float 8.5s ease-in-out infinite .8s}
-.device--pc{width:250px;left:0;bottom:6px;z-index:1;animation:float 9.5s ease-in-out infinite 1.6s}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+.device--phone{grid-area:1/2;justify-self:end;width:110px;animation:float 8.5s ease-in-out infinite .8s}
+.device--remote{grid-area:2/1;justify-self:start;width:76px;animation:float 6.4s ease-in-out infinite .5s}
+.remote-svg{width:100%;height:auto;display:block}
+.device--pc{grid-area:2/2;justify-self:end;width:180px;animation:float 9.5s ease-in-out infinite 1.6s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-13px)}}
+
+/* hero rozetleri (asla taşmaz, akış içinde) */
+.hero__tags{display:flex;flex-wrap:wrap;gap:9px;position:relative;z-index:6}
+.tag{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 15px;border-radius:999px;
+  background:rgba(20,20,20,.85);border:1px solid var(--line);
+  font-size:.76rem;font-weight:700;color:var(--text-2);backdrop-filter:blur(10px);
+}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--text-3)}
+.tag--red{color:var(--accent-soft);border-color:rgba(229,9,20,.42)}
+.tag--red::before{background:var(--accent);box-shadow:0 0 8px rgba(229,9,20,.9)}
+.tag--green{color:var(--success);border-color:rgba(16,185,129,.35)}
+.tag--green::before{background:var(--success)}
 
 .tv-ui{aspect-ratio:16/10;border-radius:16px}
 .tv-ui__bar{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line-soft);background:rgba(0,0,0,.4)}
@@ -264,15 +284,6 @@ ul{margin:0;padding:0;list-style:none}
 .pc-ui__side i:first-child{background:rgba(229,9,20,.6)}
 .pc-ui__stage{position:relative;border-radius:8px;background:linear-gradient(140deg,#202020,#0d0d0d)}
 .pc-ui__stage b{position:absolute;inset:0;margin:auto;width:26px;height:26px;border-radius:50%;background:rgba(229,9,20,.9);box-shadow:0 0 22px rgba(229,9,20,.6)}
-
-.float-card{
-  position:absolute;z-index:5;padding:8px 14px;border-radius:12px;
-  background:rgba(20,20,20,.88);border:1px solid var(--line);backdrop-filter:blur(10px);
-  font-size:.76rem;font-weight:700;letter-spacing:.02em;box-shadow:0 16px 34px rgba(0,0,0,.55);
-}
-.float-card--1{top:6px;right:10px;color:var(--accent-soft);border-color:rgba(229,9,20,.4)}
-.float-card--2{bottom:120px;left:10px;color:var(--success)}
-.float-card--3{top:44%;right:10px}
 
 /* ---------- bölüm başlıkları ---------- */
 .section-head{text-align:center;max-width:720px;margin:0 auto 48px}
@@ -480,10 +491,11 @@ ul{margin:0;padding:0;list-style:none}
 @media (max-width:920px){
   .hero{padding:112px 0 70px}
   .hero__inner{grid-template-columns:1fr;gap:46px}
-  .hero__stage{min-height:430px;width:100%;max-width:560px;margin:0 auto}
-  .device--tv{max-width:100%;left:0}
-  .device--phone{width:140px;right:0}
-  .device--pc{width:220px}
+  .hero__visual{width:100%;max-width:560px;margin:0 auto}
+  .device--tv{width:320px}
+  .device--remote{width:70px}
+  .device--pc{width:160px}
+  .device--phone{width:100px}
   .slider__nav{display:none}
 }
 @media (max-width:760px){
@@ -507,19 +519,18 @@ ul{margin:0;padding:0;list-style:none}
   .hero__meta{gap:20px}
   .fcard,.fcard--wide{flex-basis:82vw}
   /* mobilde kutu animasyonu tam görünsün */
-  .hero__stage{min-height:380px}
-  .float-card{padding:6px 12px;font-size:.7rem;border-radius:10px}
-  .float-card--1{top:2px;right:6px}
-  .float-card--2{bottom:104px;left:6px}
-  .float-card--3{top:40%;right:6px}
+  .hero__tags{gap:7px}
+  .tag{font-size:.7rem;padding:7px 12px}
+  .device--remote{width:64px}
+  .device--phone{width:100px}
+  .device--pc{width:170px}
 }
 @media (max-width:480px){
   .container{padding:0 16px}
   .hero__actions .btn{width:100%}
   .cta__actions .btn{width:100%}
   .footer__top{grid-template-columns:1fr}
-  .hero__stage{min-height:330px}
-  .device--phone{width:112px;bottom:8px}
-  .device--pc{width:190px;bottom:0}
-  .float-card--3{display:none}
+  .device--remote{width:56px}
+  .device--phone{width:88px}
+  .device--pc{width:148px}
 }
