@@ -26,10 +26,10 @@ Git'e push yapıldığında Render otomatik yeniden deploy eder.
 
 ## İndirme bağlantıları
 
+- Site adresi: `https://notflixlive.onrender.com`
+- İndirme bölümü: `https://notflixlive.onrender.com/#indir`
 - Android / Android TV (APK):
   `https://www.dropbox.com/scl/fi/v4fkjh9hf1rqvv7twls50/notflix.apk?rlkey=hbtfqitdl57zykf9jfu6i27xp&st=noeu08rr&dl=1`
-- Windows:
-  `https://www.dropbox.com/scl/fi/rrrr85qb886vufbgl0yur/NOTFL-X-Setup-1.0.1.exe?rlkey=6li1uq47tijkmq346qwpjynbi&st=x4zkd1f5&dl=1`
 
 ## Marka
 
