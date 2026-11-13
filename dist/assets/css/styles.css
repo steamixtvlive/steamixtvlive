@@ -402,6 +402,11 @@ ul{margin:0;padding:0;list-style:none}
 .dl__card p{color:var(--text-3);font-size:.93rem;margin-bottom:22px}
 .dl__card .btn{margin-top:auto}
 .dl__card--info{background:rgba(20,20,20,.55)}
+.dl__card--warn{background:linear-gradient(180deg,rgba(142,6,13,.22),rgba(20,20,20,.55));border-color:rgba(229,9,20,.32)}
+.dl__card--warn .dl__icon{background:rgba(229,9,20,.18);border-color:rgba(229,9,20,.45)}
+.dl__card--warn .dl__icon svg{stroke:var(--accent-soft)}
+.dl__card--warn h3{color:var(--accent-soft)}
+.dl__card--warn p{color:var(--text-2);font-size:.9rem;margin-bottom:10px}
 .ticks{display:flex;flex-direction:column;gap:11px;margin-top:2px}
 .ticks li{position:relative;padding-left:26px;color:var(--text-3);font-size:.9rem}
 .ticks li::before{
