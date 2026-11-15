@@ -146,6 +146,42 @@
     if (e.ctrlKey && (k === 'C' || k === 'X' || k === 'A')) { e.preventDefault(); return false; }
   });
 
+  /* ---------- TV afiş slaytı ---------- */
+  var appSlides = $$('.app__slide');
+  if (appSlides.length) {
+    var slideTitle = $('[data-slide-title]');
+    var slideKicker = $('[data-slide-kicker]');
+    var slideMeta = $('[data-slide-meta]');
+    var slideLine = $('[data-slide-line]');
+    var slideIndex = $('[data-slide-index]');
+    var slideAt = 0;
+    var showSlide = function (idx) {
+      slideAt = (idx + appSlides.length) % appSlides.length;
+      appSlides.forEach(function (el, i) { el.classList.toggle('is-on', i === slideAt); });
+      var el = appSlides[slideAt];
+      if (slideTitle) slideTitle.textContent = el.getAttribute('data-title') || '';
+      if (slideKicker) slideKicker.textContent = el.getAttribute('data-kicker') || '';
+      if (slideLine) slideLine.textContent = el.getAttribute('data-line') || '';
+      if (slideIndex) slideIndex.textContent = (slideAt + 1 < 10 ? '0' : '') + (slideAt + 1);
+      if (slideMeta) {
+        slideMeta.innerHTML = '';
+        (el.getAttribute('data-meta') || '').split('|').forEach(function (part) {
+          var s = document.createElement('span');
+          s.textContent = part;
+          slideMeta.appendChild(s);
+        });
+      }
+    };
+    showSlide(0);
+    var slideTimer = setInterval(function () { showSlide(slideAt + 1); }, 3000);
+    document.addEventListener('visibilitychange', function () {
+      clearInterval(slideTimer);
+      if (!document.hidden) {
+        slideTimer = setInterval(function () { showSlide(slideAt + 1); }, 3000);
+      }
+    });
+  }
+
   /* ---------- canlı saat (Türkiye) ---------- */
   var liveClock = $('#liveClock');
   if (liveClock) {
