@@ -341,7 +341,7 @@ ul{margin:0;padding:0;list-style:none}
              linear-gradient(180deg,rgba(5,5,5,.22),transparent 28%,rgba(5,5,5,.52));
 }
 .app__count{
-  position:absolute;right:4.4%;bottom:5%;z-index:3;display:flex;align-items:baseline;gap:2px;
+  position:absolute;right:4.4%;top:6%;z-index:3;display:flex;align-items:baseline;gap:2px;
   font-size:.46vw;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.6);
 }
 .app__count b{font-size:.6vw;color:#fff}
@@ -843,7 +843,7 @@ body.is-ready .phone{animation:phoneIn 1s 1.05s var(--ease) forwards,phoneFloat 
   .app__meta span{padding:0 3px}
   .app__play,.app__info{font-size:6px;padding:2px 5px;border-radius:2px}
   .app__row-title{font-size:6px}
-  .subtitle{width:58%;left:31%;bottom:7%;gap:1px}
+  .subtitle{width:94%;left:50%;bottom:4%;gap:1px}
   .subtitle__text{font-size:9px;padding:2px 6px;line-height:1.25}
   .subtitle__tag{font-size:6px;padding:1px 5px;letter-spacing:.06em}
   .feat-strip__grid{grid-template-columns:1fr}
