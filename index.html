@@ -770,11 +770,22 @@ document.addEventListener('selectstart', function(e){ e.preventDefault(); });
     var email = form.email.value.trim();
     var msg = form.message.value.trim();
     var to = atob(enc);
-    var subject = encodeURIComponent("NOTFLİX öneri/görüş" + (name ? " - " + name : ""));
-    var body = encodeURIComponent((email ? "Gönderen: " + email + "\n\n" : "") + msg);
-    window.location.href = "mailto:" + to + "?subject=" + subject + "&body=" + body;
     var st = document.getElementById('contactStatus');
-    if(st) st.textContent = "E-posta istemciniz açıldı. Mesajınızı göndermeyi unutmayın.";
+    if(st) st.textContent = "Gönderiliyor…";
+    fetch("https://formsubmit.co/ajax/" + to, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ name: name, email: email, message: msg, _subject: "NOTFLİX öneri/görüş" })
+    }).then(function(r){ return r.json(); }).then(function(){
+      if(st) st.textContent = "Mesajınız gönderildi. Teşekkürler!";
+      form.reset();
+    }).catch(function(){
+      // Fallback: sessiz mailto
+      var subject = encodeURIComponent("NOTFLİX öneri/görüş" + (name ? " - " + name : ""));
+      var body = encodeURIComponent((email ? "Gönderen: " + email + "\n\n" : "") + msg);
+      window.location.href = "mailto:" + to + "?subject=" + subject + "&body=" + body;
+      if(st) st.textContent = "";
+    });
   });
 })();
 </script>
