@@ -72,6 +72,9 @@ function streamApk(res) {
   get(APK_SOURCE, 0);
 }
 
+process.on('unhandledRejection', function(e){ console.error('UNHANDLED', e); });
+process.on('uncaughtException', function(e){ console.error('UNCAUGHT', e); });
+
 const server = http.createServer((req, res) => {
   let pathname;
   try { pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
@@ -82,14 +85,14 @@ const server = http.createServer((req, res) => {
     let body = '';
     req.on('data', (c) => { body += c; if (body.length > 10000) req.destroy(); });
     req.on('end', async () => {
-      let data = {};
-      try { data = JSON.parse(body || '{}'); } catch {}
-      const name = String(data.name || '').trim();
-      const email = String(data.email || '').trim();
-      const message = String(data.message || '').trim();
-      if (!name || !email || !message) { sendJson(res, 400, { ok: false, error: 'Eksik alan' }); return; }
-      if (!SMTP_PASS) { sendJson(res, 500, { ok: false, error: 'Mail yapılandırılmamış' }); return; }
       try {
+        let data = {};
+        try { data = JSON.parse(body || '{}'); } catch {}
+        const name = String(data.name || '').trim();
+        const email = String(data.email || '').trim();
+        const message = String(data.message || '').trim();
+        if (!name || !email || !message) { sendJson(res, 400, { ok: false, error: 'Eksik alan' }); return; }
+        if (!SMTP_PASS) { sendJson(res, 500, { ok: false, error: 'Mail yapılandırılmamış' }); return; }
         await transporter.sendMail({
           from: SMTP_USER,
           to: MAIL_TO,
@@ -99,9 +102,11 @@ const server = http.createServer((req, res) => {
         });
         sendJson(res, 200, { ok: true });
       } catch (e) {
+        console.error('MAILERR', e && e.message);
         sendJson(res, 500, { ok: false, error: 'Gönderilemedi' });
       }
     });
+    req.on('error', function(){ sendJson(res, 500, { ok: false, error: 'Gönderilemedi' }); });
     return;
   }
 
