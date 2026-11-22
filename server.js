@@ -92,7 +92,15 @@ const server = http.createServer((req, res) => {
         const email = String(data.email || '').trim();
         const message = String(data.message || '').trim();
         if (!name || !email || !message) { sendJson(res, 400, { ok: false, error: 'Eksik alan' }); return; }
-          sendJson(res, 200, { ok: true }); // TEST: mail gonderimi devre disi
+          if (!SMTP_PASS) { sendJson(res, 500, { ok: false, error: 'Mail yapilandirilmamis' }); return; }
+        await transporter.sendMail({
+          from: SMTP_USER,
+          to: MAIL_TO,
+          replyTo: email,
+          subject: 'NOTFLIX öneri/görüş' + (name ? ' - ' + name : ''),
+          text: 'Gönderen: ' + name + ' <' + email + '>\n\n' + message
+        });
+        sendJson(res, 200, { ok: true });
       } catch (e) {
         console.error('MAILERR', e && e.message);
         sendJson(res, 500, { ok: false, error: 'Gönderilemedi' });
