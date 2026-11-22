@@ -761,7 +761,6 @@ document.addEventListener('selectstart', function(e){ e.preventDefault(); });
 </script>
 <script>
 (function(){
-  var enc = "c3RlYW1peGdhbWVAeWFuZGV4LmNvbQ==";
   var form = document.getElementById('contactForm');
   if(!form) return;
   form.addEventListener('submit', function(e){
@@ -769,22 +768,21 @@ document.addEventListener('selectstart', function(e){ e.preventDefault(); });
     var name = form.name.value.trim();
     var email = form.email.value.trim();
     var msg = form.message.value.trim();
-    var to = atob(enc);
     var st = document.getElementById('contactStatus');
     if(st) st.textContent = "Gönderiliyor…";
-    fetch("https://formsubmit.co/ajax/" + to, {
+    fetch("/iletisim", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ name: name, email: email, message: msg, _subject: "NOTFLİX öneri/görüş" })
-    }).then(function(r){ return r.json(); }).then(function(){
-      if(st) st.textContent = "Mesajınız gönderildi. Teşekkürler!";
-      form.reset();
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name, email: email, message: msg })
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if(d && d.ok){
+        if(st) st.textContent = "Mesajınız gönderildi. Teşekkürler!";
+        form.reset();
+      } else {
+        if(st) st.textContent = "Gönderilemedi. Tekrar deneyin.";
+      }
     }).catch(function(){
-      // Fallback: sessiz mailto
-      var subject = encodeURIComponent("NOTFLİX öneri/görüş" + (name ? " - " + name : ""));
-      var body = encodeURIComponent((email ? "Gönderen: " + email + "\n\n" : "") + msg);
-      window.location.href = "mailto:" + to + "?subject=" + subject + "&body=" + body;
-      if(st) st.textContent = "";
+      if(st) st.textContent = "Gönderilemedi. Tekrar deneyin.";
     });
   });
 })();

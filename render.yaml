@@ -1,7 +1,7 @@
-# Render Blueprint — NOTFLİX tanıtım sitesi
 services:
-  - type: static
-    name: notflixlive
-    buildCommand: ""
-    staticPublishPath: .
+  - type: web
+    name: notflixplay
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
     autoDeploy: true
