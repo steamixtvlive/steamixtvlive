@@ -1,6 +1,6 @@
 // NOTFLİX tanıtım sitesi — sıfır bağımlılıklı statik sunucu.
-// Render Web Service olarak çalışırsa `npm start` ile devreye girer.
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
@@ -28,7 +28,43 @@ const MIME = {
   '.webmanifest': 'application/manifest+json'
 };
 
-const server = http.createServer(async (req, res) => {
+function streamApk(res) {
+  function get(url, redirects) {
+    const client = url.startsWith('https:') ? https : http;
+    const req = client.get(url, (upstream) => {
+      if (upstream.statusCode >= 300 && upstream.statusCode < 400 && upstream.headers.location) {
+        if (redirects > 6) {
+          res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('APK alınamadı');
+          upstream.resume();
+          return;
+        }
+        const next = new URL(upstream.headers.location, url).href;
+        upstream.resume();
+        get(next, redirects + 1);
+        return;
+      }
+      if (upstream.statusCode !== 200) {
+        res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('APK alınamadı');
+        upstream.resume();
+        return;
+      }
+      const headers = {
+        'Content-Type': 'application/vnd.android.package-archive',
+        'Content-Disposition': 'attachment; filename="notflix.apk"',
+        'Cache-Control': 'no-cache, must-revalidate'
+      };
+      if (upstream.headers['content-length']) headers['Content-Length'] = upstream.headers['content-length'];
+      res.writeHead(200, headers);
+      upstream.pipe(res);
+    });
+    req.on('error', () => {
+      res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('APK alınamadı');
+    });
+  }
+  get(APK_SOURCE, 0);
+}
+
+const server = http.createServer((req, res) => {
   let pathname;
   try {
     pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
@@ -37,32 +73,8 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // APK indirme: kaynak adres gizli tutulur, sunucu üzerinden aktarılır.
   if (pathname === '/indir/notflix.apk' || pathname === '/download/notflix.apk') {
-    try {
-      const upstream = await fetch(APK_SOURCE, { redirect: 'follow' });
-      if (!upstream.ok) {
-        res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('APK alınamadı');
-        return;
-      }
-      const headers = {
-        'Content-Type': 'application/vnd.android.package-archive',
-        'Content-Disposition': 'attachment; filename="notflix.apk"',
-        'Cache-Control': 'no-cache, must-revalidate'
-      };
-      const len = upstream.headers.get('content-length');
-      if (len) headers['Content-Length'] = len;
-      res.writeHead(200, headers);
-      // Stream body
-      if (upstream.body && typeof upstream.body.pipe === 'function') {
-        upstream.body.pipe(res);
-      } else {
-        const buf = Buffer.from(await upstream.arrayBuffer());
-        res.end(buf);
-      }
-    } catch (e) {
-      res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('APK alınamadı');
-    }
+    streamApk(res);
     return;
   }
 
