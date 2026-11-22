@@ -7,6 +7,8 @@ const path = require('path');
 const PORT = Number(process.env.PORT) || 3000;
 const ROOT = __dirname;
 
+const APK_SOURCE = 'https://github.com/steamixtvlive/Steamix-TV/releases/latest/download/notflix.apk';
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -26,12 +28,41 @@ const MIME = {
   '.webmanifest': 'application/manifest+json'
 };
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   let pathname;
   try {
     pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
   } catch {
     res.writeHead(400).end('Bad Request');
+    return;
+  }
+
+  // APK indirme: kaynak adres gizli tutulur, sunucu üzerinden aktarılır.
+  if (pathname === '/indir/notflix.apk' || pathname === '/download/notflix.apk') {
+    try {
+      const upstream = await fetch(APK_SOURCE, { redirect: 'follow' });
+      if (!upstream.ok) {
+        res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('APK alınamadı');
+        return;
+      }
+      const headers = {
+        'Content-Type': 'application/vnd.android.package-archive',
+        'Content-Disposition': 'attachment; filename="notflix.apk"',
+        'Cache-Control': 'no-cache, must-revalidate'
+      };
+      const len = upstream.headers.get('content-length');
+      if (len) headers['Content-Length'] = len;
+      res.writeHead(200, headers);
+      // Stream body
+      if (upstream.body && typeof upstream.body.pipe === 'function') {
+        upstream.body.pipe(res);
+      } else {
+        const buf = Buffer.from(await upstream.arrayBuffer());
+        res.end(buf);
+      }
+    } catch (e) {
+      res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('APK alınamadı');
+    }
     return;
   }
 
@@ -47,7 +78,6 @@ const server = http.createServer((req, res) => {
     if (!err && stat.isFile()) {
       const ext = path.extname(filePath).toLowerCase();
       const type = MIME[ext] || 'application/octet-stream';
-      // html/css/js her zaman tazelensin (cache sorunu olmasin)
       const noCache = ext === '.html' || ext === '.css' || ext === '.js' || ext === '.svg';
       res.writeHead(200, {
         'Content-Type': type,
@@ -56,7 +86,6 @@ const server = http.createServer((req, res) => {
       fs.createReadStream(filePath).pipe(res);
       return;
     }
-    // SPA fallback
     const index = path.join(ROOT, 'index.html');
     fs.readFile(index, (e2, buf) => {
       if (e2) {
