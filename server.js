@@ -92,8 +92,7 @@ const server = http.createServer((req, res) => {
         const email = String(data.email || '').trim();
         const message = String(data.message || '').trim();
         if (!name || !email || !message) { sendJson(res, 400, { ok: false, error: 'Eksik alan' }); return; }
-        if (!SMTP_PASS) { sendJson(res, 500, { ok: false, error: 'Mail yapılandırılmamış' }); return; }
-        sendJson(res, 200, { ok: true }); // TEST: mail gonderimi devre disi
+          sendJson(res, 200, { ok: true }); // TEST: mail gonderimi devre disi
       } catch (e) {
         console.error('MAILERR', e && e.message);
         sendJson(res, 500, { ok: false, error: 'Gönderilemedi' });
