@@ -93,14 +93,7 @@ const server = http.createServer((req, res) => {
         const message = String(data.message || '').trim();
         if (!name || !email || !message) { sendJson(res, 400, { ok: false, error: 'Eksik alan' }); return; }
         if (!SMTP_PASS) { sendJson(res, 500, { ok: false, error: 'Mail yapılandırılmamış' }); return; }
-        await transporter.sendMail({
-          from: SMTP_USER,
-          to: MAIL_TO,
-          replyTo: email,
-          subject: 'NOTFLİX öneri/görüş' + (name ? ' - ' + name : ''),
-          text: 'Gönderen: ' + name + ' <' + email + '>\n\n' + message
-        });
-        sendJson(res, 200, { ok: true });
+        sendJson(res, 200, { ok: true }); // TEST: mail gonderimi devre disi
       } catch (e) {
         console.error('MAILERR', e && e.message);
         sendJson(res, 500, { ok: false, error: 'Gönderilemedi' });
