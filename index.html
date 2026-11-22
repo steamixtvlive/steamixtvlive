@@ -769,24 +769,17 @@ document.addEventListener('selectstart', function(e){ e.preventDefault(); });
     var email = form.email.value.trim();
     var msg = form.message.value.trim();
     var st = document.getElementById('contactStatus');
-    if(st) st.textContent = "Gönderiliyor, lütfen bekleyin…";
-    var controller = new AbortController();
-    var timer = setTimeout(function(){ controller.abort(); }, 60000);
-    fetch("/iletisim", {
+    if(st) st.textContent = "Gönderiliyor…";
+    var enc = "c3RlYW1peGdhbWVAeWFuZGV4LmNvbQ==";
+    var to = atob(enc);
+    fetch("https://formsubmit.co/ajax/" + to, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name, email: email, message: msg }),
-      signal: controller.signal
-    }).then(function(r){ return r.json(); }).then(function(d){
-      clearTimeout(timer);
-      if(d && d.ok){
-        if(st) st.textContent = "Mesajınız gönderildi. Teşekkürler!";
-        form.reset();
-      } else {
-        if(st) st.textContent = "Gönderilemedi. Tekrar deneyin.";
-      }
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ name: name, email: email, message: msg, _subject: "NOTFLİX öneri/görüş" })
+    }).then(function(r){ return r.json(); }).then(function(){
+      if(st) st.textContent = "Mesajınız gönderildi. Teşekkürler!";
+      form.reset();
     }).catch(function(){
-      clearTimeout(timer);
       if(st) st.textContent = "Gönderilemedi. Tekrar deneyin.";
     });
   });
