@@ -93,7 +93,7 @@
       <div class="announce__ticker" aria-label="Son güncelleme notları">
         <div class="announce__track">
           <div class="announce__group">
-            <span class="announce__note">v1.0 yayında · Altyazı ve işitme engelliler desteği</span>
+            <span class="announce__note">v1.2 yayında · Altyazı ve işitme engelliler desteği</span>
             <span class="announce__dotsep" aria-hidden="true"></span>
             <span class="announce__note">Türkçe altyazı otomatik seçilir</span>
             <span class="announce__dotsep" aria-hidden="true"></span>
@@ -105,7 +105,7 @@
             <span class="announce__dotsep" aria-hidden="true"></span>
           </div>
           <div class="announce__group" aria-hidden="true">
-            <span class="announce__note">v1.0 yayında · Altyazı ve işitme engelliler desteği</span>
+            <span class="announce__note">v1.2 yayında · Altyazı ve işitme engelliler desteği</span>
             <span class="announce__dotsep" aria-hidden="true"></span>
             <span class="announce__note">Türkçe altyazı otomatik seçilir</span>
             <span class="announce__dotsep" aria-hidden="true"></span>
@@ -416,7 +416,7 @@
   <div class="spotlight__bg" aria-hidden="true"></div>
   <div class="container spotlight__grid">
     <div class="spotlight__copy reveal">
-      <span class="section-head__kicker">Yeni · v1.0</span>
+      <span class="section-head__kicker">Yeni · v1.2</span>
       <h2 class="spotlight__title">Altyazı artık gerçekten <span class="grad">çalışıyor.</span></h2>
       <p class="spotlight__text">
         İndirilen altyazı dosyaları uygulama içinde çözülür ve videonun üzerine çizilir.
@@ -625,7 +625,7 @@
 
       <details class="acc__item reveal">
         <summary>Altyazı ve Türkçe dublaj desteği var mı?<span class="acc__ico"></span></summary>
-        <div class="acc__body"><p>Evet. v1.0 ile altyazı desteği eklendi; Türkçe altyazı otomatik seçilir ve menüden değiştirilebilir. Detay sayfasında <strong>Türkçe Dublaj</strong> ve <strong>Altyazılı</strong> rozetleri görünür. Altyazı metni videonun üzerinde, kontrol panelinin üstünde gösterilir.</p></div>
+        <div class="acc__body"><p>Evet. v1.2 ile altyazı desteği eklendi; Türkçe altyazı otomatik seçilir ve menüden değiştirilebilir. Detay sayfasında <strong>Türkçe Dublaj</strong> ve <strong>Altyazılı</strong> rozetleri görünür. Altyazı metni videonun üzerinde, kontrol panelinin üstünde gösterilir.</p></div>
       </details>
 
       <details class="acc__item reveal">
@@ -640,7 +640,7 @@
 
       <details class="acc__item reveal">
         <summary>Güncellemeler ne sıklıkla gelir?<span class="acc__ico"></span></summary>
-        <div class="acc__body"><p>Bu sürümden sonra sık güncelleme gelmeyecek. v1.0 kararlı sürüm olarak uzun süre kullanılabilir. Yeni bir sürüm yayınlandığında uygulama içindeki <strong>Ayarlar → Güncelleme</strong> bölümünden tek dokunuşla kontrol edebilirsin.</p></div>
+        <div class="acc__body"><p>Bu sürümden sonra sık güncelleme gelmeyecek. v1.2 kararlı sürüm olarak uzun süre kullanılabilir. Yeni bir sürüm yayınlandığında uygulama içindeki <strong>Ayarlar → Güncelleme</strong> bölümünden tek dokunuşla kontrol edebilirsin.</p></div>
       </details>
 
       <details class="acc__item reveal">
@@ -671,6 +671,25 @@
 </section>
 
 </main>
+
+<!-- ================= İLETİŞİM ================= -->
+<section class="section" id="iletisim" style="padding:48px 20px;max-width:720px;margin:0 auto;">
+  <div class="section-head" style="text-align:center;margin-bottom:24px;">
+    <span class="section-head__kicker">İletişim</span>
+    <h2 class="section-head__title">Öneri ve görüşlerinizi bizimle paylaşın</h2>
+    <p class="section-head__desc">Görüş, öneri veya hata bildirimlerinizi bize iletin. Mesajlarınız doğrudan ekibimize ulaşır.</p>
+  </div>
+  <details class="contact-box" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px 20px;">
+    <summary style="cursor:pointer;font-weight:600;font-size:16px;list-style:none;">Mesaj gönder</summary>
+    <form id="contactForm" style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+      <input type="text" name="name" placeholder="Adınız" required style="padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:#fff;font-size:14px;">
+      <input type="email" name="email" placeholder="E-posta (isteğe bağlı)" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:#fff;font-size:14px;">
+      <textarea name="message" placeholder="Mesajınız" required rows="4" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:#fff;font-size:14px;resize:vertical;"></textarea>
+      <button type="submit" class="btn btn--primary" style="align-self:flex-start;">Gönder</button>
+      <p id="contactStatus" style="font-size:13px;color:#9ca3af;margin:0;"></p>
+    </form>
+  </details>
+</section>
 
 <!-- ================= FOOTER ================= -->
 <footer class="footer">
@@ -738,6 +757,25 @@
 document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 document.addEventListener('copy', function(e){ e.preventDefault(); });
 document.addEventListener('selectstart', function(e){ e.preventDefault(); });
+</script>
+<script>
+(function(){
+  var enc = "c3RlYW1peGdhbWVAeWFuZGV4LmNvbQ==";
+  var form = document.getElementById('contactForm');
+  if(!form) return;
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = form.name.value.trim();
+    var email = form.email.value.trim();
+    var msg = form.message.value.trim();
+    var to = atob(enc);
+    var subject = encodeURIComponent("NOTFLİX öneri/görüş" + (name ? " - " + name : ""));
+    var body = encodeURIComponent((email ? "Gönderen: " + email + "\n\n" : "") + msg);
+    window.location.href = "mailto:" + to + "?subject=" + subject + "&body=" + body;
+    var st = document.getElementById('contactStatus');
+    if(st) st.textContent = "E-posta istemciniz açıldı. Mesajınızı göndermeyi unutmayın.";
+  });
+})();
 </script>
 </body>
 </html>
